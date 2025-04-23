@@ -1,10 +1,14 @@
+import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/screens/chat_page.dart';
 import 'package:app_ecommerce/screens/favorite_page.dart';
 import 'package:app_ecommerce/screens/home_page.dart';
+import 'package:app_ecommerce/screens/login_page.dart';
 import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/screens/profile_page.dart';
 import 'package:app_ecommerce/screens/verify_page.dart';
+import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class CustomDrawer extends StatelessWidget {
   @override
@@ -38,7 +42,7 @@ class CustomDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => HomePage()),
-              );// đóng drawer
+              ); // đóng drawer
               // Thêm điều hướng nếu cần
             },
           ),
@@ -72,7 +76,7 @@ class CustomDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => FavoritePage()),
-              );// đóng drawer
+              ); // đóng drawer
             },
           ),
           ListTile(
@@ -94,15 +98,31 @@ class CustomDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => VerifyPage()),
-              );// đóng drawer
+              ); // đóng drawer
             },
           ),
           ListTile(
             leading: Icon(Icons.logout),
             title: Text('Đăng xuất'),
-            onTap: () {
-              Navigator.pop(context);
-              // Xử lý logout nếu cần
+            onTap: () async {
+              Navigator.pop(context); // đóng drawer
+
+              // 1. Xóa token khỏi SharedPreferences
+              await SharedPrefsHelper.clearToken();
+
+              // 2. Reset AuthProvider nếu có
+              final authProvider = Provider.of<AuthProvider>(
+                context,
+                listen: false,
+              );
+              authProvider.logout();
+
+              // 3. Điều hướng về LoginPage
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => LoginPage()),
+                (route) => false, // clear all previous routes
+              );
             },
           ),
         ],

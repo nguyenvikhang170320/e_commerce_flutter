@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../screens/bill_page.dart';
 import '../screens/cart_page.dart';
 import '../screens/home_page.dart';
-import '../screens/profile_page.dart';
 import '../screens/revenue_page.dart';
 
 class BottomNav extends StatefulWidget {
@@ -41,10 +40,22 @@ class _BottomNavState extends State<BottomNav> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Giỏ hàng'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Hoá đơn'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Doanh thu'),
-          BottomNavigationBarItem(icon: Icon(Icons.credit_card), label: 'Thanh toán'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Giỏ hàng',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long),
+            label: 'Hoá đơn',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Doanh thu',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.credit_card),
+            label: 'Thanh toán',
+          ),
         ],
       ),
     );
