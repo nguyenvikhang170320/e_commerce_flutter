@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:app_ecommerce/screens/product_page.dart';
 import 'package:app_ecommerce/services/auth_service.dart';
-import 'package:app_ecommerce/services/catrgories_service.dart';
+import 'package:app_ecommerce/services/categories_service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -31,7 +31,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
   Future<void> _fetchCategories() async {
     try {
       // GIẢ SỬ bạn có một CategoryService với hàm fetchAllCategories()
-      final categoryList = await CategoriesService.fetchCategories();
+      final categoryList = await CategoriesService.getCategories();
       setState(() {
         categories = categoryList;
       });

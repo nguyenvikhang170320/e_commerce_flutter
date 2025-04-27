@@ -1,6 +1,7 @@
-import 'package:app_ecommerce/services/catrgories_service.dart';
+import 'package:app_ecommerce/services/categories_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../models/category.dart'; // Import đúng model nếu cần
 
 class CategoryList extends StatefulWidget {
   final Function(int) onCategorySelected;
@@ -11,7 +12,7 @@ class CategoryList extends StatefulWidget {
 }
 
 class _CategoryListState extends State<CategoryList> {
-  List categories = [];
+  List<Category> categories = [];
   int selectedId = 0;
 
   @override
@@ -21,13 +22,9 @@ class _CategoryListState extends State<CategoryList> {
   }
 
   void loadCategories() async {
-    final data = await CategoriesService.fetchCategories();
+    final data = await CategoriesService.getCategories();
     setState(() {
       categories = data;
-      // if (data.isNotEmpty) {
-      //   selectedId = data[0]['id'];
-      //   widget.onCategorySelected(selectedId);
-      // }
     });
   }
 
@@ -42,14 +39,14 @@ class _CategoryListState extends State<CategoryList> {
         separatorBuilder: (_, __) => SizedBox(width: 10),
         itemBuilder: (context, index) {
           final cat = categories[index];
-          final isSelected = cat['id'] == selectedId;
+          final isSelected = cat.id == selectedId;
           return GestureDetector(
             onTap: () {
-              setState(() => selectedId = cat['id']);
+              setState(() => selectedId = cat.id!);
               widget.onCategorySelected(selectedId);
             },
             child: SizedBox(
-              width: 70, // Tăng width để chữ có thêm khoảng
+              width: 70,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -59,30 +56,14 @@ class _CategoryListState extends State<CategoryList> {
                         isSelected ? Colors.orange : Colors.orange.shade100,
                     child: Builder(
                       builder: (context) {
-                        final categoryId =
-                            cat['id']; // Lấy categoryId từ dữ liệu
+                        final categoryId = cat.id;
 
                         if (categoryId == 1) {
-                          // Giả sử ID = 1 là cho đồ ăn
-                          return FaIcon(
-                            FontAwesomeIcons
-                                .laptop, // Sử dụng icon pizza từ Font Awesome
-                            size: 16,
-                          );
+                          return FaIcon(FontAwesomeIcons.laptop, size: 16);
                         } else if (categoryId == 2) {
-                          // Giả sử ID = 2 là cho đồ uống
-                          return FaIcon(
-                            FontAwesomeIcons
-                                .phone, // Sử dụng icon pizza từ Font Awesome
-                            size: 16,
-                          );
+                          return FaIcon(FontAwesomeIcons.phone, size: 16);
                         } else if (categoryId == 5) {
-                          // Giả sử ID = 2 là cho đồ uống
-                          return FaIcon(
-                            FontAwesomeIcons
-                                .clock, // Sử dụng icon pizza từ Font Awesome
-                            size: 16,
-                          );
+                          return FaIcon(FontAwesomeIcons.clock, size: 16);
                         } else {
                           return FaIcon(FontAwesomeIcons.accusoft, size: 16);
                         }
@@ -91,7 +72,7 @@ class _CategoryListState extends State<CategoryList> {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    cat['name'],
+                    cat.name ?? '',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight:

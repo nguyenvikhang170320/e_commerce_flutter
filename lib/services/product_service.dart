@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class ProductService {
+  //Lấy danh sách sản phẩm theo categoryId
   static Future<List<dynamic>> fetchProducts(int categoryId) async {
     final res = await http.get(
       Uri.parse(
@@ -18,6 +19,7 @@ class ProductService {
     }
   }
 
+  //Lấy danh sách sản phẩm nổi bật
   static Future<List> fetchFeaturedProducts() async {
     final url = Uri.parse('${dotenv.env['BASE_URL']}/products/featured');
     final res = await http.get(url);
@@ -28,6 +30,7 @@ class ProductService {
     }
   }
 
+  //Lấy chi tiết sản phẩm
   static Future<Map<String, dynamic>> fetchProductDetails(int productId) async {
     final response = await http.get(
       Uri.parse('${dotenv.env['BASE_URL']}/products/$productId'),
@@ -39,6 +42,7 @@ class ProductService {
     }
   }
 
+  //Lấy tất cả sản phẩm (có phân trang + lọc theo category)
   static Future<List<dynamic>> fetchAllProducts() async {
     try {
       final url = '${dotenv.env['BASE_URL']}/products';

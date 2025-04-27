@@ -181,11 +181,11 @@ class _ProductScreenState extends State<ProductScreen> {
             ).pushReplacement(MaterialPageRoute(builder: (ctx) => HomePage()));
           },
         ),
-        title: Text('Danh sách sản phẩm'),
+        title: Text('Danh sách sản phẩm', style: TextStyle(fontSize: 18)),
         actions: [
           IconButton(onPressed: () {}, icon: Icon(Icons.search)),
           IconButton(
-            icon: Icon(Icons.more_vert),
+            icon: Icon(Icons.create),
             onPressed: () => _showCreateOnlyDialog(context),
           ),
         ],
@@ -277,6 +277,8 @@ class _ProductScreenState extends State<ProductScreen> {
                           top: 4,
                           right: 4,
                           child: Container(
+                            width: 30, // Adjust the width as needed
+                            height: 30, // Adjust the height as needed
                             decoration: BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
@@ -284,10 +286,20 @@ class _ProductScreenState extends State<ProductScreen> {
                                 BoxShadow(color: Colors.black26, blurRadius: 4),
                               ],
                             ),
-                            child: IconButton(
-                              icon: Icon(Icons.more_vert, size: 20),
-                              onPressed:
-                                  () => _showEditDeleteDialog(context, prod),
+                            child: Center(
+                              // Center the IconButton within the smaller Container
+                              child: IconButton(
+                                icon: Icon(Icons.more_vert, size: 16),
+                                padding:
+                                    EdgeInsets
+                                        .zero, // Remove default padding around the icon
+                                constraints: BoxConstraints(
+                                  minWidth: 28,
+                                  minHeight: 28,
+                                ), // Ensure IconButton respects Container size
+                                onPressed:
+                                    () => _showEditDeleteDialog(context, prod),
+                              ),
                             ),
                           ),
                         ),

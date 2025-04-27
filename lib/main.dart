@@ -1,7 +1,10 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
+import 'package:app_ecommerce/providers/category_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
+import 'package:app_ecommerce/services/auth_roles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,11 +16,13 @@ import 'screens/login_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: MyApp(),
@@ -63,6 +68,14 @@ class _SplashDeciderState extends State<SplashDecider> {
       setState(() => _startScreen = IntroPage());
     } else {
       final token = prefs.getString('token') ?? '';
+      print("Token của app dạng Json: $token");
+      // Giải mã token
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      print(decodedToken); // In ra toàn bộ payload để kiểm tra
+
+      // Lấy role từ decoded token
+      String? role = decodedToken['role'];
+      print('Vai trò của người dùng là: $role');
       if (token.isNotEmpty) {
         setState(() => _startScreen = BottomNav());
       } else {

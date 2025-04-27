@@ -26,7 +26,7 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
   late int category_id;
   late int is_featured;
   late int stock;
-
+  bool showImageField = false;
   @override
   void initState() {
     super.initState();
@@ -36,18 +36,6 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
     imagePath = null; // mặc định chưa chọn ảnh mới
     description = widget.product['description'];
     category_id = widget.product['category_id'];
-    stock = widget.product['stock'];
-    is_featured = widget.product['is_featured'];
-  }
-
-  Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await ImagePicker().pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        imagePath = pickedFile.path;
-        imageUrl = null; // xoá url cũ nếu có ảnh mới
-      });
-    }
   }
 
   void _submit() {
@@ -80,13 +68,19 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
   }
 
   Widget _buildImagePreview() {
-    if (imagePath != null) {
-      return Image.file(File(imagePath!), height: 150);
-    } else if (imageUrl != null && imageUrl!.isNotEmpty) {
-      return Image.network(imageUrl!, height: 150);
-    } else {
-      return Text('Chưa có hình ảnh');
-    }
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          showImageField = true; // Bấm vào ảnh thì mới hiện field nhập link
+        });
+      },
+      child:
+          imagePath != null
+              ? Image.file(File(imagePath!), height: 150)
+              : (imageUrl != null && imageUrl!.isNotEmpty
+                  ? Image.network(imageUrl!, height: 150)
+                  : Text('Chưa có hình ảnh')),
+    );
   }
 
   @override
@@ -122,21 +116,15 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
               ),
               SizedBox(height: 12),
               _buildImagePreview(),
-              Row(
-                children: [
-                  ElevatedButton.icon(
-                    icon: Icon(Icons.photo),
-                    label: Text('Thư viện'),
-                    onPressed: () => _pickImage(ImageSource.gallery),
-                  ),
-                  SizedBox(width: 10),
-                  ElevatedButton.icon(
-                    icon: Icon(Icons.camera_alt),
-                    label: Text('Camera'),
-                    onPressed: () => _pickImage(ImageSource.camera),
-                  ),
-                ],
-              ),
+              if (showImageField)
+                TextFormField(
+                  initialValue: imagePath ?? imageUrl ?? '',
+                  decoration: InputDecoration(labelText: 'Link hình ảnh mới'),
+                  onChanged: (val) => imagePath = val,
+                  validator:
+                      (val) => val == null || val.isEmpty ? 'Nhập link' : null,
+                ),
+
               SizedBox(height: 20),
               ElevatedButton(onPressed: _submit, child: Text('Cập nhật')),
             ],
