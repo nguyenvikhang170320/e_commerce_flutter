@@ -1,0 +1,43 @@
+import 'dart:convert';
+
+import 'package:app_ecommerce/services/share_preference.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+
+class UserProvider with ChangeNotifier {
+  String? role;
+  int? userId;
+  String? accessToken; // ✅ Thêm dòng này
+
+  Future<void> fetchUserInfo() async {
+    final token = await SharedPrefsHelper.getToken();
+    if (token == null) return;
+
+    accessToken = token; // ✅ Gán token vào accessToken
+
+    final apiUrl = '${dotenv.env['BASE_URL']}/auth/me';
+    try {
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        role = data['role'];
+        userId = data['id']; // Lưu lại user_id
+        print("Người dùng tài khoản: $role");
+        print("Người dùng tài khoản ID: $userId");
+        notifyListeners();
+      } else {
+        print('Không thể lấy user info. Status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Lỗi khi lấy user info: $e');
+    }
+  }
+}

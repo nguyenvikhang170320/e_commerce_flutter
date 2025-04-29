@@ -1,4 +1,6 @@
+import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider with ChangeNotifier {
@@ -18,11 +20,16 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> logout() async {
+  Future<void> logout(BuildContext context) async {
+    _token = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
-    _token = "";
     notifyListeners();
+
+    // 👉 Reset cart luôn (đặt điều kiện để tránh lỗi dispose nếu widget bị destroy)
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    cartProvider
+        .cleanCart(); // bạn cần viết thêm hàm clearCart() trong CartProvider
   }
 
   bool get isLoggedIn => _token != null;

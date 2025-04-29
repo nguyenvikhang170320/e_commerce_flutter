@@ -32,19 +32,47 @@ class Product {
   }
 
   /// Factory từ JSON
+  /**cách 1 */
+  // factory Product.fromJson(Map<String, dynamic> json) {
+  //   return Product(
+  //     id: json['id'] ?? 0,
+  //     sellerId: json['seller_id'] ?? 0,
+  //     name: json['name'] ?? 'Chưa có tên',
+  //     description: json['description'] ?? '',
+  //     price:
+  //         double.tryParse(json['price'].toString()) ??
+  //         0.0, // Chuyển sang String trước khi parse
+  //     stock: json['stock'] ?? 0,
+  //     image: json['image'] ?? '',
+  //     createdAt: json['created_at'] ?? '',
+  //     categoryId: json['category_id'] ?? 0,
+  //     isFeatured: json['is_featured'] == 1,
+  //   );
+  // }
+  /**cách 2 */
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: json['id'],
-      sellerId: json['seller_id'],
-      name: json['name'],
-      description: json['description'],
-      price: (json['price'] as num).toDouble(),
-      stock: json['stock'],
-      image: json['image'],
-      createdAt: json['created_at'],
-      categoryId: json['category_id'],
+      id: json['id'] ?? 0,
+      sellerId: json['seller_id'] ?? 0,
+      name: json['name'] ?? 'Chưa có tên',
+      description: json['description'] ?? '',
+      price: _parsePrice(json['price']),
+      stock: json['stock'] ?? 0,
+      image: json['image'] ?? '',
+      createdAt: json['created_at'] ?? '',
+      categoryId: json['category_id'] ?? 0,
       isFeatured: json['is_featured'] == 1,
     );
+  }
+
+  /// Hàm hỗ trợ chuyển đổi giá trị 'price' từ String sang double an toàn
+  static double _parsePrice(dynamic value) {
+    if (value is String) {
+      // Nếu giá trị là chuỗi, thử chuyển nó thành double
+      return double.tryParse(value) ?? 0.0;
+    }
+    // Nếu giá trị là số, trực tiếp chuyển đổi thành double
+    return (value as num?)?.toDouble() ?? 0.0;
   }
 
   /// Chuyển ngược lại thành JSON nếu cần

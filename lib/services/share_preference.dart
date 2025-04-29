@@ -18,6 +18,7 @@ class SharedPrefsHelper {
 
   /// Xóa token (hoặc đặt lại rỗng khi logout)
   static Future<void> clearToken() async {
+    print("Đã xóa token");
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, '');
   }

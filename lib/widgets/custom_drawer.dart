@@ -1,3 +1,4 @@
+import 'package:app_ecommerce/main.dart';
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/screens/chat_page.dart';
 import 'package:app_ecommerce/screens/favorite_page.dart';
@@ -110,12 +111,12 @@ class CustomDrawer extends StatelessWidget {
               // 1. Xóa token khỏi SharedPreferences
               await SharedPrefsHelper.clearToken();
 
-              // 2. Reset AuthProvider nếu có
+              //2. Reset AuthProvider nếu có
               final authProvider = Provider.of<AuthProvider>(
                 context,
                 listen: false,
               );
-              authProvider.logout();
+              authProvider.logout(context);
 
               // 3. Điều hướng về LoginPage
               Navigator.pushAndRemoveUntil(

@@ -13,13 +13,13 @@ class _IntroPageState extends State<IntroPage> {
   final List<Map<String, String>> introData = [
     {
       'text': 'Chào mừng bạn đến với ứng dụng',
-      'image': 'assets/images/screen1.png',
+      'image': 'assets/images/app_ecommerce1.png',
     },
     {
       'text': 'Quản lý sản phẩm & danh mục dễ dàng',
-      'image': 'assets/images/screen2.png',
+      'image': 'assets/images/app_ecommerce.png',
     },
-    {'text': 'Hãy bắt đầu nào!', 'image': 'assets/images/screen3.png'},
+    {'text': 'Hãy bắt đầu nào!', 'image': 'assets/images/app_ecommerce2.png'},
   ];
 
   @override

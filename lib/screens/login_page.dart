@@ -1,4 +1,5 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
+import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/screens/register_page.dart';
 import 'package:app_ecommerce/services/auth_service.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
@@ -136,10 +137,25 @@ class LoginPage extends StatelessWidget {
                 );
 
                 if (res['token'] != null) {
-                  Provider.of<AuthProvider>(
+                  final token = res['token'];
+
+                  // 1. Lưu token vào AuthProvider
+                  final authProvider = Provider.of<AuthProvider>(
                     context,
                     listen: false,
-                  ).saveToken(res['token']);
+                  );
+                  await authProvider.saveToken(token);
+
+                  // 2. Gọi fetchCart từ CartProvider ngay sau login
+                  final cartProvider = Provider.of<CartProvider>(
+                    context,
+                    listen: false,
+                  );
+                  await cartProvider.fetchCart(
+                    token,
+                  ); // 👈 load giỏ hàng mới sau đăng nhập
+
+                  // 3. Chuyển sang màn hình chính
                   ToastService.showSuccessToast(
                     context,
                     length: ToastLength.medium,
@@ -156,10 +172,11 @@ class LoginPage extends StatelessWidget {
                     length: ToastLength.medium,
                     expandedHeight: 100,
                     message:
-                        "Đăng nhập thất bại! Vui lòng kiểm tra lại thông tin đăng nhập.",
+                        "Đăng nhập thất bại! Vui lòng kiểm tra lại thông tin.",
                   );
                 }
               },
+
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepPurpleAccent,
                 padding: EdgeInsets.symmetric(vertical: 16),

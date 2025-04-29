@@ -76,11 +76,11 @@ class ProductService {
               ..fields['description'] = product['description'] ?? ''
               ..fields['category_id'] = product['category_id']?.toString() ?? ''
               ..fields['stock'] =
-                  product['stock']?.toString() ??
-                  '0' // ✅ Đã thêm stock
+                  product['stock'].toString() ??
+                  '' // ✅ Chuyển int thành String cho fields
               ..fields['is_featured'] =
-                  product['is_featured']?.toString() ??
-                  '0'; // ✅ Đã thêm is_featured
+                  product['is_featured']?.toString() ?? '0'
+              ..fields['seller_id'] = product['seller_id']?.toString() ?? '';
 
         request.files.add(
           await http.MultipartFile.fromPath('image', product['image']),
@@ -101,8 +101,9 @@ class ProductService {
             'description': product['description'] ?? '',
             'image': product['image'],
             'category_id': product['category_id'],
-            'stock': product['stock'], // ✅ Đã thêm stock
-            'is_featured': product['is_featured'], // ✅ Đã thêm is_featured
+            'stock': product['stock'], // ✅ Sử dụng trực tiếp int
+            'is_featured': product['is_featured'],
+            'seller_id': product['seller_id'],
           }),
         );
       }
@@ -136,8 +137,8 @@ class ProductService {
               ..fields['description'] = product['description'] ?? ''
               ..fields['category_id'] = product['category_id']?.toString() ?? ''
               ..fields['stock'] =
-                  product['stock']?.toString() ??
-                  '0' // ✅ Đã thêm stock
+                  product['stock'] ??
+                  0 // ✅ Đã thêm stock
               ..fields['is_featured'] =
                   product['is_featured']?.toString() ??
                   '0'; // ✅ Đã thêm is_featured

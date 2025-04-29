@@ -1,8 +1,14 @@
+import 'package:app_ecommerce/models/products.dart';
+import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
+import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/create_product_page.dart';
 import 'package:app_ecommerce/screens/home_page.dart';
 import 'package:app_ecommerce/screens/update_product_page.dart';
+import 'package:app_ecommerce/services/auth_roles.dart';
+import 'package:app_ecommerce/services/cart_service.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
+import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
@@ -22,12 +28,11 @@ class ProductScreen extends StatefulWidget {
 class _ProductScreenState extends State<ProductScreen> {
   List products = [];
   String? userRole;
-
   @override
   void initState() {
     super.initState();
-    Provider.of<ProductProvider>(context, listen: false).fetchProducts();
     fetchUserRole();
+    Provider.of<ProductProvider>(context, listen: false).fetchProducts();
   }
 
   void fetchUserRole() async {
@@ -49,7 +54,7 @@ class _ProductScreenState extends State<ProductScreen> {
         final data = jsonDecode(response.body);
         setState(() {
           userRole = data['role'];
-          print(userRole);
+          print("Người dùng $userRole");
         });
       } else {
         print('Không thể lấy role. Status: ${response.statusCode}');
@@ -178,7 +183,7 @@ class _ProductScreenState extends State<ProductScreen> {
           onPressed: () {
             Navigator.of(
               context,
-            ).pushReplacement(MaterialPageRoute(builder: (ctx) => HomePage()));
+            ).pushReplacement(MaterialPageRoute(builder: (ctx) => BottomNav()));
           },
         ),
         title: Text('Danh sách sản phẩm', style: TextStyle(fontSize: 18)),
@@ -263,6 +268,81 @@ class _ProductScreenState extends State<ProductScreen> {
                                       ),
                                       textAlign: TextAlign.center,
                                     ),
+                                    SizedBox(height: 8),
+
+                                    // CHỈ hiển thị nếu KHÔNG phải admin
+                                    if (userRole != 'admin')
+                                      ElevatedButton(
+                                        onPressed: () async {
+                                          final cartProvider =
+                                              Provider.of<CartProvider>(
+                                                context,
+                                                listen: false,
+                                              );
+                                          print("trạng thái: $cartProvider");
+                                          final product = Product.fromJson(
+                                            prod,
+                                          );
+
+                                          final exists = cartProvider.items.any(
+                                            (p) => p.id == product.id,
+                                          );
+                                          if (exists) {
+                                            ToastService.showWarningToast(
+                                              context,
+                                              length: ToastLength.medium,
+                                              expandedHeight: 80,
+                                              message:
+                                                  "⚠️ Sản phẩm đã có trong giỏ hàng. Vui lòng vào giỏ để xóa trước khi thêm lại.",
+                                            );
+                                            return;
+                                          }
+
+                                          final token =
+                                              await SharedPrefsHelper.getToken(); // ví dụ bạn lấy từ SharedPreferences
+                                          final success =
+                                              await CartService.addToCart(
+                                                productId: product.id,
+                                                quantity: 1,
+                                                token: token!,
+                                              );
+
+                                          if (success) {
+                                            // ✅ Đồng bộ lại giỏ hàng từ server
+                                            await cartProvider.fetchCart(token);
+                                            cartProvider.addToCart(
+                                              product,
+                                              token,
+                                            ); // Thêm vào local sau khi gọi API thành công
+                                            ToastService.showSuccessToast(
+                                              context,
+                                              length: ToastLength.short,
+                                              expandedHeight: 80,
+                                              message:
+                                                  "✅ Đã thêm ${product.name} vào giỏ hàng",
+                                            );
+                                          } else {
+                                            ToastService.showErrorToast(
+                                              context,
+                                              length: ToastLength.medium,
+                                              expandedHeight: 80,
+                                              message:
+                                                  "❌ Không thể thêm vào giỏ hàng",
+                                            );
+                                          }
+                                        },
+
+                                        child: Text('+Add'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.orange,
+                                          shape: StadiumBorder(),
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
+                                          textStyle: TextStyle(fontSize: 12),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),

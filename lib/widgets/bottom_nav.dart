@@ -1,10 +1,14 @@
 import 'package:app_ecommerce/screens/payment_page.dart';
+import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 
 import '../screens/bill_page.dart';
 import '../screens/cart_page.dart';
 import '../screens/home_page.dart';
 import '../screens/revenue_page.dart';
+import 'package:app_ecommerce/providers/auth_provider.dart';
+import 'package:app_ecommerce/providers/cart_provider.dart';
+import 'package:provider/provider.dart';
 
 class BottomNav extends StatefulWidget {
   @override
@@ -21,6 +25,20 @@ class _BottomNavState extends State<BottomNav> {
     RevenuePage(),
     PaymentPage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _syncCart();
+  }
+
+  Future<void> _syncCart() async {
+    final token = await SharedPrefsHelper.getToken();
+    if (token != null) {
+      final cartProvider = Provider.of<CartProvider>(context, listen: false);
+      await cartProvider.fetchCart(token);
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {

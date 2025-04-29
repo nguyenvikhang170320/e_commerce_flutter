@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:app_ecommerce/screens/product_page.dart';
 import 'package:app_ecommerce/services/auth_service.dart';
 import 'package:app_ecommerce/services/categories_service.dart';
+import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:toasty_box/toast_enums.dart';
@@ -19,6 +21,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
   String name = '';
   String price = '';
   String description = '';
+  int stock = 20;
   String? imagePath;
   String? selectedCategoryId; // Biến để lưu category ID đã chọn
   List<dynamic> categories = []; // Danh sách category
@@ -41,34 +44,64 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
     }
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      final newProduct = {
-        'name': name,
-        'price': price, // Chuyển đổi giá thành double
-        'image': imagePath ?? '', // Nếu không có ảnh thì gửi chuỗi rỗng
-        'category_id':
-            selectedCategoryId, // Nếu không có ảnh thì gửi chuỗi rỗng
-        'description': description,
-        // 'stock': 0,
-        // 'seller_id': 3,
-        // 'is_featured': 0, // Nếu không có ảnh thì gửi chuỗi rỗng
-      };
-      Provider.of<ProductProvider>(
-        context,
-        listen: false,
-      ).addProduct(newProduct);
+  void _submit() async {
+    if (_formKey.currentState!.validate() && selectedCategoryId != null) {
+      final String? token = await SharedPrefsHelper.getToken();
 
-      ToastService.showSuccessToast(
+      if (token != null) {
+        try {
+          Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+          int? sellerId = decodedToken['id'];
+
+          if (sellerId != null) {
+            final newProduct = {
+              'name': name,
+              'price': price,
+              'image': imagePath ?? '',
+              'category_id': selectedCategoryId,
+              'description': description,
+              'stock':
+                  stock.toString(), // ✅ Chuyển stock thành String trước khi gửi
+              'seller_id':
+                  sellerId.toString(), // ✅ Thêm seller_id vào dữ liệu gửi
+              // 'is_featured': 0.toString(), // Bạn có thể thêm mặc định hoặc thu thập từ UI
+            };
+            Provider.of<ProductProvider>(
+              context,
+              listen: false,
+            ).addProduct(newProduct); // ✅ Gửi newProduct chứa seller_id
+
+            ToastService.showSuccessToast(
+              context,
+              length: ToastLength.medium,
+              expandedHeight: 100,
+              message: "Tạo sản phẩm thành công",
+            );
+
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (ctx) => ProductScreen()),
+            );
+          } else {
+            ToastService.showErrorToast(
+              context,
+              message: 'Không tìm thấy ID người dùng trong token.',
+            );
+          }
+        } catch (e) {
+          print('Lỗi giải mã token: $e');
+          ToastService.showErrorToast(
+            context,
+            message: 'Lỗi: Không thể xác thực người dùng.',
+          );
+        }
+      } else {
+        ToastService.showErrorToast(context, message: 'Bạn chưa đăng nhập.');
+      }
+    } else {
+      ToastService.showErrorToast(
         context,
-        length: ToastLength.medium,
-        expandedHeight: 100,
-        message: "Tạo sản phẩm thành công",
+        message: 'Vui lòng điền đầy đủ thông tin và chọn danh mục.',
       );
-
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (ctx) => ProductScreen()));
     }
   }
 
@@ -108,10 +141,10 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                     categories.map((category) {
                       return DropdownMenuItem<String>(
                         value:
-                            category['id']
+                            category.id
                                 .toString(), // Giả sử 'id' là khóa chính của bảng category
                         child: Text(
-                          category['name'],
+                          category.name,
                         ), // Giả sử 'name' là tên category
                       );
                     }).toList(),
@@ -123,7 +156,18 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                 validator: (value) => value == null ? 'Chọn danh mục' : null,
               ),
               SizedBox(height: 10),
-              if (imagePath != null) Image.file(File(imagePath!), height: 150),
+              if (imagePath != null &&
+                  imagePath!.startsWith('http')) // Kiểm tra nếu là URL
+                Image.network(
+                  imagePath!,
+                  height: 150,
+                  errorBuilder: (context, error, stackTrace) {
+                    print('Lỗi tải ảnh: $error');
+                    return const Text('Không thể tải ảnh');
+                  },
+                )
+              else if (imagePath != null)
+                Image.file(File(imagePath!), height: 150),
               TextFormField(
                 decoration: InputDecoration(labelText: 'Link sản phẩm'),
                 onChanged: (val) => imagePath = val,
