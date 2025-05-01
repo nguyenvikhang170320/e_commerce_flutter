@@ -1,4 +1,5 @@
 import 'package:app_ecommerce/providers/cart_provider.dart';
+import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,6 +31,12 @@ class AuthProvider with ChangeNotifier {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     cartProvider
         .cleanCart(); // bạn cần viết thêm hàm clearCart() trong CartProvider
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
+    productProvider
+        .cleanProduct(); // bạn cần viết thêm hàm clearCart() trong CartProvider
   }
 
   bool get isLoggedIn => _token != null;

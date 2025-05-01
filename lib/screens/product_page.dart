@@ -2,6 +2,7 @@ import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
+import 'package:app_ecommerce/screens/add_to_cart_page.dart';
 import 'package:app_ecommerce/screens/create_product_page.dart';
 import 'package:app_ecommerce/screens/home_page.dart';
 import 'package:app_ecommerce/screens/update_product_page.dart';
@@ -28,6 +29,8 @@ class ProductScreen extends StatefulWidget {
 class _ProductScreenState extends State<ProductScreen> {
   List products = [];
   String? userRole;
+  bool _isAddingToCart = false;
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +67,7 @@ class _ProductScreenState extends State<ProductScreen> {
     }
   }
 
+  //giá tiền
   String formatCurrency(String amountStr) {
     final amount = double.tryParse(amountStr) ?? 0;
     return NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(amount);
@@ -274,65 +278,42 @@ class _ProductScreenState extends State<ProductScreen> {
                                     if (userRole != 'admin')
                                       ElevatedButton(
                                         onPressed: () async {
-                                          final cartProvider =
-                                              Provider.of<CartProvider>(
-                                                context,
-                                                listen: false,
-                                              );
-                                          print("trạng thái: $cartProvider");
-                                          final product = Product.fromJson(
-                                            prod,
-                                          );
-
-                                          final exists = cartProvider.items.any(
-                                            (p) => p.id == product.id,
-                                          );
-                                          if (exists) {
-                                            ToastService.showWarningToast(
-                                              context,
-                                              length: ToastLength.medium,
-                                              expandedHeight: 80,
-                                              message:
-                                                  "⚠️ Sản phẩm đã có trong giỏ hàng. Vui lòng vào giỏ để xóa trước khi thêm lại.",
-                                            );
-                                            return;
-                                          }
-
+                                          // Fetch token before navigating
                                           final token =
-                                              await SharedPrefsHelper.getToken(); // ví dụ bạn lấy từ SharedPreferences
-                                          final success =
-                                              await CartService.addToCart(
-                                                productId: product.id,
-                                                quantity: 1,
-                                                token: token!,
-                                              );
-
-                                          if (success) {
-                                            // ✅ Đồng bộ lại giỏ hàng từ server
-                                            await cartProvider.fetchCart(token);
-                                            cartProvider.addToCart(
-                                              product,
-                                              token,
-                                            ); // Thêm vào local sau khi gọi API thành công
-                                            ToastService.showSuccessToast(
+                                              await SharedPrefsHelper.getToken();
+                                          if (token != null) {
+                                            Product productObj =
+                                                Product.fromJson(prod);
+                                            Navigator.of(
                                               context,
-                                              length: ToastLength.short,
-                                              expandedHeight: 80,
-                                              message:
-                                                  "✅ Đã thêm ${product.name} vào giỏ hàng",
+                                            ).pushReplacement(
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (
+                                                      context,
+                                                    ) => AddToCartScreen(
+                                                      product:
+                                                          productObj, // Use `prod` instead of `product`
+                                                      token:
+                                                          token, // Make sure token is retrieved
+                                                    ),
+                                              ),
                                             );
                                           } else {
-                                            ToastService.showErrorToast(
+                                            // Handle case when token is null (e.g., user not logged in)
+                                            ToastService.showToast(
                                               context,
                                               length: ToastLength.medium,
-                                              expandedHeight: 80,
+                                              expandedHeight: 100,
                                               message:
-                                                  "❌ Không thể thêm vào giỏ hàng",
+                                                  "Token không hợp lệ. Vui lòng đăng nhập lại.",
                                             );
                                           }
                                         },
-
-                                        child: Text('+Add'),
+                                        child:
+                                            _isAddingToCart
+                                                ? CircularProgressIndicator() // Show a loading indicator while adding to cart
+                                                : Text('+Add'),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.orange,
                                           shape: StadiumBorder(),

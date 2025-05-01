@@ -3,6 +3,7 @@ import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/screens/product_page.dart';
 import 'package:app_ecommerce/services/product_service.dart';
+import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -39,11 +40,20 @@ class _ProductListCategoryState extends State<ProductListCategory> {
   void initState() {
     super.initState();
     fetchProducts();
+    _syncCart();
   }
 
   void fetchProducts() async {
     final data = await ProductService.fetchProducts(widget.categoryId);
     setState(() => products = data);
+  }
+
+  Future<void> _syncCart() async {
+    final token = await SharedPrefsHelper.getToken();
+    if (token != null) {
+      final cartProvider = Provider.of<CartProvider>(context, listen: false);
+      await cartProvider.fetchCart(token);
+    }
   }
 
   @override

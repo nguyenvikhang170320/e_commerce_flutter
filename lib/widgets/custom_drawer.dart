@@ -1,5 +1,6 @@
 import 'package:app_ecommerce/main.dart';
 import 'package:app_ecommerce/providers/auth_provider.dart';
+import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/screens/chat_page.dart';
 import 'package:app_ecommerce/screens/favorite_page.dart';
 import 'package:app_ecommerce/screens/home_page.dart';
@@ -117,6 +118,11 @@ class CustomDrawer extends StatelessWidget {
                 listen: false,
               );
               authProvider.logout(context);
+              final cartProvider = Provider.of<CartProvider>(
+                context,
+                listen: false,
+              );
+              cartProvider.cleanCart();
 
               // 3. Điều hướng về LoginPage
               Navigator.pushAndRemoveUntil(

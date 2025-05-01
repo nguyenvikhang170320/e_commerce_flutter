@@ -1,34 +1,53 @@
 import 'dart:convert';
 
+import 'package:app_ecommerce/models/cartItem.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class CartService {
-  static Future<bool> addToCart({
+  static bool _isAdding = false; // 🛑 Cờ kiểm soát
+  // ✅ Thêm sản phẩm vào giỏ hàng
+  static Future<CartItem?> addToCart({
     required int productId,
     required int quantity,
     required String token,
   }) async {
-    final url = Uri.parse("${dotenv.env['BASE_URL']}/carts");
+    if (_isAdding) return null; // Prevent duplicate requests
+    _isAdding = true;
+    try {
+      final url = Uri.parse("${dotenv.env['BASE_URL']}/carts");
 
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'product_id': productId, 'quantity': quantity}),
-    );
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'product_id': productId, 'quantity': quantity}),
+      );
 
-    if (response.statusCode == 201) {
-      return true; // Thành công, sản phẩm được thêm vào giỏ
-    } else {
-      final responseData = jsonDecode(response.body);
-      if (responseData['error'] != null) {
-        print('❌ Thêm giỏ hàng lỗi: ${responseData['error']}');
+      if (response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        // Check if the response has the expected 'data' field containing the cart item
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final cartItem = CartItem.fromJson(responseData['data']);
+          return cartItem;
+        } else {
+          print(
+            '❌ Không thể thêm sản phẩm vào giỏ hàng: ${responseData['error']}',
+          );
+          return null;
+        }
+      } else {
+        print('❌ Lỗi khi thêm sản phẩm vào giỏ hàng: ${response.body}');
+        return null;
       }
-      return false; // Lỗi khi thêm vào giỏ hàng
+    } catch (e) {
+      print('❌ Lỗi mạng khi thêm giỏ hàng: $e');
+      return null;
+    } finally {
+      _isAdding = false;
     }
   }
 

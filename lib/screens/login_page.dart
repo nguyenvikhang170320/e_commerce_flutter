@@ -1,5 +1,6 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
+import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/screens/register_page.dart';
 import 'package:app_ecommerce/services/auth_service.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
@@ -139,6 +140,8 @@ class LoginPage extends StatelessWidget {
                 if (res['token'] != null) {
                   final token = res['token'];
 
+                  print("Đăng nhập token là: $token");
+
                   // 1. Lưu token vào AuthProvider
                   final authProvider = Provider.of<AuthProvider>(
                     context,
@@ -154,6 +157,11 @@ class LoginPage extends StatelessWidget {
                   await cartProvider.fetchCart(
                     token,
                   ); // 👈 load giỏ hàng mới sau đăng nhập
+                  final productProvider = Provider.of<ProductProvider>(
+                    context,
+                    listen: false,
+                  );
+                  await productProvider.fetchProducts();
 
                   // 3. Chuyển sang màn hình chính
                   ToastService.showSuccessToast(

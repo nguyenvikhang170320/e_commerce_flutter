@@ -4,7 +4,8 @@ class CartItem {
   final String productName;
   final double productPrice;
   final String productImage;
-  int quantity; // Sử dụng int vì quantity là số nguyên và có thể thay đổi
+  int quantity;
+  final DateTime addedAt; // Thêm thời gian thêm vào giỏ hàng
 
   CartItem({
     required this.id,
@@ -13,9 +14,10 @@ class CartItem {
     required this.productPrice,
     required this.productImage,
     required this.quantity,
+    required this.addedAt, // ✅ nhớ thêm vào constructor
   });
 
-  // Sử dụng factory constructor để tạo CartItem từ JSON
+  // Factory constructor để tạo CartItem từ JSON
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
       id: json['id'],
@@ -23,15 +25,32 @@ class CartItem {
       productName: json['name'],
       productPrice:
           (json['price'] is String)
-              ? double.tryParse(json['price']) ??
-                  0.0 // Chuyển giá trị String sang double
+              ? double.tryParse(json['price']) ?? 0.0
               : json['price'].toDouble(),
       productImage: json['image'] ?? '',
-      quantity: json['quantity'], // Lấy quantity từ JSON
+      quantity: json['quantity'],
+      addedAt: _parseDate(json['added_at']), // ✅ dùng hàm an toàn
     );
   }
 
-  // Optional: Nếu cần setter cho quantity (mặc dù bạn có thể sửa trực tiếp)
+  static DateTime _parseDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value * 1000).toLocal();
+    }
+    if (value is String) {
+      try {
+        return DateTime.parse(
+          value,
+        ).toLocal(); // Parse và để Flutter tự xử lý múi giờ
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+    return DateTime.now();
+  }
+
+  // Optional setter cho quantity
   void updateQuantity(int newQuantity) {
     quantity = newQuantity;
   }

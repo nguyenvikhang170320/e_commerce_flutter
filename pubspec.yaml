@@ -44,6 +44,7 @@ dependencies:
   intl: ^0.20.2 #tiền tệ
   image_picker: ^1.0.4 #camera
   jwt_decoder: ^2.0.1 #Để chuyển chuỗi token JWT (JSON Web Token)
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

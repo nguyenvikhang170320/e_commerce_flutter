@@ -57,4 +57,9 @@ class ProductProvider with ChangeNotifier {
       print("Lỗi khi xóa sản phẩm: $e");
     }
   }
+
+  void cleanProduct() {
+    _products.clear();
+    notifyListeners();
+  }
 }

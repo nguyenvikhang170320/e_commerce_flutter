@@ -21,7 +21,7 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
   String name = '';
   String price = '';
   String description = '';
-  int stock = 20;
+  int stock = 100;
   String? imagePath;
   String? selectedCategoryId; // Biến để lưu category ID đã chọn
   List<dynamic> categories = []; // Danh sách category

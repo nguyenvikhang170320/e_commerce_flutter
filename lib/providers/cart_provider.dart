@@ -4,24 +4,30 @@ import 'package:app_ecommerce/services/cart_service.dart';
 import 'package:flutter/material.dart';
 
 class CartProvider with ChangeNotifier {
-  final List<Product> _items =
-      []; // Chỉ dùng cho addToCart từ danh sách sản phẩm
-  List<CartItem> _itemCart = []; // Dùng cho hiển thị và thao tác giỏ hàng
+  List<CartItem> _itemCart = []; // Quản lý giỏ hàng
 
-  List<Product> get items => _items;
   List<CartItem> get itemCart => _itemCart;
 
-  // ✅ Không chỉnh sửa hàm này như bạn yêu cầu
+  // ✅ Thêm sản phẩm vào giỏ hàng
   Future<bool> addToCart(Product product, String token) async {
-    const int quantity = 1;
-    final result = await CartService.addToCart(
+    const int quantity = 1; // You can customize this if needed
+    final cartItem = await CartService.addToCart(
       productId: product.id,
       quantity: quantity,
       token: token,
     );
 
-    if (result) {
-      _items.add(product);
+    if (cartItem != null) {
+      // Check if product is already in the cart
+      final index = _itemCart.indexWhere(
+        (item) => item.productId == product.id,
+      );
+      if (index != -1) {
+        // Update quantity if product exists in the cart
+        _itemCart[index].quantity += quantity;
+      } else {
+        _itemCart.add(cartItem);
+      }
       notifyListeners();
       return true;
     } else {
@@ -34,12 +40,11 @@ class CartProvider with ChangeNotifier {
   Future<void> fetchCart(String token) async {
     try {
       final data = await CartService.fetchCart(token);
-      print('Dữ liệu giỏ hàng từ API: $data'); // Log để kiểm tra dữ liệu
+      print('Dữ liệu giỏ hàng từ API: $data');
       _itemCart = data.map<CartItem>((e) => CartItem.fromJson(e)).toList();
       notifyListeners();
     } catch (e) {
       print('Lỗi khi lấy giỏ hàng: $e');
-      // Có thể xử lý thông báo lỗi tại đây nếu cần
     }
   }
 
@@ -71,28 +76,26 @@ class CartProvider with ChangeNotifier {
   // ✅ Số lượng sản phẩm trong giỏ
   int get itemCount => _itemCart.length;
 
-  // ✅ Tổng giá trị giỏ hàng (dựa vào product.price)
-  // Tính tổng tiền của giỏ hàng
+  // ✅ Tổng giá trị giỏ hàng
   double get totalPrice {
     return _itemCart.fold(0, (sum, item) {
       return sum + item.productPrice * item.quantity;
     });
   }
 
+  // ✅ Xóa toàn bộ giỏ hàng
   Future<void> clearCart({required String token}) async {
-    // Lấy danh sách giỏ hàng của người dùng
     final cartItems = await CartService.fetchCart(token);
 
-    // Duyệt qua tất cả các sản phẩm trong giỏ và xóa từng sản phẩm
     for (var item in cartItems) {
       await CartService.deleteCartItem(cartId: item['id'], token: token);
     }
 
-    // Sau khi xóa, xóa dữ liệu giỏ hàng trong bộ nhớ
     _itemCart.clear();
     notifyListeners();
   }
 
+  // ✅ Dọn sạch local (nếu cần)
   void cleanCart() {
     _itemCart.clear();
     notifyListeners();
