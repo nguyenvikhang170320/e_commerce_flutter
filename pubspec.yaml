@@ -42,7 +42,10 @@ dependencies:
   toasty_box: ^1.0.4 #thông báo dạng toast
   font_awesome_flutter: ^10.8.0 # Icon
   intl: ^0.20.2 #tiền tệ
-  image_picker: ^1.0.4 #camera
+  image_picker: ^1.0.4 #camera and gallery
+  mime: ^2.0.0 #Xác định kiểu file (MIME type) dựa trên đuôi file hoặc nội dung file .jpg, .png 
+  path: ^1.9.1 #Xử lý đường dẫn file
+  http_parser: ^4.1.2
   jwt_decoder: ^2.0.1 #Để chuyển chuỗi token JWT (JSON Web Token)
 
 dev_dependencies:

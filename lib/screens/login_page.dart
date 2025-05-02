@@ -1,6 +1,7 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
+import 'package:app_ecommerce/screens/forgot_password_page.dart';
 import 'package:app_ecommerce/screens/register_page.dart';
 import 'package:app_ecommerce/services/auth_service.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
@@ -121,7 +122,11 @@ class LoginPage extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () {
-                  // TODO: Xử lý quên mật khẩu
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => ForgotPasswordScreen(),
+                    ),
+                  );
                 },
                 child: Text(
                   'Quên mật khẩu?',
