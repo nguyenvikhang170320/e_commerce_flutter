@@ -23,6 +23,7 @@ class BottomNav extends StatefulWidget {
 class _BottomNavState extends State<BottomNav> {
   int _selectedIndex = 0;
   String? userRole;
+  int? sellerID;
 
   Future<void> fetchUserRole() async {
     final token = await SharedPrefsHelper.getToken();
@@ -43,7 +44,9 @@ class _BottomNavState extends State<BottomNav> {
         final data = jsonDecode(response.body);
         setState(() {
           userRole = data['role'];
+          sellerID = data['id'];
           print("Người dùng $userRole");
+          print("ID Người bán $sellerID");
         });
       } else {
         print('Không thể lấy role. Status: ${response.statusCode}');
@@ -90,7 +93,7 @@ class _BottomNavState extends State<BottomNav> {
       HomePage(),
       CartPage(),
       userRole == 'user' ? UserOrdersScreen() : AllOrdersScreen(),
-      RevenuePage(),
+      SellerRevenueScreen(sellerId: sellerID!),
       PaymentPage(),
     ];
 

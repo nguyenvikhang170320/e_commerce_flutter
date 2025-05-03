@@ -8,6 +8,7 @@ import 'package:app_ecommerce/screens/login_page.dart';
 import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/screens/profile_page.dart';
 import 'package:app_ecommerce/screens/verify_page.dart';
+import 'package:app_ecommerce/screens/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -99,7 +100,7 @@ class CustomDrawer extends StatelessWidget {
               Navigator.pop(context); // đóng drawer
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => VerifyPage()),
+                MaterialPageRoute(builder: (context) => VerifyRequestsScreen()),
               ); // đóng drawer
             },
           ),

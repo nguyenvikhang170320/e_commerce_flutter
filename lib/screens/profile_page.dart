@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'package:app_ecommerce/screens/change_password_page.dart';
 import 'package:app_ecommerce/screens/edit_profile_page.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
+import 'package:app_ecommerce/screens/verify_page.dart';
+import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
 import '../widgets/bottom_nav.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -14,17 +18,39 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? userData;
   bool isLoading = true;
-
+  String? _userRole;
   @override
   void initState() {
     super.initState();
+    _loadUserRoleAndProfile();
+  }
+
+  Future<void> _loadUserRoleAndProfile() async {
+    final token = await SharedPrefsHelper.getToken();
+    if (token != null) {
+      try {
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+        setState(() {
+          _userRole = decodedToken['role'];
+        });
+      } catch (e) {
+        print("Lỗi giải mã token: $e");
+        // Xử lý lỗi giải mã token nếu cần
+      }
+    }
     fetchProfile();
   }
 
   Future<void> fetchProfile() async {
     try {
+      final token = await SharedPrefsHelper.getToken();
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+      print("Token: $token");
+      print("Payload: $decodedToken");
+      int? userId = decodedToken['id'];
+      print('Vai trò: $userId');
       // Giả định userId = 1, bạn nên lấy từ SharedPreferences hoặc Provider
-      final userId = 1;
+
       final response = await http.get(
         Uri.parse('${dotenv.env['BASE_URL']}/auth/profile/$userId'),
       );
@@ -144,48 +170,70 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 30),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Chỉnh sửa Profile'),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) =>
-                                    EditProfileScreen(userData: userData!),
-                          ),
-                        ).then((value) {
-                          // Sau khi chỉnh sửa xong quay lại, load lại dữ liệu
-                          fetchProfile();
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
+                    if (_userRole != 'admin') ...[
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.edit),
+                        label: const Text('Chỉnh sửa Profile'),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) =>
+                                      EditProfileScreen(userData: userData!),
+                            ),
+                          ).then((value) {
+                            // Sau khi chỉnh sửa xong quay lại, load lại dữ liệu
+                            fetchProfile();
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.lock_reset),
-                      label: const Text('Đổi mật khẩu'),
-                      onPressed: () {
-                        // TODO: Navigate to Change Password Screen
-                      },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
+                      const SizedBox(height: 10),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.lock_reset),
+                        label: const Text('Đổi mật khẩu'),
+                        onPressed: () async {
+                          final token = await SharedPrefsHelper.getToken();
+                          Map<String, dynamic> decodedToken = JwtDecoder.decode(
+                            token!,
+                          );
+                          print("Token: $token");
+                          print("Payload: $decodedToken");
+                          int? userId = decodedToken['id'];
+                          print('Vai trò: $userId');
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) =>
+                                      ChangePasswordScreen(userId: userId!),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.verified),
-                      label: const Text('Xác minh tài khoản'),
-                      onPressed: () {
-                        // TODO: Navigate to Verify Account Screen
-                      },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
+                      const SizedBox(height: 10),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.verified),
+                        label: const Text('Xác minh tài khoản'),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => VerifyScreen(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

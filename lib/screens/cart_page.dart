@@ -297,7 +297,7 @@ class _CartPageState extends State<CartPage> {
                                               ),
                                               SizedBox(height: 4),
                                               Text(
-                                                'Thêm lúc: ${DateFormat('dd/MM/yyyy HH:mm').format(item.addedAt)}',
+                                                'Thời gian đặt hàng: ${DateFormat('dd/MM/yyyy HH:mm').format(item.addedAt)}',
                                                 style: TextStyle(
                                                   fontSize: 12,
                                                   color: Colors.grey,

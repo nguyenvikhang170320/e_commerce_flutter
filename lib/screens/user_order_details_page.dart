@@ -7,9 +7,49 @@ import '../services/order_service.dart';
 
 class UserOrdersScreen extends StatelessWidget {
   final orderService = OrderService();
+
   String formatCurrency(String amountStr) {
     final amount = double.tryParse(amountStr) ?? 0;
     return NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(amount);
+  }
+
+  //trạng thái đơn hàng
+  String _mapOrderStatusToVietnamese(String? status) {
+    switch (status) {
+      case 'pending':
+        return 'Đang xử lý';
+      case 'processing':
+        return 'Đang chuẩn bị hàng';
+      case 'shipping':
+        return 'Chờ vận chuyển';
+      case 'delivered':
+        return 'Đã giao hàng';
+      case 'completed':
+        return 'Đã thanh toán';
+      case 'cancelled':
+        return 'Đã hủy';
+      default:
+        return status ?? '';
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.orange;
+      case 'processing':
+        return Colors.blue;
+      case 'shipping':
+        return Colors.teal;
+      case 'delivered':
+        return Colors.yellow;
+      case 'completed':
+        return Colors.green;
+      case 'canceled':
+        return Colors.red;
+      default:
+        return Colors.black87;
+    }
   }
 
   @override
@@ -20,8 +60,8 @@ class UserOrdersScreen extends StatelessWidget {
           "Đơn hàng của bạn",
           style: TextStyle(fontSize: 18, color: Colors.black),
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0.0,
+        backgroundColor: Colors.white, // Đổi màu nền AppBar
+        elevation: 1, // Thêm đổ bóng nhẹ cho AppBar
         iconTheme: IconThemeData(color: Colors.black),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -50,27 +90,100 @@ class UserOrdersScreen extends StatelessWidget {
             return Center(child: Text('Chưa có đơn hàng'));
 
           final orders = snapshot.data as List;
-
-          return ListView.builder(
+          // Sắp xếp danh sách đơn hàng theo ID giảm dần
+          orders.sort((a, b) => b['id'].compareTo(a['id']));
+          return ListView.separated(
+            padding: const EdgeInsets.all(16.0),
             itemCount: orders.length,
+            separatorBuilder:
+                (context, index) =>
+                    Divider(height: 1, color: Colors.grey.shade300),
             itemBuilder: (context, index) {
               final order = orders[index];
-              return ListTile(
-                title: Text('Đơn hàng #${order['id']}'),
-                subtitle: Text('Trạng thái: ${order['status']}'),
-                trailing: Text(
-                  'Tổng tiền: ' + formatCurrency(order['total_amount']),
+              return Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                onTap: () {
-                  // Khi người dùng nhấn vào đơn hàng, chuyển đến màn hình chi tiết đơn hàng
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => OrderDetailScreen(orderId: order['id']),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                OrderDetailScreen(orderId: order['id']),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Đơn hàng #${order['id']}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Trạng thái:',
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              _mapOrderStatusToVietnamese(order['status']),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: _getStatusColor(order['status']),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Tổng tiền:',
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              formatCurrency(order['total_amount']),
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Xem chi tiết',
+                              style: TextStyle(color: Colors.blue),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 14,
+                              color: Colors.blue,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  );
-                },
+                  ),
+                ),
               );
             },
           );

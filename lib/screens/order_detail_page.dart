@@ -22,6 +22,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Map<String, dynamic>? orderDetail;
   bool isAdmin = false;
   bool isSeller = false;
+  String? _selectedStatus;
+  String? _selectedPaymentStatus; // Thêm trường này
 
   @override
   void initState() {
@@ -37,23 +39,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (token != null) {
       try {
         Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-        // Giả sử payload của token có chứa trường 'role'
         String? role = decodedToken['role'];
 
         if (role == 'admin') {
           setState(() {
             isAdmin = true;
-            isSeller = true; // Admin có thể có quyền seller
+            isSeller = true;
           });
         } else if (role == 'seller') {
           setState(() {
             isSeller = true;
           });
         }
-        // Nếu role không phải admin hoặc seller, thì mặc định là user
       } catch (e) {
         print('Lỗi giải mã token: $e');
-        // Xử lý lỗi giải mã token (ví dụ: token không hợp lệ)
       }
     }
   }
@@ -68,7 +67,67 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final detail = await orderService.getOrderDetail(widget.orderId);
     setState(() {
       orderDetail = detail;
+      final apiStatus = detail?['order']?['status'];
+      final apiPaymentStatus =
+          detail?['order']?['payment_status']; // Lấy payment_status từ API
+      _selectedStatus = apiStatus?.toLowerCase().trim();
+      _selectedPaymentStatus =
+          apiPaymentStatus?.toLowerCase().trim(); // Lưu payment_status
+      print('Trạng thái thanh toán từ API: ${_selectedPaymentStatus}');
+      print('Trạng thái đơn hàng từ API: ${_selectedStatus}');
     });
+  }
+
+  // Cập nhật trạng thái đơn hàng và thanh toán
+  Future<void> _updateOrderStatus(
+    String newStatus,
+    String newPaymentStatus,
+  ) async {
+    try {
+      print("Gửi cập nhật: status=$newStatus, paymentStatus=$newPaymentStatus");
+      final success = await orderService.updateOrderStatusAndPayment(
+        widget.orderId,
+        newStatus,
+        newPaymentStatus, // Truyền thêm payment_status
+      );
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật trạng thái thành công')),
+        );
+        // Làm mới lại thông tin sau khi cập nhật thành công
+        _fetchOrderDetail();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật trạng thái thất bại')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lỗi khi cập nhật trạng thái')),
+      );
+      print('Lỗi cập nhật trạng thái: $e');
+    }
+  }
+
+  //trạng thái đơn hàng
+  String _mapOrderStatusToVietnamese(String? status) {
+    switch (status) {
+      case 'pending':
+        return 'Đang xử lý';
+      case 'processing':
+        return 'Đang chuẩn bị hàng';
+      case 'shipping':
+        return 'Chờ vận chuyển';
+      case 'delivered':
+        return 'Đã giao hàng';
+      case 'completed':
+        return 'Đã thanh toán';
+      case 'cancelled':
+        return 'Đã hủy';
+      default:
+        return status ?? '';
+    }
   }
 
   @override
@@ -82,15 +141,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     final order = orderDetail!['order'];
     final items = orderDetail!['items'];
-
+    final currentStatus = order['status']; // Trạng thái thanh toán tiền mặt
+    final currentPaymentStatus =
+        order['payment_status']; // Trạng thái thanh toán điện tử
+    final customerName = order['customer_name'] ?? 'Không có tên';
     return Scaffold(
       appBar: AppBar(
         title: Text(
           "Chi tiết đơn hàng #${order['id']}",
           style: TextStyle(fontSize: 18, color: Colors.black),
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0.0,
+        backgroundColor: Colors.white, // Đổi màu nền AppBar
+        elevation: 1, // Thêm đổ bóng nhẹ cho AppBar
         iconTheme: IconThemeData(color: Colors.black),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -117,65 +179,252 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
+        // Sử dụng SingleChildScrollView để tránh tràn màn hình
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Trạng thái: ${order['status']}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Địa chỉ: ${order['address']}',
-              style: TextStyle(fontSize: 16),
-            ),
-            Text(
-              'Số điện thoại: ${order['phone']}',
-              style: TextStyle(fontSize: 16),
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Sản phẩm:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Expanded(
-              child: ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      leading: Image.network(
-                        item['image'],
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                      ),
-                      title: Text(
-                        item['name'],
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text('Số lượng: ${item['quantity']}'),
-                      trailing: Text(
-                        formatCurrency(item['price']),
-                        style: TextStyle(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  );
-                },
+            _buildSectionTitle('Thông tin đơn hàng'),
+            _buildOrderDetailItem(
+              'Trạng thái thanh toán tiền mặt',
+              _mapOrderStatusToVietnamese(currentStatus),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: _getStatusColor(currentStatus),
               ),
             ),
+            _buildOrderDetailItem(
+              'Trạng thái thanh toán điện tử', // Thêm trạng thái thanh toán
+              _mapPaymentStatusToVietnamese(currentPaymentStatus),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: _getPaymentStatusColor(currentPaymentStatus),
+              ),
+            ),
+
+            _buildOrderDetailItem('Mã đơn hàng', '#${order['id']}'),
+            _buildOrderDetailItem('Tên khách hàng', customerName),
+            _buildOrderDetailItem('Địa chỉ giao hàng', order['address']),
+            _buildOrderDetailItem('Số điện thoại', order['phone']),
+            _buildOrderDetailItem(
+              'Ngày đặt hàng',
+              DateFormat(
+                'dd/MM/yyyy HH:mm',
+              ).format(DateTime.parse(order['created_at'].toString())),
+            ),
+
+            SizedBox(height: 20),
+            _buildSectionTitle('Chi tiết sản phẩm'),
+            ListView.separated(
+              shrinkWrap: true,
+              physics:
+                  NeverScrollableScrollPhysics(), // Ngăn ListView bên trong ScrollView cuộn
+              itemCount: items.length,
+              separatorBuilder:
+                  (context, index) =>
+                      Divider(height: 1, color: Colors.grey.shade300),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            item['image'],
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (context, error, stackTrace) =>
+                                    Icon(Icons.image_not_supported),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['name'],
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 4),
+                            Text('Số lượng: ${item['quantity']}'),
+                            Text(
+                              formatCurrency(item['price']),
+                              style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+
+            SizedBox(height: 20),
+            if (isAdmin || isSeller) ...[
+              _buildSectionTitle('Cập nhật trạng thái'),
+              DropdownButtonFormField<String>(
+                value: _selectedStatus,
+                items:
+                    <String>[
+                      'pending',
+                      'processing',
+                      'shipping',
+                      'delivered',
+                      'completed',
+                      'cancelled',
+                    ].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(_mapOrderStatusToVietnamese(value)),
+                      );
+                    }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedStatus = newValue;
+                  });
+                },
+                decoration: InputDecoration(
+                  labelText: 'Chọn trạng thái đơn hàng',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16),
+              // Dropdown cho trạng thái thanh toán
+              DropdownButtonFormField<String>(
+                value: _selectedPaymentStatus,
+                items:
+                    <String>['pending', 'paid', 'failed'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(_mapPaymentStatusToVietnamese(value)),
+                      );
+                    }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedPaymentStatus = newValue;
+                    print("Thanh toán $_selectedPaymentStatus");
+                  });
+                },
+                decoration: InputDecoration(
+                  labelText: 'Chọn trạng thái thanh toán',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed:
+                      (_selectedStatus != currentStatus ||
+                              _selectedPaymentStatus != currentPaymentStatus)
+                          ? () => _updateOrderStatus(
+                            _selectedStatus!,
+                            _selectedPaymentStatus!,
+                          )
+                          : null,
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text('Cập nhật', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+            ],
+            SizedBox(height: 16),
           ],
         ),
       ),
     );
+  }
+
+  String _mapPaymentStatusToVietnamese(String? status) {
+    switch (status) {
+      case 'pending':
+        return 'Chờ thanh toán';
+      case 'paid':
+        return 'Đã thanh toán';
+      case 'failed':
+        return 'Thanh toán thất bại';
+      default:
+        return status ?? '';
+    }
+  }
+
+  Color _getPaymentStatusColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.orange;
+      case 'paid':
+        return Colors.green;
+      case 'failed':
+        return Colors.red;
+      default:
+        return Colors.black87;
+    }
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderDetailItem(String label, String value, {TextStyle? style}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontWeight: FontWeight.w500)),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(value, textAlign: TextAlign.right, style: style),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.orange;
+      case 'processing':
+        return Colors.blue;
+      case 'shipping':
+        return Colors.teal;
+      case 'delivered':
+        return Colors.green;
+      case 'canceled':
+        return Colors.red;
+      default:
+        return Colors.black87;
+    }
   }
 }

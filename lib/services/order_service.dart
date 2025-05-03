@@ -109,7 +109,11 @@ class OrderService {
   }
 
   // 📌 Cập nhật trạng thái đơn hàng
-  Future<bool> updateOrderStatus(int id, String status) async {
+  Future<bool> updateOrderStatusAndPayment(
+    int id,
+    String status,
+    String paymentStatus,
+  ) async {
     final token = await _getToken();
     final url = Uri.parse('$baseUrl/$id/status');
 
@@ -119,13 +123,16 @@ class OrderService {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({'status': status}),
+      body: jsonEncode({
+        'status': status,
+        'payment_status': paymentStatus, // Thêm payment_status
+      }),
     );
 
     if (res.statusCode == 200) {
       return true;
     } else {
-      print('❌ Lỗi cập nhật trạng thái đơn hàng: ${res.body}');
+      print('❌ Lỗi cập nhật trạng thái đơn hàng và thanh toán: ${res.body}');
       return false;
     }
   }
