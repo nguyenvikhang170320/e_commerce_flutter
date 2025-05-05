@@ -1,10 +1,14 @@
 import 'package:app_ecommerce/screens/notification_page.dart';
+import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/notification_provider.dart';
 
 class SellerRevenueScreen extends StatefulWidget {
   final int sellerId;
@@ -24,6 +28,7 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> {
   Map<String, dynamic> _monthlyRevenueData = {};
   bool _isLoading = false;
   String _errorMessage = '';
+  String? token;
 
   @override
   void initState() {
@@ -34,6 +39,8 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> {
   }
 
   Future<void> _fetchRevenueData() async {
+    token = await SharedPrefsHelper.getToken();
+    print('Token doanh thu: $token');
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -156,14 +163,43 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> {
           },
         ),
         actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.notifications_none, color: Colors.black),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => NotificationPage()),
-              );
-            },
+          Consumer<NotificationProvider>(
+            builder: (ctx, provider, _) => Stack(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.notifications),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (ctx) => NotificationScreen(),
+                    ));
+                  },
+                ),
+                if (provider.unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '${provider.unreadCount}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

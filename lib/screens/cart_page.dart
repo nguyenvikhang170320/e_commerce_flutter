@@ -1,3 +1,4 @@
+import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/screens/create_order_page.dart';
 import 'package:app_ecommerce/screens/payment_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
@@ -18,7 +19,7 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   bool isLoading = true;
-
+  String? token;
   @override
   void initState() {
     super.initState();
@@ -36,11 +37,11 @@ class _CartPageState extends State<CartPage> {
     if (userProvider.userId == null) await userProvider.fetchUserInfo();
 
     // Lấy token từ shared preferences
-    final token = await SharedPrefsHelper.getToken();
-
+    token = await SharedPrefsHelper.getToken();
+    print('Token giỏ hàng: $token');
     if (token != null) {
       // Gọi fetchCart với token đã lấy được
-      await Provider.of<CartProvider>(context, listen: false).fetchCart(token);
+      await Provider.of<CartProvider>(context, listen: false).fetchCart(token!);
     } else {
       print("❌ Không có token để xác thực");
     }
@@ -73,11 +74,9 @@ class _CartPageState extends State<CartPage> {
                     context,
                     length: ToastLength.medium,
                     expandedHeight: 100,
-                    message: "✅ Đã xóa sản phẩm",
+                    message: "Đã xóa sản phẩm",
                   );
-                  Navigator.of(ctx).pushReplacement(
-                    MaterialPageRoute(builder: (ctx) => BottomNav()),
-                  );
+                  Navigator.pop(context);
                 },
                 child: Text("Xóa", style: TextStyle(color: Colors.red)),
               ),
@@ -112,7 +111,7 @@ class _CartPageState extends State<CartPage> {
                     context,
                     length: ToastLength.medium,
                     expandedHeight: 100,
-                    message: "✅ Đã xóa hết sản phẩm giỏ hàng",
+                    message: "Đã xóa hết sản phẩm giỏ hàng",
                   );
                   Navigator.of(ctx).pushReplacement(
                     MaterialPageRoute(builder: (ctx) => BottomNav()),
@@ -151,9 +150,10 @@ class _CartPageState extends State<CartPage> {
                       builder: (context) => CreateOrderScreen(),
                     ),
                   );
+
                 },
                 child: Text(
-                  "Thanh toán thường",
+                  "Thanh toán tiền mặt",
                   style: TextStyle(color: Colors.green),
                 ),
               ),
@@ -165,10 +165,12 @@ class _CartPageState extends State<CartPage> {
                     expandedHeight: 80,
                     message: "Thanh toán điện tử stripe",
                   );
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => PaymentPage()),
                   );
+
                 },
                 child: Text(
                   "Thanh toán Stripe",
@@ -228,12 +230,45 @@ class _CartPageState extends State<CartPage> {
                   ),
             ),
             actions: [
-              IconButton(
-                icon: Icon(Icons.notifications_none, color: Colors.black),
-                onPressed:
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => NotificationPage()),
+              Consumer<NotificationProvider>(
+                builder:
+                    (ctx, provider, _) => Stack(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.notifications),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (ctx) => NotificationScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        if (provider.unreadCount > 0)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              constraints: BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: Text(
+                                '${provider.unreadCount}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
               ),
             ],

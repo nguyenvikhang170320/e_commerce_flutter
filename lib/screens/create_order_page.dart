@@ -1,5 +1,6 @@
 import 'package:app_ecommerce/providers/cart_provider.dart';
-import 'package:app_ecommerce/screens/cart_page.dart';
+import 'package:app_ecommerce/providers/notification_provider.dart';
+import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +20,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   final orderService = OrderService();
 
   void submitOrder() async {
+    final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
     if (_formKey.currentState!.validate()) {
       bool success = await orderService.createOrder(
         address: address,
@@ -32,7 +36,14 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
           expandedHeight: 80,
           message: "Đặt hàng thành công",
         );
-
+        notificationProvider.sendNotification(
+          userId: userProvider.userId!, // Use sellerId from the product
+          title: 'Đơn hàng đã thanh toán',
+          message:
+          '${userProvider.name ?? 'Khách'} vừa thanh toán.', // Keep it general
+          type: 'order',
+        );
+        notificationProvider.loadUnreadCount(notificationProvider.authToken!);
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => BottomNav()),

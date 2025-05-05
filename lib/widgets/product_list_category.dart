@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
@@ -5,10 +7,15 @@ import 'package:app_ecommerce/screens/product_page.dart';
 import 'package:app_ecommerce/services/product_service.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:toasty_box/toast_enums.dart';
 import 'package:toasty_box/toast_service.dart';
+
+import '../providers/user_provider.dart';
+import '../screens/add_to_cart_page.dart';
 
 class ProductListCategory extends StatefulWidget {
   final int categoryId;
@@ -21,7 +28,48 @@ class ProductListCategory extends StatefulWidget {
 
 class _ProductListCategoryState extends State<ProductListCategory> {
   List products = [];
+  String? userRole;
+  String? token;
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+  Future<void> _loadData() async {
+    await Provider.of<UserProvider>(context, listen: false).fetchUserInfo();
+    userRole = Provider.of<UserProvider>(context, listen: false).role; // Lấy userRole từ provider
+    token = await SharedPrefsHelper.getToken(); // Lấy token
+    fetchProducts();
+    _syncCart();
+  }
+  void fetchUserRole() async {
+    final token = await SharedPrefsHelper.getToken();
+    if (token == null) return;
 
+    final apiUrl = '${dotenv.env['BASE_URL']}/auth/me';
+
+    try {
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          userRole = data['role'];
+          print("Người dùng $userRole");
+        });
+      } else {
+        print('Không thể lấy role. Status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Lỗi khi lấy role: $e');
+    }
+  }
   // Thêm hàm format VNĐ
   String formatCurrency(num amount) {
     final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
@@ -36,12 +84,6 @@ class _ProductListCategoryState extends State<ProductListCategory> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    fetchProducts();
-    _syncCart();
-  }
 
   void fetchProducts() async {
     final data = await ProductService.fetchProducts(widget.categoryId);
@@ -94,18 +136,34 @@ class _ProductListCategoryState extends State<ProductListCategory> {
             subtitle: Text(
               formatCurrency(double.tryParse(prod['price'].toString()) ?? 0.0),
             ),
-            // trailing: ElevatedButton(
-            //   onPressed: () {
-
-            //   },
-            //   child: Text("+Add"),
-            //   style: ElevatedButton.styleFrom(
-            //     backgroundColor: Colors.orange,
-            //     shape: StadiumBorder(),
-            //   ),
-            // ),
-          ),
-        );
+            trailing: userRole != 'admin'
+                ? ElevatedButton(
+              onPressed: () async {
+                if (token != null) {
+                  Product product = Product.fromJson(prod);
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => AddToCartScreen(
+                        product: product,
+                        token: token!, // Sử dụng toán tử ! vì đã kiểm tra null
+                      ),
+                    ),
+                  );
+                } else {
+                  // Xử lý trường hợp token là null (ví dụ: chưa đăng nhập)
+                  print("Token is null, cannot add to cart");
+                  // Có thể hiển thị thông báo cho người dùng
+                }
+              },
+              child: Text("+Add"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                shape: StadiumBorder(),
+              ),
+            )
+                : SizedBox.shrink(),
+            ),
+          );
       },
     );
   }

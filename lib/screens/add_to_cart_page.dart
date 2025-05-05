@@ -1,10 +1,19 @@
 import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
+import 'package:app_ecommerce/screens/cart_page.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:toasty_box/toast_enums.dart';
+import 'package:toasty_box/toast_service.dart';
+
+import '../models/cartItem.dart';
+import '../providers/auth_provider.dart';
+import '../providers/notification_provider.dart';
+import '../providers/user_provider.dart';
+import '../services/notification_service.dart';
 
 class AddToCartScreen extends StatefulWidget {
   final Product product;
@@ -51,12 +60,42 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
               ).pushReplacement(MaterialPageRoute(builder: (_) => BottomNav())),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_none, color: Colors.black),
-            onPressed:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => NotificationPage()),
+          Consumer<NotificationProvider>(
+            builder:
+                (ctx, provider, _) => Stack(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.notifications),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (ctx) => NotificationScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (provider.unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${provider.unreadCount}',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
           ),
         ],
@@ -170,19 +209,50 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   ),
                 ),
                 onPressed: () async {
-                  final added = await Provider.of<CartProvider>(
+                  final userProvider = Provider.of<UserProvider>(
                     context,
                     listen: false,
-                  ).addToCart(widget.product, widget.token);
-                  if (added) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('✅ Đã thêm vào giỏ hàng')),
+                  );
+                  final cartProvider = Provider.of<CartProvider>(
+                    context,
+                    listen: false,
+                  );
+                  final notificationProvider = Provider.of<NotificationProvider>(
+                    context,
+                    listen: false,
+                  ); // Lấy CartProvider để truy cập _itemCart (nếu cần)
+
+                  final added = await cartProvider.addToCart(
+                    product: widget.product,
+                    token: widget.token,
+                    currentUserName: userProvider.name ?? 'Khách',
+                  );
+                  if(added){
+                    ToastService.showToast(
+                      context,
+                      length: ToastLength.medium,
+                      expandedHeight: 80,
+                      message: "Đã thêm vào giỏ hàng",
                     );
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => BottomNav()),
-                    ); // Quay lại
+                      MaterialPageRoute(builder: (context) => CartPage()),
+                    );
                   }
+                  notificationProvider.sendNotification(
+                    userId:
+                        widget
+                            .product
+                            .sellerId!, // ✅ Sử dụng sellerId của sản phẩm
+                    title: 'Đơn hàng mới đã đặt!',
+                    message:
+                        '${userProvider.name ?? 'Khách'} vừa thêm ${widget.product.name} vào giỏ hàng.', // ✅ Sửa nội suy chuỗi
+                    type: 'order',
+                  );
+                  notificationProvider.loadUnreadCount(notificationProvider.authToken!);
+
+
                 },
+
                 child: const Text(
                   'Thêm vào giỏ hàng',
                   style: TextStyle(fontSize: 16),

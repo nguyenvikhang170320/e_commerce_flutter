@@ -47,6 +47,8 @@ dependencies:
   path: ^1.9.1 #Xử lý đường dẫn file
   http_parser: ^4.1.2
   jwt_decoder: ^2.0.1 #Để chuyển chuỗi token JWT (JSON Web Token)
+  firebase_core: ^3.13.0
+  firebase_messaging: ^15.2.5
 
 dev_dependencies:
   flutter_test:

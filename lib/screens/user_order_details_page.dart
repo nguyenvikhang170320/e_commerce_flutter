@@ -3,11 +3,30 @@ import 'package:app_ecommerce/screens/order_detail_page.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../providers/notification_provider.dart';
 import '../services/order_service.dart';
+import '../services/share_preference.dart';
 
-class UserOrdersScreen extends StatelessWidget {
+class UserOrdersScreen extends StatefulWidget {
+  @override
+  State<UserOrdersScreen> createState() => _UserOrdersScreenState();
+}
+
+class _UserOrdersScreenState extends State<UserOrdersScreen> {
   final orderService = OrderService();
+  String? token;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    // Lấy userRole từ provider
+    token = await SharedPrefsHelper.getToken(); // Lấy token
+  }
   String formatCurrency(String amountStr) {
     final amount = double.tryParse(amountStr) ?? 0;
     return NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(amount);
@@ -45,7 +64,7 @@ class UserOrdersScreen extends StatelessWidget {
         return Colors.yellow;
       case 'completed':
         return Colors.green;
-      case 'canceled':
+      case 'cancelled':
         return Colors.red;
       default:
         return Colors.black87;
@@ -57,7 +76,7 @@ class UserOrdersScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Đơn hàng của bạn",
+          "Hóa đơn",
           style: TextStyle(fontSize: 18, color: Colors.black),
         ),
         backgroundColor: Colors.white, // Đổi màu nền AppBar
@@ -71,13 +90,43 @@ class UserOrdersScreen extends StatelessWidget {
               ).pushReplacement(MaterialPageRoute(builder: (_) => BottomNav())),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_none, color: Colors.black),
-            onPressed:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => NotificationPage()),
+          Consumer<NotificationProvider>(
+            builder: (ctx, provider, _) => Stack(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.notifications),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (ctx) => NotificationScreen(),
+                    ));
+                  },
                 ),
+                if (provider.unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '${provider.unreadCount}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

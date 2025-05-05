@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:app_ecommerce/providers/notification_provider.dart';
+import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -7,6 +9,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:mime/mime.dart';
+import 'package:provider/provider.dart';
 import 'package:toasty_box/toast_enums.dart';
 import 'package:toasty_box/toast_service.dart';
 
@@ -96,7 +99,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           expandedHeight: 100,
           message: "Chỉnh sửa thành công",
         );
-        Navigator.pop(context, true); // send true to reload profile
+        Navigator.pop(context, true);
+
       } else {
         // Handle failed response
         final responseBody = await response.stream.bytesToString();

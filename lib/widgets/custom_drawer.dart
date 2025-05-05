@@ -1,13 +1,10 @@
-import 'package:app_ecommerce/main.dart';
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/screens/chat_page.dart';
-import 'package:app_ecommerce/screens/favorite_page.dart';
+import 'package:app_ecommerce/screens/favorite_list_page.dart';
 import 'package:app_ecommerce/screens/home_page.dart';
 import 'package:app_ecommerce/screens/login_page.dart';
 import 'package:app_ecommerce/screens/maps_page.dart';
-import 'package:app_ecommerce/screens/profile_page.dart';
-import 'package:app_ecommerce/screens/verify_page.dart';
 import 'package:app_ecommerce/screens/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
@@ -78,7 +75,7 @@ class CustomDrawer extends StatelessWidget {
               Navigator.pop(context); // đóng drawer
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => FavoritePage()),
+                MaterialPageRoute(builder: (context) => FavoriteListScreen()),
               ); // đóng drawer
             },
           ),

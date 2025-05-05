@@ -1,4 +1,6 @@
+import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
+import 'package:app_ecommerce/screens/profile_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +15,6 @@ class VerifyScreen extends StatefulWidget {
 
 class _VerifyScreenState extends State<VerifyScreen> {
   bool _isLoading = false;
-
   Future<void> _sendVerificationRequest() async {
     setState(() {
       _isLoading = true;
@@ -73,11 +74,11 @@ class _VerifyScreenState extends State<VerifyScreen> {
         ),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.notifications_none, color: Colors.black),
+            icon: Icon(Icons.map, color: Colors.black),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => NotificationPage()),
+                MaterialPageRoute(builder: (context) => MapsPage()),
               );
             },
           ),

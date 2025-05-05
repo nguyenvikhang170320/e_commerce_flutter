@@ -1,13 +1,31 @@
+import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
 import 'package:app_ecommerce/screens/order_detail_page.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../services/order_service.dart';
+import '../services/share_preference.dart';
 
-class AllOrdersScreen extends StatelessWidget {
+class AllOrdersScreen extends StatefulWidget {
+  @override
+  State<AllOrdersScreen> createState() => _AllOrdersScreenState();
+}
+
+class _AllOrdersScreenState extends State<AllOrdersScreen> {
   final orderService = OrderService();
-
+  String? token;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    loadToken();
+  }
+  Future<void> loadToken() async {
+    token = await SharedPrefsHelper.getToken();
+    print('Token chats: $token');
+  }
   String formatCurrency(String amountStr) {
     final amount = double.tryParse(amountStr) ?? 0;
     return NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(amount);
@@ -45,7 +63,7 @@ class AllOrdersScreen extends StatelessWidget {
         return Colors.yellow;
       case 'completed':
         return Colors.green;
-      case 'canceled':
+      case 'cancelled':
         return Colors.red;
       default:
         return Colors.black87;
@@ -57,7 +75,7 @@ class AllOrdersScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Đơn hàng của bạn",
+          "Hóa đơn",
           style: TextStyle(fontSize: 18, color: Colors.black),
         ),
         backgroundColor: Colors.white, // Đổi màu nền AppBar
@@ -71,13 +89,43 @@ class AllOrdersScreen extends StatelessWidget {
               ).pushReplacement(MaterialPageRoute(builder: (_) => BottomNav())),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_none, color: Colors.black),
-            onPressed:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => NotificationPage()),
+          Consumer<NotificationProvider>(
+            builder: (ctx, provider, _) => Stack(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.notifications),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (ctx) => NotificationScreen(),
+                    ));
+                  },
                 ),
+                if (provider.unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '${provider.unreadCount}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

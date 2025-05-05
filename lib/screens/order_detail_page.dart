@@ -7,6 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:app_ecommerce/services/order_service.dart';
 import 'package:intl/intl.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/notification_provider.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final int orderId;
@@ -23,7 +26,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   bool isAdmin = false;
   bool isSeller = false;
   String? _selectedStatus;
-  String? _selectedPaymentStatus; // Thêm trường này
+  String? _selectedPaymentStatus;
+  String? token;
 
   @override
   void initState() {
@@ -34,11 +38,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   //xác định tài khoản
   Future<void> _loadUserRole() async {
-    final token = await SharedPrefsHelper.getToken(); // Lấy token từ storage
-
+    token = await SharedPrefsHelper.getToken();
+    print('Token hóa đơn: $token');
     if (token != null) {
       try {
-        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
         String? role = decodedToken['role'];
 
         if (role == 'admin') {
@@ -169,13 +173,43 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           },
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_none, color: Colors.black),
-            onPressed:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => NotificationPage()),
+          Consumer<NotificationProvider>(
+            builder: (ctx, provider, _) => Stack(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.notifications),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (ctx) => NotificationScreen(),
+                    ));
+                  },
                 ),
+                if (provider.unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '${provider.unreadCount}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),
@@ -421,7 +455,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         return Colors.teal;
       case 'delivered':
         return Colors.green;
-      case 'canceled':
+      case 'cancelled':
         return Colors.red;
       default:
         return Colors.black87;

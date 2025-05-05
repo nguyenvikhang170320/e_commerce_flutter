@@ -8,7 +8,8 @@ import 'package:http/http.dart' as http;
 class UserProvider with ChangeNotifier {
   String? role;
   int? userId;
-  String? accessToken; // ✅ Thêm dòng này
+  String? accessToken;
+  String? name; // ✅ Thêm dòng này
 
   Future<void> fetchUserInfo() async {
     final token = await SharedPrefsHelper.getToken();
@@ -30,8 +31,8 @@ class UserProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         role = data['role'];
         userId = data['id']; // Lưu lại user_id
-        print("Người dùng tài khoản: $role");
-        print("Người dùng tài khoản ID: $userId");
+        name = data['name'];  // ✅ Lấy name
+        print("Người dùng: $name - $role (ID: $userId)");
         notifyListeners();
       } else {
         print('Không thể lấy user info. Status: ${response.statusCode}');

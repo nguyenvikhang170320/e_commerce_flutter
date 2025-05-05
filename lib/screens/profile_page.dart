@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:app_ecommerce/screens/change_password_page.dart';
 import 'package:app_ecommerce/screens/edit_profile_page.dart';
+import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
 import 'package:app_ecommerce/screens/verify_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
@@ -104,11 +105,11 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         actions: <Widget>[
           IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.black),
+            icon: Icon(Icons.map, color: Colors.black),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => NotificationPage()),
+                MaterialPageRoute(builder: (context) => MapsPage()),
               );
             },
           ),
