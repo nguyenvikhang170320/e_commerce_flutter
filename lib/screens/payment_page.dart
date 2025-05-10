@@ -24,7 +24,7 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
   Future<void> _loadData() async {
-     // Lấy userRole từ provider
+    // Lấy userRole từ provider
     token = await SharedPrefsHelper.getToken(); // Lấy token
   }
 
@@ -32,10 +32,7 @@ class _PaymentPageState extends State<PaymentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "Thanh toán",
-          style: myStyle,
-        ),
+        title: Text("Thanh toán", style: myStyle),
         backgroundColor: Colors.transparent,
         elevation: 0.0,
         leading: IconButton(
@@ -50,46 +47,51 @@ class _PaymentPageState extends State<PaymentPage> {
         ),
         actions: <Widget>[
           Consumer<NotificationProvider>(
-            builder: (ctx, provider, _) => Stack(
-              children: [
-                IconButton(
-                  icon: Icon(Icons.notifications),
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (ctx) => NotificationScreen(),
-                    ));
-                  },
-                ),
-                if (provider.unreadCount > 0)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      padding: EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      constraints: BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      child: Text(
-                        '${provider.unreadCount}',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+            builder:
+                (ctx, provider, _) => Stack(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.notifications),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (ctx) => NotificationScreen(),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-              ],
-            ),
+                    if (provider.unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${provider.unreadCount}',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
           ),
         ],
       ),
-      body: Center(child: Text('Trang thanh toán ngân hàng', style: TextStyle(fontSize: 24))),
+      body: Center(
+        child: Text(
+          'Trang thanh toán ngân hàng',
+          style: TextStyle(fontSize: 24),
+        ),
+      ),
     );
   }
 }

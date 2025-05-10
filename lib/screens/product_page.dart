@@ -1,15 +1,10 @@
 import 'dart:convert';
 
 import 'package:app_ecommerce/models/products.dart';
-import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
-import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/add_to_cart_page.dart';
 import 'package:app_ecommerce/screens/create_product_page.dart';
-import 'package:app_ecommerce/screens/home_page.dart';
 import 'package:app_ecommerce/screens/update_product_page.dart';
-import 'package:app_ecommerce/services/auth_roles.dart';
-import 'package:app_ecommerce/services/cart_service.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +14,6 @@ import 'package:app_ecommerce/services/product_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:toasty_box/toast_enums.dart';
-import 'dart:convert';
 
 import 'package:toasty_box/toast_service.dart';
 
@@ -107,9 +101,9 @@ class _ProductScreenState extends State<ProductScreen> {
   }
 
   void _showEditDeleteDialog(
-      BuildContext context,
-      Map<String, dynamic> product,
-      ) {
+    BuildContext context,
+    Map<String, dynamic> product,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -143,22 +137,23 @@ class _ProductScreenState extends State<ProductScreen> {
 
                   final confirm = await showDialog<bool>(
                     context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: Text('Xác nhận xóa'),
-                      content: Text(
-                        'Bạn có chắc chắn muốn xóa sản phẩm này không?',
-                      ),
-                      actions: [
-                        TextButton(
-                          child: Text('Hủy'),
-                          onPressed: () => Navigator.of(ctx).pop(false),
+                    builder:
+                        (ctx) => AlertDialog(
+                          title: Text('Xác nhận xóa'),
+                          content: Text(
+                            'Bạn có chắc chắn muốn xóa sản phẩm này không?',
+                          ),
+                          actions: [
+                            TextButton(
+                              child: Text('Hủy'),
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                            ),
+                            TextButton(
+                              child: Text('Xóa'),
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                            ),
+                          ],
                         ),
-                        TextButton(
-                          child: Text('Xóa'),
-                          onPressed: () => Navigator.of(ctx).pop(true),
-                        ),
-                      ],
-                    ),
                   );
 
                   if (confirm == true) {
@@ -190,9 +185,9 @@ class _ProductScreenState extends State<ProductScreen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (ctx) => BottomNav()),
-            );
+            Navigator.of(
+              context,
+            ).pushReplacement(MaterialPageRoute(builder: (ctx) => BottomNav()));
           },
         ),
         title: Text('Danh sách sản phẩm', style: TextStyle(fontSize: 18)),
@@ -210,172 +205,180 @@ class _ProductScreenState extends State<ProductScreen> {
           return products.isEmpty
               ? Center(child: Text('Không có sản phẩm'))
               : GridView.builder(
-            padding: EdgeInsets.all(12),
-            itemCount: products.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisExtent: 260,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemBuilder: (context, index) {
-              final prod = products[index];
-              final isFavorite = favoriteProvider.isProductFavorite(prod['id']);
+                padding: EdgeInsets.all(12),
+                itemCount: products.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisExtent: 260,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemBuilder: (context, index) {
+                  final prod = products[index];
+                  final isFavorite = favoriteProvider.isProductFavorite(
+                    prod['id'],
+                  );
 
-              return Stack(
-                children: [
-                  GestureDetector(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(16),
+                  return Stack(
+                    children: [
+                      GestureDetector(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Image.network(
-                                  prod['image'],
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
+                            ],
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  prod['name'],
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(16),
                                   ),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  formatCurrency(prod['price'].toString()),
-                                  style: TextStyle(
-                                    color: Colors.black87,
-                                    fontSize: 14,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: 8),
-                                if (userRole != 'admin')
-                                  ElevatedButton(
-                                    onPressed: () async {
-                                      final token =
-                                      await SharedPrefsHelper.getToken();
-                                      if (token != null) {
-                                        Product productObj =
-                                        Product.fromJson(prod);
-                                        Navigator.of(context).pushReplacement(
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                AddToCartScreen(
-                                                  product: productObj,
-                                                  token: token,
-                                                ),
-                                          ),
-                                        );
-                                      } else {
-                                        ToastService.showToast(
-                                          context,
-                                          length: ToastLength.medium,
-                                          expandedHeight: 100,
-                                          message:
-                                          "Token không hợp lệ. Vui lòng đăng nhập lại.",
-                                        );
-                                      }
-                                    },
-                                    child: _isAddingToCart
-                                        ? CircularProgressIndicator()
-                                        : Text('+Add'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.orange,
-                                      shape: StadiumBorder(),
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      textStyle: TextStyle(fontSize: 12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Image.network(
+                                      prod['image'],
+                                      fit: BoxFit.contain,
                                     ),
                                   ),
-                              ],
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      prod['name'],
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      formatCurrency(prod['price'].toString()),
+                                      style: TextStyle(
+                                        color: Colors.black87,
+                                        fontSize: 14,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    SizedBox(height: 8),
+                                    if (userRole != 'admin')
+                                      ElevatedButton(
+                                        onPressed: () async {
+                                          final token =
+                                              await SharedPrefsHelper.getToken();
+                                          if (token != null) {
+                                            Product productObj =
+                                                Product.fromJson(prod);
+                                            Navigator.of(
+                                              context,
+                                            ).pushReplacement(
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) =>
+                                                        AddToCartScreen(
+                                                          product: productObj,
+                                                          token: token,
+                                                        ),
+                                              ),
+                                            );
+                                          } else {
+                                            ToastService.showToast(
+                                              context,
+                                              length: ToastLength.medium,
+                                              expandedHeight: 100,
+                                              message:
+                                                  "Token không hợp lệ. Vui lòng đăng nhập lại.",
+                                            );
+                                          }
+                                        },
+                                        child:
+                                            _isAddingToCart
+                                                ? CircularProgressIndicator()
+                                                : Text('+Add'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.orange,
+                                          shape: StadiumBorder(),
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
+                                          textStyle: TextStyle(fontSize: 12),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (userRole !=
+                          'admin') // Chỉ hiển thị nút yêu thích cho user và seller
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () {
+                              Product product = Product.fromJson(prod);
+                              favoriteProvider.toggleFavorite(product);
+                            },
+                            child: Icon(
+                              isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: isFavorite ? Colors.red : Colors.grey,
+                              size: 24,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (userRole != 'admin') // Chỉ hiển thị nút yêu thích cho user và seller
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: () {
-                          Product product = Product.fromJson(prod);
-                          favoriteProvider.toggleFavorite(product);
-                        },
-                        child: Icon(
-                          isFavorite
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: isFavorite ? Colors.red : Colors.grey,
-                          size: 24,
                         ),
-                      ),
-                    ),
-                  if (userRole == 'admin' || userRole == 'seller')
-                    Positioned(
-                      top: 4,
-                      right: 40,
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black26, blurRadius: 4),
-                          ],
-                        ),
-                        child: Center(
-                          child: IconButton(
-                            icon: Icon(Icons.more_vert, size: 16),
-                            padding: EdgeInsets.zero,
-                            constraints: BoxConstraints(
-                                minWidth: 28, minHeight: 28),
-                            onPressed: () =>
-                                _showEditDeleteDialog(context, prod),
+                      if (userRole == 'admin' || userRole == 'seller')
+                        Positioned(
+                          top: 4,
+                          right: 40,
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(color: Colors.black26, blurRadius: 4),
+                              ],
+                            ),
+                            child: Center(
+                              child: IconButton(
+                                icon: Icon(Icons.more_vert, size: 16),
+                                padding: EdgeInsets.zero,
+                                constraints: BoxConstraints(
+                                  minWidth: 28,
+                                  minHeight: 28,
+                                ),
+                                onPressed:
+                                    () => _showEditDeleteDialog(context, prod),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                ],
+                    ],
+                  );
+                },
               );
-            },
-          );
         },
       ),
     );

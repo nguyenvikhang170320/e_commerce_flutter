@@ -1,7 +1,8 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/category_provider.dart';
 import 'package:app_ecommerce/providers/favorite_provider.dart';
-import 'package:app_ecommerce/providers/notification_provider.dart';  // Import NotificationProvider
+import 'package:app_ecommerce/providers/message_provider.dart';
+import 'package:app_ecommerce/providers/notification_provider.dart'; // Import NotificationProvider
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
@@ -27,17 +28,20 @@ void main() async {
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(
           create: (context) {
             final notificationProvider = NotificationProvider();
-            notificationProvider.init(); // Initialize NotificationProvider here!
+            notificationProvider
+                .init(); // Initialize NotificationProvider here!
             return notificationProvider;
           },
         ),
         ChangeNotifierProxyProvider<UserProvider, FavoriteProvider>(
           create: (context) => FavoriteProvider(0), // Giá trị khởi tạo tạm thời
-          update: (context, userProvider, previousFavoriteProvider) =>
-              FavoriteProvider(userProvider.userId ?? 0),
+          update:
+              (context, userProvider, previousFavoriteProvider) =>
+                  FavoriteProvider(userProvider.userId ?? 0),
         ),
       ],
       child: MyApp(),

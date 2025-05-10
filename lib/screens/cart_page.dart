@@ -1,6 +1,8 @@
+import 'package:app_ecommerce/models/cartItem.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/screens/create_order_page.dart';
 import 'package:app_ecommerce/screens/payment_page.dart';
+import 'package:app_ecommerce/services/cart_service.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -124,7 +126,21 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  void handleCheckout(BuildContext context) {
+  void handleCheckout(BuildContext context) async {
+    // Lấy token từ SharedPreferences hoặc UserProvider
+    final token =
+        await SharedPrefsHelper.getToken(); // hoặc từ UserProvider nếu bạn có lưu trong đó
+
+    if (token == null) {
+      ToastService.showToast(
+        context,
+        length: ToastLength.medium,
+        expandedHeight: 80,
+        message: "Token không hợp lệ hoặc người dùng chưa đăng nhập.",
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder:
@@ -150,7 +166,6 @@ class _CartPageState extends State<CartPage> {
                       builder: (context) => CreateOrderScreen(),
                     ),
                   );
-
                 },
                 child: Text(
                   "Thanh toán tiền mặt",
@@ -166,11 +181,11 @@ class _CartPageState extends State<CartPage> {
                     message: "Thanh toán điện tử stripe",
                   );
 
+                  // Truyền cartItems vào PaymentPage
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => PaymentPage()),
                   );
-
                 },
                 child: Text(
                   "Thanh toán Stripe",

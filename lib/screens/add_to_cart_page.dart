@@ -9,11 +9,8 @@ import 'package:provider/provider.dart';
 import 'package:toasty_box/toast_enums.dart';
 import 'package:toasty_box/toast_service.dart';
 
-import '../models/cartItem.dart';
-import '../providers/auth_provider.dart';
 import '../providers/notification_provider.dart';
 import '../providers/user_provider.dart';
-import '../services/notification_service.dart';
 
 class AddToCartScreen extends StatefulWidget {
   final Product product;
@@ -217,17 +214,18 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     context,
                     listen: false,
                   );
-                  final notificationProvider = Provider.of<NotificationProvider>(
-                    context,
-                    listen: false,
-                  ); // Lấy CartProvider để truy cập _itemCart (nếu cần)
+                  final notificationProvider =
+                      Provider.of<NotificationProvider>(
+                        context,
+                        listen: false,
+                      ); // Lấy CartProvider để truy cập _itemCart (nếu cần)
 
                   final added = await cartProvider.addToCart(
                     product: widget.product,
                     token: widget.token,
                     currentUserName: userProvider.name ?? 'Khách',
                   );
-                  if(added){
+                  if (added) {
                     ToastService.showToast(
                       context,
                       length: ToastLength.medium,
@@ -242,15 +240,15 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     userId:
                         widget
                             .product
-                            .sellerId!, // ✅ Sử dụng sellerId của sản phẩm
+                            .sellerId, // ✅ Sử dụng sellerId của sản phẩm
                     title: 'Đơn hàng mới đã đặt!',
                     message:
                         '${userProvider.name ?? 'Khách'} vừa thêm ${widget.product.name} vào giỏ hàng.', // ✅ Sửa nội suy chuỗi
                     type: 'order',
                   );
-                  notificationProvider.loadUnreadCount(notificationProvider.authToken!);
-
-
+                  notificationProvider.loadUnreadCount(
+                    notificationProvider.authToken!,
+                  );
                 },
 
                 child: const Text(

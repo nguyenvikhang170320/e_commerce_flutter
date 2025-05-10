@@ -9,7 +9,8 @@ class UserProvider with ChangeNotifier {
   String? role;
   int? userId;
   String? accessToken;
-  String? name; // ✅ Thêm dòng này
+  String? name;
+  String? image;
 
   Future<void> fetchUserInfo() async {
     final token = await SharedPrefsHelper.getToken();
@@ -31,7 +32,8 @@ class UserProvider with ChangeNotifier {
         final data = jsonDecode(response.body);
         role = data['role'];
         userId = data['id']; // Lưu lại user_id
-        name = data['name'];  // ✅ Lấy name
+        name = data['name'];
+        image = data['image']; // ✅ Lấy name
         print("Người dùng: $name - $role (ID: $userId)");
         notifyListeners();
       } else {

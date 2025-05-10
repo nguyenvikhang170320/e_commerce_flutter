@@ -52,7 +52,7 @@ class CartService {
   }
 
   /// ✅ Lấy danh sách giỏ hàng của người dùng từ token
-  static Future<List<dynamic>> fetchCart(String? token) async {
+  static Future<dynamic> fetchCart(String? token) async {
     if (token == null) {
       throw Exception("Token không hợp lệ");
     }

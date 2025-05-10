@@ -1,13 +1,8 @@
 import 'package:app_ecommerce/models/cartItem.dart';
 import 'package:app_ecommerce/models/products.dart';
-import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/services/cart_service.dart';
 
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
-import 'package:provider/provider.dart';
-
-import '../services/notification_service.dart';
 
 class CartProvider with ChangeNotifier {
   List<CartItem> _itemCart = []; // Quản lý giỏ hàng
@@ -29,7 +24,7 @@ class CartProvider with ChangeNotifier {
 
     if (cartItem != null) {
       final index = _itemCart.indexWhere(
-            (item) => item.productId == product.id,
+        (item) => item.productId == product.id,
       );
       if (index != -1) {
         _itemCart[index].quantity += quantity;
@@ -46,7 +41,6 @@ class CartProvider with ChangeNotifier {
       return false;
     }
   }
-
 
   // ✅ Lấy giỏ hàng từ backend
   Future<void> fetchCart(String token) async {

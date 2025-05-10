@@ -1,10 +1,13 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
+import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/chat_page.dart';
+import 'package:app_ecommerce/screens/chat_list_page.dart';
 import 'package:app_ecommerce/screens/favorite_list_page.dart';
 import 'package:app_ecommerce/screens/home_page.dart';
 import 'package:app_ecommerce/screens/login_page.dart';
 import 'package:app_ecommerce/screens/maps_page.dart';
+import 'package:app_ecommerce/screens/profile_page.dart';
 import 'package:app_ecommerce/screens/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +16,7 @@ import 'package:provider/provider.dart';
 class CustomDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -23,12 +27,18 @@ class CustomDrawer extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, size: 30, color: Colors.orange),
+                  backgroundImage:
+                      userProvider.image != null
+                          ? NetworkImage(userProvider.image!)
+                          : null,
+                  child:
+                      userProvider.image == null
+                          ? const Icon(Icons.person, size: 50)
+                          : null,
                 ),
                 SizedBox(width: 10),
                 Text(
-                  'Hi Ecommerce',
+                  'Hi ${userProvider.name ?? 'Ecommerce'}',
                   style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
               ],
@@ -53,10 +63,15 @@ class CustomDrawer extends StatelessWidget {
               Navigator.pop(context); // đóng drawer
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ChatPage()),
-              ); // đóng drawer
+                MaterialPageRoute(
+                  builder:
+                      (context) =>
+                          ChatListScreen(currentUserId: userProvider.userId!),
+                ),
+              );
             },
           ),
+
           ListTile(
             leading: Icon(Icons.map_outlined),
             title: Text('Bản đồ'),
@@ -84,10 +99,10 @@ class CustomDrawer extends StatelessWidget {
             title: Text('Cá nhân'),
             onTap: () {
               Navigator.pop(context); // đóng drawer
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(builder: (context) => ProfilePage()),
-              // ); // đóng drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfilePage()),
+              ); // đóng drawer
             },
           ),
           ListTile(

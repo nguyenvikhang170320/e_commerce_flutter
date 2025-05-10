@@ -1,11 +1,7 @@
-import 'package:app_ecommerce/providers/notification_provider.dart';
-import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
 import '../models/products.dart';
 import '../services/favorite_service.dart';
- // Import FavoriteService của bạn
+// Import FavoriteService của bạn
 
 class FavoriteProvider extends ChangeNotifier {
   final FavoriteService _favoriteService = FavoriteService();
@@ -29,7 +25,6 @@ class FavoriteProvider extends ChangeNotifier {
   }
 
   Future<void> toggleFavorite(Product product) async {
-
     final isFavorite = _favoriteProducts.any((fav) => fav.id == product.id);
     if (isFavorite) {
       await _removeFromFavorite(product);
