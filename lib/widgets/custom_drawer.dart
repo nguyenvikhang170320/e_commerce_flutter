@@ -11,9 +11,28 @@ import 'package:app_ecommerce/screens/profile_page.dart';
 import 'package:app_ecommerce/screens/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
-class CustomDrawer extends StatelessWidget {
+class CustomDrawer extends StatefulWidget {
+  @override
+  State<CustomDrawer> createState() => _CustomDrawerState();
+}
+
+class _CustomDrawerState extends State<CustomDrawer> {
+  String _deliveryAddress = '';
+
+  LatLng? _deliveryCoordinates;
+
+  void _handleLocationSelected(LatLng location, String address) {
+    setState(() {
+      _deliveryCoordinates = location;
+      _deliveryAddress = address;
+    });
+    print('Địa chỉ đã chọn (OrderPage): $_deliveryAddress, tọa độ: $_deliveryCoordinates');
+    // Cập nhật trường địa chỉ trên UI của trang hóa đơn
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -79,7 +98,7 @@ class CustomDrawer extends StatelessWidget {
               Navigator.pop(context); // đóng drawer
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => MapsPage()),
+                MaterialPageRoute(builder: (context) => MapsPage(onLocationSelected: _handleLocationSelected)),
               );
             },
           ),

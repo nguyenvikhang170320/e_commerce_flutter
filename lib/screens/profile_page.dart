@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'package:app_ecommerce/screens/change_password_page.dart';
 import 'package:app_ecommerce/screens/edit_profile_page.dart';
+import 'package:app_ecommerce/screens/favorite_list_page.dart';
 import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
+import 'package:app_ecommerce/screens/user_list_screen.dart';
 import 'package:app_ecommerce/screens/verify_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 import '../widgets/bottom_nav.dart';
@@ -20,6 +23,19 @@ class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? userData;
   bool isLoading = true;
   String? _userRole;
+  int? userId;
+
+  String _deliveryAddress = '';
+  LatLng? _deliveryCoordinates;
+
+  void _handleLocationSelected(LatLng location, String address) {
+    setState(() {
+      _deliveryCoordinates = location;
+      _deliveryAddress = address;
+    });
+    print('Địa chỉ đã chọn (OrderPage): $_deliveryAddress, tọa độ: $_deliveryCoordinates');
+    // Cập nhật trường địa chỉ trên UI của trang hóa đơn
+  }
   @override
   void initState() {
     super.initState();
@@ -46,9 +62,8 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final token = await SharedPrefsHelper.getToken();
       Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
-      print("Token: $token");
       print("Payload: $decodedToken");
-      int? userId = decodedToken['id'];
+      userId = decodedToken['id'];
       print('Vai trò: $userId');
       // Giả định userId = 1, bạn nên lấy từ SharedPreferences hoặc Provider
 
@@ -105,12 +120,11 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.map, color: Colors.black),
+            icon: Icon(Icons.supervised_user_circle_sharp, color: Colors.black),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => MapsPage()),
-              );
+                MaterialPageRoute(builder: (context) => UserListScreen()));
             },
           ),
         ],

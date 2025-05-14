@@ -7,6 +7,9 @@ import 'package:provider/provider.dart';
 import 'package:toasty_box/toast_enums.dart';
 import 'package:toasty_box/toast_service.dart';
 import '../services/order_service.dart';
+import '../screens/maps_page.dart'; // <-- nhớ import MapsPage
+
+import 'package:google_maps_flutter/google_maps_flutter.dart'; // để dùng LatLng
 
 class CreateOrderScreen extends StatefulWidget {
   @override
@@ -17,17 +20,24 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   final _formKey = GlobalKey<FormState>();
   String address = '';
   String phone = '';
+  LatLng? _selectedLatLng;
+
   final orderService = OrderService();
+  final TextEditingController _addressController = TextEditingController();
 
   void submitOrder() async {
     final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
-
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+
     if (_formKey.currentState!.validate()) {
       bool success = await orderService.createOrder(
         address: address,
         phone: phone,
+        // Nếu cần gửi tọa độ thì thêm:
+        // lat: _selectedLatLng?.latitude,
+        // lng: _selectedLatLng?.longitude,
       );
+
       if (success) {
         Provider.of<CartProvider>(context, listen: false).cleanCart();
         ToastService.showSuccessToast(
@@ -37,14 +47,13 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
           message: "Đặt hàng thành công",
         );
         notificationProvider.sendNotification(
-          userId: userProvider.userId!, // Use sellerId from the product
+          userId: userProvider.userId!,
           title: 'Đơn hàng đã thanh toán',
-          message:
-          '${userProvider.name ?? 'Khách'} vừa thanh toán.', // Keep it general
+          message: '${userProvider.name ?? 'Khách'} vừa thanh toán.',
           type: 'order',
         );
         notificationProvider.loadUnreadCount(notificationProvider.authToken!);
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => BottomNav()),
         );
@@ -59,6 +68,23 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
     }
   }
 
+  void _openMapToPickAddress() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MapsPage(
+          onLocationSelected: (LatLng latLng, String pickedAddress) {
+            setState(() {
+              _selectedLatLng = latLng;
+              address = pickedAddress;
+              _addressController.text = pickedAddress;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,12 +96,20 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
           child: Column(
             children: [
               TextFormField(
-                decoration: InputDecoration(labelText: 'Địa chỉ'),
+                controller: _addressController,
+                decoration: InputDecoration(
+                  labelText: 'Địa chỉ',
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.map),
+                    onPressed: _openMapToPickAddress,
+                  ),
+                ),
                 validator: (val) => val!.isEmpty ? 'Nhập địa chỉ' : null,
                 onChanged: (val) => address = val,
               ),
               TextFormField(
                 decoration: InputDecoration(labelText: 'Số điện thoại'),
+                keyboardType: TextInputType.phone,
                 validator: (val) => val!.isEmpty ? 'Nhập số điện thoại' : null,
                 onChanged: (val) => phone = val,
               ),

@@ -1,51 +1,42 @@
+import 'package:app_ecommerce/models/message.dart';
+
 class Conversation {
-  final int userId;
+  final int? userId; // Cho phép userId là null
   final String name;
   final String avatar;
-  final String? lastMessage; // nullable
-  final DateTime? lastMessageTime; // nullable
+  final Message? lastMessage;
 
   Conversation({
     required this.userId,
     required this.name,
     required this.avatar,
-    this.lastMessage,
-    this.lastMessageTime,
+    required this.lastMessage,
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
-    return Conversation(
-      userId: json['user_id'] ?? 0,
-      name: json['name'] ?? '',
-      avatar: json['avatar'] ?? '',
-      lastMessage: json['last_message'],
-      lastMessageTime: _parseDate(json['last_message_time']),
-    );
-  }
-  static DateTime _parseDate(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value * 1000).toLocal();
-    }
-    if (value is String) {
-      try {
-        return DateTime.parse(
-          value,
-        ).toLocal(); // Parse và để Flutter tự xử lý múi giờ
-      } catch (e) {
-        return DateTime.now();
+    int? userId; // Declare as nullable
+    if (json['user_id'] != null) {
+      if (json['user_id'] is int) {
+        userId = json['user_id'];
+      } else {
+        // Handle the case where user_id is not an int (e.g., a string)
+        print('Warning: user_id is not an int: ${json['user_id']}');
+        userId = int.tryParse(json['user_id'].toString()); // Attempt to parse
+        if (userId == null) {
+          //If it's still null, set to a default value.
+          userId = 0; // Or handle as appropriate for your logic
+        }
       }
     }
-    return DateTime.now();
-  }
+    //If json['user_id'] is null, userId remains null.
 
-  // Hàm kiểm tra xem tin nhắn có phải là hình ảnh hay không
-  bool isImageMessage() {
-    if (lastMessage == null) return false;
-    final lower = lastMessage!.toLowerCase();
-    // Kiểm tra nếu tin nhắn là URL hình ảnh (có thể thêm các đuôi mở rộng khác nếu cần)
-    return lower.contains(
-      'image',
-    ); // Nếu có chứa từ "image", có thể là hình ảnh
+    return Conversation(
+      userId: userId, // Pass the nullable userId
+      name: json['name'] ?? '',
+      avatar: json['avatar'] ?? '',
+      lastMessage: json['last_message'] != null
+          ? Message.fromJson(json['last_message'] as Map<String, dynamic>)
+          : null,
+    );
   }
 }

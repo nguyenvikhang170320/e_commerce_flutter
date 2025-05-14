@@ -1,10 +1,13 @@
 import 'package:app_ecommerce/screens/all_order_page.dart';
+import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
 import 'package:app_ecommerce/screens/user_order_details_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:app_ecommerce/services/order_service.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
@@ -28,7 +31,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   String? _selectedStatus;
   String? _selectedPaymentStatus;
   String? token;
-
+  LatLng? _deliveryCoordinates;
+  String? address;
   @override
   void initState() {
     super.initState();
@@ -73,15 +77,60 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       orderDetail = detail;
       final apiStatus = detail?['order']?['status'];
       final apiPaymentStatus =
-          detail?['order']?['payment_status']; // Lấy payment_status từ API
+          detail?['order']?['payment_status'];
+      address = detail?['order']?['address'];// Lấy payment_status từ API
+      print("Địa chỉ $address");
       _selectedStatus = apiStatus?.toLowerCase().trim();
       _selectedPaymentStatus =
-          apiPaymentStatus?.toLowerCase().trim(); // Lưu payment_status
+          apiPaymentStatus?.toLowerCase().trim();
+      _extractCoordinates(address);// Lưu payment_status
       print('Trạng thái thanh toán từ API: ${_selectedPaymentStatus}');
       print('Trạng thái đơn hàng từ API: ${_selectedStatus}');
     });
   }
 
+  //địa chỉ maps
+  Future<void> _extractCoordinates(String? address) async {
+    if (address != null && address.isNotEmpty) {
+      try {
+        List<Location> locations = await locationFromAddress(
+          address,
+        );
+        if (locations.isNotEmpty) {
+          setState(() {
+            _deliveryCoordinates =
+                LatLng(locations.first.latitude, locations.first.longitude);
+          });
+        } else {
+          print('Không tìm thấy tọa độ cho địa chỉ: $address');
+        }
+      } catch (e) {
+        print('Lỗi khi lấy tọa độ từ địa chỉ: $e');
+      }
+    }
+  }
+  void _handleLocationSelected(LatLng location, String address) {
+    setState(() {
+      // Cập nhật địa chỉ hiển thị (nếu cần)
+      orderDetail!['order']['address'] = address;
+      _deliveryCoordinates = location;
+    });
+    // Bạn có thể gọi API để cập nhật địa chỉ đơn hàng ở đây nếu cần
+    print('Địa chỉ đã chọn: $address, tọa độ: <span class="math-inline">location');
+    }
+// Hàm điều hướng đến trang MapsPage
+  void _navigateToMapPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MapsPage(
+          onLocationSelected: _handleLocationSelected)));
+    // Bạn có thể xử lý kết quả trả về từ MapsPage nếu cần
+    if (result != null) {
+      // Ví dụ: Cập nhật lại thông tin đơn hàng nếu địa chỉ thay đổi
+      _fetchOrderDetail();
+    }
+  }
   // Cập nhật trạng thái đơn hàng và thanh toán
   Future<void> _updateOrderStatus(
     String newStatus,
@@ -241,7 +290,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
             _buildOrderDetailItem('Mã đơn hàng', '#${order['id']}'),
             _buildOrderDetailItem('Tên khách hàng', customerName),
-            _buildOrderDetailItem('Địa chỉ giao hàng', order['address']),
+            _buildOrderAdress('Địa chỉ giao hàng', order['address']),
             _buildOrderDetailItem('Số điện thoại', order['phone']),
             _buildOrderDetailItem(
               'Ngày đặt hàng',
@@ -437,8 +486,30 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         children: [
           Text(label, style: TextStyle(fontWeight: FontWeight.w500)),
           SizedBox(width: 10),
+           Expanded(
+              child: Text(value, textAlign: TextAlign.right, style: style),
+            ),
+        ],
+      ),
+    );
+  }
+  Widget _buildOrderAdress(String label, String value, {TextStyle? style}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontWeight: FontWeight.w500)),
+          SizedBox(width: 10),
           Expanded(
-            child: Text(value, textAlign: TextAlign.right, style: style),
+            child: InkWell(
+              onTap: _navigateToMapPage, // Gọi hàm điều hướng khi nhấn
+              child: Text(
+                value,
+                textAlign: TextAlign.right,
+                style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+              ),
+          ),
           ),
         ],
       ),

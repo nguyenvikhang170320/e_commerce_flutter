@@ -1,12 +1,13 @@
+import 'package:app_ecommerce/screens/favorite_list_page.dart';
 import 'package:app_ecommerce/screens/maps_page.dart';
-import 'package:app_ecommerce/screens/notification_page.dart';
-import 'package:app_ecommerce/screens/profile_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
-import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class VerifyScreen extends StatefulWidget {
   @override
@@ -15,12 +16,30 @@ class VerifyScreen extends StatefulWidget {
 
 class _VerifyScreenState extends State<VerifyScreen> {
   bool _isLoading = false;
+  int? userId;
+
+  String _deliveryAddress = '';
+  LatLng? _deliveryCoordinates;
+
+  void _handleLocationSelected(LatLng location, String address) {
+    setState(() {
+      _deliveryCoordinates = location;
+      _deliveryAddress = address;
+    });
+    print('Địa chỉ đã chọn (OrderPage): $_deliveryAddress, tọa độ: $_deliveryCoordinates');
+    // Cập nhật trường địa chỉ trên UI của trang hóa đơn
+  }
+
   Future<void> _sendVerificationRequest() async {
     setState(() {
       _isLoading = true;
     });
 
     final token = await SharedPrefsHelper.getToken();
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    print("Payload: $decodedToken");
+    userId = decodedToken['id'];
+    print('Vai trò: $userId');
     final url = Uri.parse('${dotenv.env['BASE_URL']}/auth/verify-request');
     final headers = {
       'Content-Type': 'application/json',
@@ -74,12 +93,11 @@ class _VerifyScreenState extends State<VerifyScreen> {
         ),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.map, color: Colors.black),
+            icon: Icon(Icons.favorite, color: Colors.black),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => MapsPage()),
-              );
+                MaterialPageRoute(builder: (context) => FavoriteListScreen()));
             },
           ),
         ],

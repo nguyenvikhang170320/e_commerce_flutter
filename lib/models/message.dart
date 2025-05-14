@@ -4,8 +4,12 @@ class Message {
   final int receiverId;
   final String? content;
   final String? mediaUrl;
-  final String? status; // Thêm trường status
   final DateTime createdAt;
+
+  final String? senderName;
+  final String? senderAvatar;
+  final String? receiverName;
+  final String? receiverAvatar;
 
   Message({
     this.id,
@@ -13,32 +17,37 @@ class Message {
     required this.receiverId,
     this.content,
     this.mediaUrl,
-    this.status, // Thêm vào constructor
     required this.createdAt,
+    this.senderName,
+    this.senderAvatar,
+    this.receiverName,
+    this.receiverAvatar,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      id: json['messageId'],
+      id: json['id'],
       senderId: json['sender_id'],
       receiverId: json['receiver_id'],
       content: json['content'],
       mediaUrl: json['media_url'],
-      status:
-          json['status'] ?? 'sent', // Giá trị mặc định nếu không có trong JSON
       createdAt: DateTime.parse(json['created_at']),
+      senderName: json['sender_name'],
+      senderAvatar: json['sender_avatar'],
+      receiverName: json['receiver_name'],
+      receiverAvatar: json['receiver_avatar'],
     );
   }
-}
 
-// Model cho người dùng
-class User {
-  final int id;
-  final String username;
+  bool isImageMessage() {
+    if (mediaUrl == null || mediaUrl!.isEmpty) return false;
 
-  User({required this.id, required this.username});
+    final lower = mediaUrl!.toLowerCase().trim();
 
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(id: json['id'], username: json['username']);
+    // Các định dạng ảnh phổ biến
+    final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+
+    // Kiểm tra đuôi file
+    return imageExtensions.any((ext) => lower.endsWith(ext));
   }
 }

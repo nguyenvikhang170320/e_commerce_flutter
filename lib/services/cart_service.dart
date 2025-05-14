@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:app_ecommerce/models/cartItem.dart';
-import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 

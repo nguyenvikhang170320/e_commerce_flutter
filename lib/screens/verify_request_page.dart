@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -39,7 +40,7 @@ class _VerifyRequestsScreenState extends State<VerifyRequestsScreen> {
       return;
     }
 
-    final url = Uri.parse('http://172.16.1.82:5000/api/auth/verify-requests');
+    final url = Uri.parse('${dotenv.env['BASE_URL']}/auth/verify-requests');
     try {
       final response = await http.get(
         url,
@@ -80,7 +81,7 @@ class _VerifyRequestsScreenState extends State<VerifyRequestsScreen> {
     }
 
     final url = Uri.parse(
-      'http://172.16.1.82:5000/api/auth/verify-request/$requestId/$action',
+      '${dotenv.env['BASE_URL']}/auth/verify-request/$requestId/$action',
     );
     try {
       final response = await http.put(
