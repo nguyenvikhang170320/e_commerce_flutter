@@ -22,10 +22,12 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
     super.initState();
     loadToken();
   }
+
   Future<void> loadToken() async {
     token = await SharedPrefsHelper.getToken();
     print('Token chats: $token');
   }
+
   String formatCurrency(String amountStr) {
     final amount = double.tryParse(amountStr) ?? 0;
     return NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(amount);
@@ -78,8 +80,6 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
           "Hóa đơn",
           style: TextStyle(fontSize: 18, color: Colors.black),
         ),
-        backgroundColor: Colors.white, // Đổi màu nền AppBar
-        elevation: 1, // Thêm đổ bóng nhẹ cho AppBar
         iconTheme: IconThemeData(color: Colors.black),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -90,42 +90,42 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
         ),
         actions: [
           Consumer<NotificationProvider>(
-            builder: (ctx, provider, _) => Stack(
-              children: [
-                IconButton(
-                  icon: Icon(Icons.notifications),
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (ctx) => NotificationScreen(),
-                    ));
-                  },
-                ),
-                if (provider.unreadCount > 0)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      padding: EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      constraints: BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      child: Text(
-                        '${provider.unreadCount}',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+            builder:
+                (ctx, provider, _) => Stack(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.notifications),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (ctx) => NotificationScreen(),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-              ],
-            ),
+                    if (provider.unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${provider.unreadCount}',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
           ),
         ],
       ),

@@ -1,11 +1,14 @@
 import 'dart:convert';
 
 import 'package:app_ecommerce/models/message.dart';
+import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/chat_page.dart';
+import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class ChatListScreen extends StatefulWidget {
   final int currentUserId; //  current user's ID
@@ -64,56 +67,67 @@ class _ChatListScreenState extends State<ChatListScreen> {
     if (_error != null) {
       return Scaffold(body: Center(child: Text('Error: $_error')));
     }
-
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
     return Scaffold(
-      appBar: AppBar(title: Text('Tin nhắn')),
-        body: ListView.builder(
-          itemCount: _chatPreviews.length,
-          itemBuilder: (context, index) {
-            final msg = _chatPreviews[index];
-            final isSender = msg.senderId == widget.currentUserId;
-
-            final partnerName = isSender ? msg.receiverName : msg.senderName;
-            final partnerAvatar = isSender ? msg.receiverAvatar : msg.senderAvatar;
-            final partnerId = isSender ? msg.receiverId : msg.senderId;
-
-            return ListTile(
-              leading: CircleAvatar(
-                backgroundImage: NetworkImage(partnerAvatar ?? ''),
-              ),
-              title: Text(partnerName ?? 'Không rõ'),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _getLastMessageText(msg),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    'Thời gian: ${DateFormat('dd/MM/yyyy HH:mm').format(msg.createdAt)}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatScreen(
-                      currentUserId: widget.currentUserId,
-                      receiverId: partnerId,
-                      receiverName: partnerName ?? '',
-                      receiverAvatar: partnerAvatar ?? '',
-                    ),
-                  ),
-                );
-                _fetchChatPreviews(); // reload lại sau khi quay về
-              },
-            );
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(
+              context,
+            ).pushReplacement(MaterialPageRoute(builder: (ctx) => BottomNav()));
           },
         ),
+        title: Text('Tin nhắn'),
+      ),
+      body: ListView.builder(
+        itemCount: _chatPreviews.length,
+        itemBuilder: (context, index) {
+          final msg = _chatPreviews[index];
+          final isSender = msg.senderId == widget.currentUserId;
 
+          final partnerName = isSender ? msg.receiverName : msg.senderName;
+          final partnerAvatar =
+              isSender ? msg.receiverAvatar : msg.senderAvatar;
+          final partnerId = isSender ? msg.receiverId : msg.senderId;
+
+          return ListTile(
+            leading: CircleAvatar(
+              backgroundImage: NetworkImage(partnerAvatar ?? ''),
+            ),
+            title: Text(partnerName ?? 'Không rõ'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getLastMessageText(msg),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Thời gian: ${DateFormat('dd/MM/yyyy HH:mm').format(msg.createdAt)}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => ChatScreen(
+                        currentUserId: widget.currentUserId,
+                        receiverId: partnerId,
+                        receiverName: partnerName ?? '',
+                        receiverAvatar: partnerAvatar ?? '',
+                      ),
+                ),
+              );
+              _fetchChatPreviews(); // reload lại sau khi quay về
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -126,8 +140,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
       return 'Bạn đã gửi một ảnh';
     }
 
-    if (lastMessage.content?.isNotEmpty == true) { // Use the null-aware operator
-      return lastMessage.content!; // It's safe to use ! here because of the previous check
+    if (lastMessage.content?.isNotEmpty == true) {
+      // Use the null-aware operator
+      return lastMessage
+          .content!; // It's safe to use ! here because of the previous check
     }
 
     return 'Tin nhắn không có nội dung';

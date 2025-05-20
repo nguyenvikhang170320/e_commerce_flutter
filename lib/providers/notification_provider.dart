@@ -20,8 +20,7 @@ class NotificationProvider with ChangeNotifier {
     _authToken = await SharedPrefsHelper.getToken();
     print('Auth Token: $_authToken');
     await loadNotifications(_authToken!); // Truyền Auth Token
-    await loadUnreadCount(_authToken!);// Lấy Auth Token
-
+    await loadUnreadCount(_authToken!); // Lấy Auth Token
   }
 
   // Load notifications (nhận Auth Token làm tham số)
@@ -37,7 +36,7 @@ class NotificationProvider with ChangeNotifier {
   Future<void> loadUnreadCount(String authToken) async {
     try {
       _unreadCount = await _notificationService.fetchUnreadCount(authToken);
-      print('Unread Count: $_unreadCount');
+      print('Số lượng thông báo: $_unreadCount');
       notifyListeners();
     } catch (e) {
       print('Error loading unread count: $e');

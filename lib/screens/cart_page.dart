@@ -4,6 +4,7 @@ import 'package:app_ecommerce/screens/create_order_page.dart';
 import 'package:app_ecommerce/screens/payment_page.dart';
 import 'package:app_ecommerce/services/cart_service.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -126,6 +127,40 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
+  Future<String> fetchPaymentUrlFromApi({
+    required double amount,
+    required String orderId,
+  }) async {
+    try {
+      final dio = Dio();
+
+      final url = 'http://192.168.1.7:5000/api/payments/create_payment_url';
+
+      // Gửi dữ liệu lên backend, amount nên gửi dạng số (ví dụ: 2000000)
+      final data = {
+        "orderId": orderId,
+        "amount": amount,
+        "orderInfo": "Thanh toán đơn hàng $orderId",
+      };
+
+      final response = await dio.post(url, data: data);
+
+      if (response.statusCode == 200) {
+        final paymentUrl = response.data['paymentUrl'];
+        if (paymentUrl != null && paymentUrl is String) {
+          return paymentUrl;
+        } else {
+          throw Exception('Không tìm thấy paymentUrl trong response');
+        }
+      } else {
+        throw Exception('Lỗi server: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Lỗi khi gọi API paymentUrl: $e');
+      rethrow;
+    }
+  }
+
   void handleCheckout(BuildContext context) async {
     // Lấy token từ SharedPreferences hoặc UserProvider
     final token =
@@ -140,6 +175,13 @@ class _CartPageState extends State<CartPage> {
       );
       return;
     }
+    // Ví dụ orderId có thể lấy từ backend hoặc tạo tạm thời
+    String orderId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    // Lấy tổng tiền từ CartProvider (lưu ý là double, chưa format)
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    double totalAmount =
+        cartProvider.totalPrice; // giả sử totalPrice kiểu double
 
     showDialog(
       context: context,
@@ -173,22 +215,38 @@ class _CartPageState extends State<CartPage> {
                 ),
               ),
               TextButton(
-                onPressed: () {
+                onPressed: () async {
                   ToastService.showToast(
                     context,
                     length: ToastLength.medium,
                     expandedHeight: 80,
-                    message: "Thanh toán điện tử stripe",
+                    message: "Thanh toán điện tử vnpay",
                   );
 
-                  // Truyền cartItems vào PaymentPage
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => PaymentPage()),
-                  );
+                  try {
+                    String paymentUrl = await fetchPaymentUrlFromApi(
+                      amount: totalAmount,
+                      orderId: orderId,
+                    );
+
+                    // Ví dụ sau khi lấy paymentUrl xong thì chuyển sang trang PaymentPage
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PaymentPage(paymentUrl: paymentUrl),
+                      ),
+                    );
+                  } catch (e) {
+                    ToastService.showToast(
+                      context,
+                      length: ToastLength.medium,
+                      expandedHeight: 80,
+                      message: "Lỗi khi lấy đường dẫn thanh toán: $e",
+                    );
+                  }
                 },
                 child: Text(
-                  "Thanh toán Stripe",
+                  "Thanh toán VNPAY",
                   style: TextStyle(color: Colors.blue),
                 ),
               ),
@@ -197,7 +255,6 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  @override
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
@@ -234,8 +291,6 @@ class _CartPageState extends State<CartPage> {
               "Giỏ hàng",
               style: TextStyle(fontSize: 18, color: Colors.black),
             ),
-            backgroundColor: Colors.transparent,
-            elevation: 0.0,
             iconTheme: IconThemeData(color: Colors.black),
             leading: IconButton(
               icon: Icon(Icons.arrow_back),

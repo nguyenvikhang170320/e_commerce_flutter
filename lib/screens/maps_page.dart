@@ -9,25 +9,33 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class MapsPage extends StatefulWidget {
   final Function(LatLng, String) onLocationSelected;
 
-  MapsPage({required this.onLocationSelected});
+  const MapsPage({super.key, required this.onLocationSelected});
 
   @override
   MapsPageState createState() => MapsPageState();
 }
 
 class MapsPageState extends State<MapsPage> {
-  GoogleMapController? _controller;
+  // Completer để lấy GoogleMapController sau khi bản đồ được tạo
   final Completer<GoogleMapController> _mapController = Completer();
-
-  LatLng _initialCameraPosition = LatLng(10.201893, 105.714324); // Sa Đéc
+  GoogleMapController? _controller; // Thêm biến này
+  // Vị trí ban đầu của bản đồ (có thể là một vị trí mặc định hoặc vị trí hiện tại)
+  LatLng _initialCameraPosition = const LatLng(10.201893, 105.714324); // Sa Đéc
+  // Vị trí hiện tại của người dùng
   LatLng? _currentLocation;
+  // Vị trí được chọn trên bản đồ
   LatLng? _pickedLocation;
+  // Địa chỉ của vị trí được chọn
   String? _pickedAddress;
-  Set<Marker> _markers = {};
+  // Tập hợp các markers trên bản đồ
+  final Set<Marker> _markers = {};
+  // Danh sách các điểm để vẽ đường đi
   List<LatLng> _polylineCoordinates = [];
-  PolylinePoints polylinePoints = PolylinePoints();
-
+  // Đối tượng để lấy thông tin đường đi
+  final PolylinePoints _polylinePoints = PolylinePoints();
+  // Khóa API Google Maps (được tải từ .env)
   final String? _googleApiKey = dotenv.env['GOOGLE_MAPS_API_KEY'];
+  bool _disposed = false;
 
   @override
   void initState() {
@@ -35,6 +43,27 @@ class MapsPageState extends State<MapsPage> {
     _getCurrentLocation();
   }
 
+  @override
+  void dispose() {
+    _disposed = true;
+    _controller?.dispose(); // Dispose controller
+    super.dispose();
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
+    if (!_mapController.isCompleted) {
+      _mapController.complete(controller);
+    }
+    _controller = controller;
+  }
+
+  void _safeSetState(VoidCallback fn) {
+    if (!_disposed && mounted) {
+      setState(fn);
+    }
+  }
+
+  // Lấy vị trí hiện tại của người dùng
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -42,9 +71,11 @@ class MapsPageState extends State<MapsPage> {
     // Kiểm tra xem dịch vụ vị trí có được bật không.
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      // Nếu dịch vụ vị trí bị tắt, hãy yêu cầu người dùng bật.
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Dịch vụ vị trí bị tắt.')));
+      // Nếu dịch vụ vị trí bị tắt, hiển thị thông báo lỗi.
+      if (!mounted) return; // Check mounted
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Dịch vụ vị trí bị tắt.')));
       return;
     }
 
@@ -52,109 +83,152 @@ class MapsPageState extends State<MapsPage> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        // Quyền bị từ chối, thông báo cho người dùng.
+        // Quyền bị từ chối, hiển thị thông báo lỗi.
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Quyền truy cập vị trí bị từ chối.')));
+          const SnackBar(content: Text('Quyền truy cập vị trí bị từ chối.')),
+        );
         return;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      // Quyền bị từ chối vĩnh viễn, hướng dẫn người dùng bật thủ công.
+      // Quyền bị từ chối vĩnh viễn, hiển thị thông báo lỗi và hướng dẫn người dùng.
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Quyền truy cập vị trí bị từ chối vĩnh viễn, vui lòng bật trong cài đặt.')));
+        const SnackBar(
+          content: Text(
+            'Quyền truy cập vị trí bị từ chối vĩnh viễn, vui lòng bật trong cài đặt.',
+          ),
+        ),
+      );
       return;
     }
 
-    // Khi có quyền, lấy vị trí hiện tại.
+    // Lấy vị trí hiện tại.
     try {
       Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-      setState(() {
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      _safeSetState(() {
         _currentLocation = LatLng(position.latitude, position.longitude);
         _initialCameraPosition = _currentLocation!;
-        _goToCurrentLocation();
         _setInitialMarker(_currentLocation!);
       });
+      _goToCurrentLocation(); // Gọi hàm này để di chuyển đến vị trí hiện tại
     } catch (e) {
       print("Lỗi khi lấy vị trí hiện tại: $e");
-      _setInitialMarker(_initialCameraPosition); // Vẫn hiển thị marker ban đầu nếu lỗi
+      _setInitialMarker(
+        _initialCameraPosition,
+      ); // Vẫn hiển thị marker ban đầu nếu có lỗi
     }
   }
 
+  // Đặt marker ban đầu (vị trí hiện tại)
   void _setInitialMarker(LatLng location) {
     _markers.add(
       Marker(
-        markerId: MarkerId('current_location'),
+        markerId: const MarkerId('current_location'),
         position: location,
-        infoWindow: InfoWindow(title: 'Vị trí hiện tại của bạn'),
+        infoWindow: const InfoWindow(title: 'Vị trí hiện tại của bạn'),
       ),
     );
   }
 
+  // Di chuyển camera đến vị trí hiện tại
   Future<void> _goToCurrentLocation() async {
     final GoogleMapController controller = await _mapController.future;
-    await controller.animateCamera(CameraUpdate.newCameraPosition(
-      CameraPosition(
-        target: _currentLocation ?? _initialCameraPosition,
-        zoom: 15,
+    controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: _currentLocation ?? _initialCameraPosition,
+          zoom: 15,
+        ),
       ),
-    ));
+    );
   }
 
+  // Xử lý sự kiện khi người dùng chọn một vị trí trên bản đồ
   Future<void> _selectLocation(LatLng position) async {
     _pickedLocation = position;
+    _markers.clear(); // Clear previous markers
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('selected_location'),
+        position: position,
+        infoWindow: const InfoWindow(title: 'Vị trí đã chọn'),
+      ),
+    );
+    _polylineCoordinates.clear(); // Clear polyline
+    _getAddress(position); // Gọi _getAddress để lấy địa chỉ
+    _safeSetState(() {}); // Cập nhật giao diện sau khi thay đổi
+  }
+
+  Future<void> _getAddress(LatLng position) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
-        // localeIdentifier: 'vi_VN',
+        // localeIdentifier: 'vi_VN', // tùy chọn, có thể gây lỗi nếu thiết bị không hỗ trợ
       );
+
       if (placemarks.isNotEmpty) {
-        final Placemark place = placemarks.first;
+        Placemark place = placemarks.first;
         _pickedAddress =
-        '${place.street ?? ''}, ${place.subAdministrativeArea ?? ''}, ${place.administrativeArea ?? ''}';
+            '${place.street ?? ''}, ${place.subAdministrativeArea ?? ''}, ${place.administrativeArea ?? ''}';
       } else {
         _pickedAddress = 'Không tìm thấy địa chỉ';
       }
     } catch (e) {
       _pickedAddress = 'Lỗi khi lấy địa chỉ';
-      print('Lỗi geocoding: $e');
+      print('Lỗi Geocoding: $e');
     }
-
-    setState(() {
-      _markers.clear(); // Xóa marker cũ
-      _markers.add(
-        Marker(
-          markerId: MarkerId('selected_location'),
-          position: position,
-          infoWindow: InfoWindow(title: _pickedAddress ?? 'Vị trí đã chọn'),
-        ),
-      );
-      _polylineCoordinates.clear(); // Xóa polyline cũ khi chọn vị trí mới
-    });
+    _safeSetState(() {});
   }
 
+  // Vẽ đường đi giữa vị trí hiện tại và vị trí đã chọn
   void _drawPolyline() async {
-    if (_currentLocation != null && _pickedLocation != null) {
-      PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-        googleApiKey: _googleApiKey!,
-        request: PolylineRequest(
-          origin:  PointLatLng(_currentLocation!.latitude, _currentLocation!.longitude),
-          destination:  PointLatLng(_pickedLocation!.latitude, _pickedLocation!.longitude),
-          mode: TravelMode.driving,
+    if (_currentLocation == null || _pickedLocation == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Vui lòng chọn vị trí hiện tại và vị trí đến.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    PolylineResult result = await _polylinePoints.getRouteBetweenCoordinates(
+      googleApiKey: _googleApiKey!,
+      request: PolylineRequest(
+        origin: PointLatLng(
+          _currentLocation!.latitude,
+          _currentLocation!.longitude,
         ),
+        destination: PointLatLng(
+          _pickedLocation!.latitude,
+          _pickedLocation!.longitude,
+        ),
+        mode: TravelMode.driving,
+      ),
+    );
 
-      );
-
-      if (result.points.isNotEmpty) {
-        setState(() {
-          _polylineCoordinates = result.points
-              .map((p) => LatLng(p.latitude, p.longitude))
-              .toList();
-        });
-      } else {
-        print("Không tìm thấy đường đi: ${result.errorMessage}");
+    if (result.points.isNotEmpty) {
+      _safeSetState(() {
+        _polylineCoordinates =
+            result.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+      });
+    } else {
+      print("Không tìm thấy đường đi: ${result.errorMessage}");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Không tìm thấy đường đi: ${result.errorMessage ?? 'Lỗi không xác định'}',
+            ),
+          ),
+        );
       }
     }
   }
@@ -163,9 +237,9 @@ class MapsPageState extends State<MapsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Google Maps"),
+        title: const Text("Google Maps"),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -174,18 +248,16 @@ class MapsPageState extends State<MapsPage> {
       body: Stack(
         children: [
           GoogleMap(
+            // Cung cấp controller cho GoogleMap
+            onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
               target: _initialCameraPosition,
               zoom: 14.0,
             ),
-            onMapCreated: (controller) {
-              _mapController.complete(controller);
-              _controller = controller;
-            },
             markers: _markers,
             polylines: {
               Polyline(
-                polylineId: PolylineId("route"),
+                polylineId: const PolylineId("route"),
                 points: _polylineCoordinates,
                 color: Colors.blue,
                 width: 5,
@@ -193,8 +265,10 @@ class MapsPageState extends State<MapsPage> {
             },
             onTap: _selectLocation,
             myLocationEnabled: true, // Hiển thị vị trí hiện tại của người dùng
-            myLocationButtonEnabled: true, // Nút để di chuyển đến vị trí hiện tại
+            myLocationButtonEnabled:
+                true, // Nút để di chuyển đến vị trí hiện tại
           ),
+          // Hiển thị thông tin vị trí đã chọn và nút xác nhận
           if (_pickedLocation != null)
             Align(
               alignment: Alignment.bottomCenter,
@@ -207,28 +281,36 @@ class MapsPageState extends State<MapsPage> {
                     Text(
                       _pickedAddress ?? 'Đang lấy địa chỉ...',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
                         if (_pickedLocation != null && _pickedAddress != null) {
-                          widget.onLocationSelected(_pickedLocation!, _pickedAddress!);
+                          widget.onLocationSelected(
+                            _pickedLocation!,
+                            _pickedAddress!,
+                          );
                           Navigator.pop(context);
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Vui lòng chọn một vị trí trên bản đồ')),
+                            const SnackBar(
+                              content: Text(
+                                'Vui lòng chọn một vị trí trên bản đồ',
+                              ),
+                            ),
                           );
                         }
                       },
-                      child: Text('Xác nhận vị trí'),
+                      child: const Text('Xác nhận vị trí'),
                     ),
-                    if (_currentLocation != null && _pickedLocation != null)
+                    if (_currentLocation != null &&
+                        _pickedLocation != null) // Thêm điều kiện
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: ElevatedButton(
                           onPressed: _drawPolyline,
-                          child: Text('Vẽ đường đi'),
+                          child: const Text('Vẽ đường đi'),
                         ),
                       ),
                   ],

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/screens/payment_page.dart';
+import 'package:app_ecommerce/screens/user_list_page.dart';
 import 'package:app_ecommerce/screens/user_order_details_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
@@ -94,7 +95,7 @@ class _BottomNavState extends State<BottomNav> {
       CartPage(),
       userRole == 'user' ? UserOrdersScreen() : AllOrdersScreen(),
       SellerRevenueScreen(sellerId: sellerID!),
-      PaymentPage(),
+      UserListScreen(),
     ];
 
     return Scaffold(
@@ -123,8 +124,8 @@ class _BottomNavState extends State<BottomNav> {
             label: 'Doanh thu',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.credit_card),
-            label: 'Thanh toán',
+            icon: Icon(Icons.data_usage_rounded),
+            label: 'Tài khoản',
           ),
         ],
       ),

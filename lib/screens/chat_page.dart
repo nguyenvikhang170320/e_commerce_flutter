@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:app_ecommerce/providers/message_provider.dart';
+import 'package:app_ecommerce/providers/user_provider.dart';
+import 'package:app_ecommerce/screens/chat_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -64,9 +66,21 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final chatProvider = Provider.of<ChatProvider>(context);
     final messages = chatProvider.messages;
-
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder:
+                    (ctx) =>
+                        ChatListScreen(currentUserId: userProvider.userId!),
+              ),
+            );
+          },
+        ),
         title: Row(
           children: [
             CircleAvatar(backgroundImage: NetworkImage(widget.receiverAvatar)),

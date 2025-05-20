@@ -53,7 +53,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Ecommerce App',
+      title: 'E-commerce',
       debugShowCheckedModeBanner: false,
       home: SplashDecider(), // Trang khởi đầu
     );

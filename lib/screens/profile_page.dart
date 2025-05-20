@@ -4,7 +4,7 @@ import 'package:app_ecommerce/screens/edit_profile_page.dart';
 import 'package:app_ecommerce/screens/favorite_list_page.dart';
 import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
-import 'package:app_ecommerce/screens/user_list_screen.dart';
+import 'package:app_ecommerce/screens/user_list_page.dart';
 import 'package:app_ecommerce/screens/verify_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
@@ -24,18 +24,18 @@ class _ProfilePageState extends State<ProfilePage> {
   bool isLoading = true;
   String? _userRole;
   int? userId;
-
+  String? _verificationStatus;
   String _deliveryAddress = '';
   LatLng? _deliveryCoordinates;
 
-  void _handleLocationSelected(LatLng location, String address) {
-    setState(() {
-      _deliveryCoordinates = location;
-      _deliveryAddress = address;
-    });
-    print('Địa chỉ đã chọn (OrderPage): $_deliveryAddress, tọa độ: $_deliveryCoordinates');
-    // Cập nhật trường địa chỉ trên UI của trang hóa đơn
-  }
+  // void _handleLocationSelected(LatLng location, String address) {
+  //   setState(() {
+  //     _deliveryCoordinates = location;
+  //     _deliveryAddress = address;
+  //   });
+  //   print('Địa chỉ đã chọn (OrderPage): $_deliveryAddress, tọa độ: $_deliveryCoordinates');
+  //   // Cập nhật trường địa chỉ trên UI của trang hóa đơn
+  // }
   @override
   void initState() {
     super.initState();
@@ -56,6 +56,34 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
     fetchProfile();
+    fetchVerify();
+  }
+
+  Future<void> fetchVerify() async {
+    try {
+      final token = await SharedPrefsHelper.getToken();
+
+      if (token != null) {
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+        userId = decodedToken['id'];
+
+        final response = await http.get(
+          Uri.parse('${dotenv.env['BASE_URL']}/verify/me'),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          setState(() {
+            _verificationStatus = data['verification_status'];
+          });
+        } else {
+          throw Exception('Lỗi khi tải thông tin xác minh');
+        }
+      }
+    } catch (e) {
+      print('Lỗi fetchVerify: $e');
+    }
   }
 
   Future<void> fetchProfile() async {
@@ -124,7 +152,8 @@ class _ProfilePageState extends State<ProfilePage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => UserListScreen()));
+                MaterialPageRoute(builder: (context) => UserListScreen()),
+              );
             },
           ),
         ],
@@ -134,61 +163,75 @@ class _ProfilePageState extends State<ProfilePage> {
               ? const Center(child: CircularProgressIndicator())
               : userData == null
               ? const Center(child: Text('Không thể tải thông tin'))
-              : Padding(
-                padding: const EdgeInsets.all(16.0),
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Center(
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundImage:
-                            userData!['image'] != null
-                                ? NetworkImage(userData!['image'])
-                                : null,
-                        child:
-                            userData!['image'] == null
-                                ? const Icon(Icons.person, size: 50)
-                                : null,
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.grey[200],
+                            backgroundImage:
+                                userData!['image'] != null
+                                    ? NetworkImage(userData!['image'])
+                                    : null,
+                            child:
+                                userData!['image'] == null
+                                    ? const Icon(
+                                      Icons.person,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    )
+                                    : null,
+                          ),
+                          if (_verificationStatus != null &&
+                              _verificationStatus == 'approved')
+                            const CircleAvatar(
+                              backgroundColor: Colors.white,
+                              radius: 14,
+                              child: Icon(
+                                Icons.verified,
+                                color: Colors.blue,
+                                size: 20,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       userData!['name'] ?? '',
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
                       userData!['email'] ?? '',
-                      style: const TextStyle(fontSize: 16),
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
                     ),
-                    const SizedBox(height: 8),
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.phone),
-                        title: Text(
-                          userData!['phone'] ?? 'Chưa cập nhật',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ),
+                    const SizedBox(height: 16),
+
+                    _buildInfoCard(
+                      Icons.phone,
+                      userData!['phone'] ?? 'Chưa cập nhật',
                     ),
-                    const SizedBox(height: 8),
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.verified_user),
-                        title: Text(
-                          'Vai trò: ${_mapRole(userData!['role'])}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ),
+                    const SizedBox(height: 10),
+                    _buildInfoCard(
+                      Icons.verified_user,
+                      'Vai trò: ${_mapRole(userData!['role'])}',
                     ),
                     const SizedBox(height: 30),
+
                     if (_userRole != 'admin') ...[
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.edit),
-                        label: const Text('Chỉnh sửa Profile'),
+                      _buildActionButton(
+                        icon: Icons.edit,
+                        label: 'Chỉnh sửa Profile',
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -197,28 +240,17 @@ class _ProfilePageState extends State<ProfilePage> {
                                   (context) =>
                                       EditProfileScreen(userData: userData!),
                             ),
-                          ).then((value) {
-                            // Sau khi chỉnh sửa xong quay lại, load lại dữ liệu
-                            fetchProfile();
-                          });
+                          ).then((_) => fetchProfile());
                         },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                        ),
                       ),
-                      const SizedBox(height: 10),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.lock_reset),
-                        label: const Text('Đổi mật khẩu'),
+                      const SizedBox(height: 12),
+                      _buildActionButton(
+                        icon: Icons.lock_reset,
+                        label: 'Đổi mật khẩu',
                         onPressed: () async {
                           final token = await SharedPrefsHelper.getToken();
-                          Map<String, dynamic> decodedToken = JwtDecoder.decode(
-                            token!,
-                          );
-                          print("Token: $token");
-                          print("Payload: $decodedToken");
-                          int? userId = decodedToken['id'];
-                          print('Vai trò: $userId');
+                          final decodedToken = JwtDecoder.decode(token!);
+                          final userId = decodedToken['id'];
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -228,14 +260,11 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           );
                         },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                        ),
                       ),
-                      const SizedBox(height: 10),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.verified),
-                        label: const Text('Xác minh tài khoản'),
+                      const SizedBox(height: 12),
+                      _buildActionButton(
+                        icon: Icons.verified,
+                        label: 'Xác minh tài khoản',
                         onPressed: () {
                           Navigator.push(
                             context,
@@ -244,14 +273,40 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           );
                         },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                        ),
                       ),
                     ],
                   ],
                 ),
               ),
+    );
+  }
+
+  Widget _buildInfoCard(IconData icon, String text) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      child: ListTile(
+        leading: Icon(icon, color: Colors.deepPurple),
+        title: Text(text, style: const TextStyle(fontSize: 16)),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton.icon(
+      icon: Icon(icon),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size.fromHeight(50),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+      ),
+      onPressed: onPressed,
     );
   }
 }

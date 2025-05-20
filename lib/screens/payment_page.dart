@@ -1,97 +1,76 @@
-import 'package:app_ecommerce/screens/notification_page.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../providers/notification_provider.dart';
-import '../providers/user_provider.dart';
-import '../services/share_preference.dart';
-import '../widgets/bottom_nav.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentPage extends StatefulWidget {
+  final String paymentUrl;
+
+  const PaymentPage({required this.paymentUrl, super.key});
+
   @override
   State<PaymentPage> createState() => _PaymentPageState();
 }
 
 class _PaymentPageState extends State<PaymentPage> {
-  final TextStyle myStyle = TextStyle(fontSize: 18);
+  String _paymentResult = 'Đang xử lý thanh toán...';
 
-  String? token;
+  late final WebViewController _webViewController;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
-  }
 
-  Future<void> _loadData() async {
-    // Lấy userRole từ provider
-    token = await SharedPrefsHelper.getToken(); // Lấy token
+    _webViewController =
+        WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted)
+          ..setNavigationDelegate(
+            NavigationDelegate(
+              onNavigationRequest: (request) {
+                final url = request.url;
+
+                if (url.contains('/payment-result')) {
+                  final uri = Uri.parse(url);
+                  final status = uri.queryParameters['status'];
+
+                  switch (status) {
+                    case 'success':
+                      _paymentResult = 'Thanh toán thành công 🎉';
+                      break;
+                    case 'failed':
+                      _paymentResult = 'Thanh toán thất bại hoặc bị hủy ❌';
+                      break;
+                    case 'already_paid':
+                      _paymentResult = 'Đơn hàng đã thanh toán trước đó.';
+                      break;
+                    case 'order_not_found':
+                      _paymentResult = 'Không tìm thấy đơn hàng.';
+                      break;
+                    case 'server_error':
+                      _paymentResult = 'Lỗi hệ thống, vui lòng thử lại.';
+                      break;
+                    case 'invalid_signature':
+                      _paymentResult = 'Chữ ký không hợp lệ.';
+                      break;
+                    default:
+                      _paymentResult = 'Kết quả thanh toán không xác định.';
+                  }
+
+                  // Thoát WebView và trở về với kết quả
+                  Navigator.pop(context, _paymentResult);
+                  return NavigationDecision.prevent;
+                }
+
+                return NavigationDecision.navigate;
+              },
+            ),
+          )
+          ..loadRequest(Uri.parse(widget.paymentUrl));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Thanh toán", style: myStyle),
-        backgroundColor: Colors.transparent,
-        elevation: 0.0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          color: Colors.black,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => BottomNav()),
-            );
-          },
-        ),
-        actions: <Widget>[
-          Consumer<NotificationProvider>(
-            builder:
-                (ctx, provider, _) => Stack(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.notifications),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (ctx) => NotificationScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    if (provider.unreadCount > 0)
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          padding: EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          constraints: BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            '${provider.unreadCount}',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Text(
-          'Trang thanh toán ngân hàng',
-          style: TextStyle(fontSize: 24),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Thanh toán VNPAY')),
+      body: WebViewWidget(controller: _webViewController),
     );
   }
 }
