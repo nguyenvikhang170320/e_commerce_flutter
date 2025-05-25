@@ -2,19 +2,23 @@ class CartItem {
   final int id;
   final int productId;
   final String productName;
-  final double productPrice;
+  final double price;
   final String productImage;
   int quantity;
   final DateTime addedAt; // Thêm thời gian thêm vào giỏ hàng
-
+  // ✅ Thêm 2 thuộc tính mới
+  final double discountPercent;
+  final double shippingFee;
   CartItem({
     required this.id,
     required this.productId,
     required this.productName,
-    required this.productPrice,
+    required this.price,
     required this.productImage,
     required this.quantity,
-    required this.addedAt, // ✅ nhớ thêm vào constructor
+    required this.addedAt,
+    this.discountPercent = 0.0,
+    this.shippingFee = 0.0, // ✅ nhớ thêm vào constructor
   });
 
   // Factory constructor để tạo CartItem từ JSON
@@ -23,7 +27,7 @@ class CartItem {
       id: json['id'],
       productId: json['product_id'],
       productName: json['name'],
-      productPrice:
+      price:
           (json['price'] is String)
               ? double.tryParse(json['price']) ?? 0.0
               : json['price'].toDouble(),
@@ -50,7 +54,7 @@ class CartItem {
     return DateTime.now();
   }
 
-  // Optional setter cho quantity
+  // Tùy chọn setter cho số lượng
   void updateQuantity(int newQuantity) {
     quantity = newQuantity;
   }

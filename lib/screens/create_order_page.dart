@@ -26,7 +26,10 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   final TextEditingController _addressController = TextEditingController();
 
   void submitOrder() async {
-    final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+    final notificationProvider = Provider.of<NotificationProvider>(
+      context,
+      listen: false,
+    );
     final userProvider = Provider.of<UserProvider>(context, listen: false);
 
     if (_formKey.currentState!.validate()) {
@@ -72,15 +75,16 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MapsPage(
-          onLocationSelected: (LatLng latLng, String pickedAddress) {
-            setState(() {
-              _selectedLatLng = latLng;
-              address = pickedAddress;
-              _addressController.text = pickedAddress;
-            });
-          },
-        ),
+        builder:
+            (context) => MapsPage(
+              onLocationSelected: (LatLng latLng, String pickedAddress) {
+                setState(() {
+                  _selectedLatLng = latLng;
+                  address = pickedAddress;
+                  _addressController.text = pickedAddress;
+                });
+              },
+            ),
       ),
     );
   }

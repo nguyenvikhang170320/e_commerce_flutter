@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/notification.dart';
 import '../services/notification_service.dart';
 import '../services/share_preference.dart'; // Import SharedPrefsHelper
@@ -76,5 +77,32 @@ class NotificationProvider with ChangeNotifier {
       extraData: extraData,
       authToken: usedToken, // Sử dụng authToken
     );
+  }
+
+  // 🆕 Phương thức mới để đánh dấu tất cả thông báo là đã đọc
+  Future<bool> markAllAsRead() async {
+    if (_authToken == null) {
+      print('Auth token is null. Cannot mark all as read.');
+      return false;
+    }
+
+    try {
+      // Gọi phương thức markAllAsRead từ NotificationService
+      final success = await _notificationService.markAllAsRead(_authToken!);
+
+      if (success) {
+        print('Tất cả thông báo chưa đọc đã được đánh dấu là đã đọc.');
+        await loadNotifications(_authToken!);
+        await loadUnreadCount(_authToken!);
+        notifyListeners(); // Thông báo cho UI cập nhật
+        return true;
+      } else {
+        print('Lỗi khi đánh dấu tất cả thông báo là đã đọc thông qua service.');
+        return false;
+      }
+    } catch (e) {
+      print('Lỗi trong NotificationProvider khi gọi markAllAsRead: $e');
+      return false;
+    }
   }
 }

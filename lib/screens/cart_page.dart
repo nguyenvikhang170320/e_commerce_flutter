@@ -23,10 +23,11 @@ class CartPage extends StatefulWidget {
 class _CartPageState extends State<CartPage> {
   bool isLoading = true;
   String? token;
+  String? userRole;
   @override
   void initState() {
     super.initState();
-    loadCart();
+    _loadData();
   }
 
   //giá tiền
@@ -35,20 +36,32 @@ class _CartPageState extends State<CartPage> {
     return NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(amount);
   }
 
-  Future<void> loadCart() async {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (userProvider.userId == null) await userProvider.fetchUserInfo();
-
-    // Lấy token từ shared preferences
-    token = await SharedPrefsHelper.getToken();
-    print('Token giỏ hàng: $token');
+  Future<void> _loadData() async {
+    await Provider.of<UserProvider>(context, listen: false).fetchUserInfo();
+    userRole =
+        Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).role; // Lấy userRole từ provider
+    token =
+        Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).accessToken; // Lấy token
     if (token != null) {
       // Gọi fetchCart với token đã lấy được
+      if (userRole == 'admin') {
+        ToastService.showWarningToast(
+          context,
+          length: ToastLength.medium,
+          expandedHeight: 100,
+          message: "Bạn là tài khoản admin, nên sẽ hiển thị giỏ hàng trống",
+        );
+      }
       await Provider.of<CartProvider>(context, listen: false).fetchCart(token!);
     } else {
       print("❌ Không có token để xác thực");
     }
-
     setState(() => isLoading = false);
   }
 
@@ -127,45 +140,8 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  Future<String> fetchPaymentUrlFromApi({
-    required double amount,
-    required String orderId,
-  }) async {
-    try {
-      final dio = Dio();
-
-      final url = 'http://192.168.1.7:5000/api/payments/create_payment_url';
-
-      // Gửi dữ liệu lên backend, amount nên gửi dạng số (ví dụ: 2000000)
-      final data = {
-        "orderId": orderId,
-        "amount": amount,
-        "orderInfo": "Thanh toán đơn hàng $orderId",
-      };
-
-      final response = await dio.post(url, data: data);
-
-      if (response.statusCode == 200) {
-        final paymentUrl = response.data['paymentUrl'];
-        if (paymentUrl != null && paymentUrl is String) {
-          return paymentUrl;
-        } else {
-          throw Exception('Không tìm thấy paymentUrl trong response');
-        }
-      } else {
-        throw Exception('Lỗi server: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Lỗi khi gọi API paymentUrl: $e');
-      rethrow;
-    }
-  }
-
   void handleCheckout(BuildContext context) async {
-    // Lấy token từ SharedPreferences hoặc UserProvider
-    final token =
-        await SharedPrefsHelper.getToken(); // hoặc từ UserProvider nếu bạn có lưu trong đó
-
+    print("handleCheckout $token");
     if (token == null) {
       ToastService.showToast(
         context,
@@ -220,30 +196,8 @@ class _CartPageState extends State<CartPage> {
                     context,
                     length: ToastLength.medium,
                     expandedHeight: 80,
-                    message: "Thanh toán điện tử vnpay",
+                    message: "Thông cảm, chức năng tạm thời đang phát triển",
                   );
-
-                  try {
-                    String paymentUrl = await fetchPaymentUrlFromApi(
-                      amount: totalAmount,
-                      orderId: orderId,
-                    );
-
-                    // Ví dụ sau khi lấy paymentUrl xong thì chuyển sang trang PaymentPage
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => PaymentPage(paymentUrl: paymentUrl),
-                      ),
-                    );
-                  } catch (e) {
-                    ToastService.showToast(
-                      context,
-                      length: ToastLength.medium,
-                      expandedHeight: 80,
-                      message: "Lỗi khi lấy đường dẫn thanh toán: $e",
-                    );
-                  }
                 },
                 child: Text(
                   "Thanh toán VNPAY",
@@ -258,296 +212,266 @@ class _CartPageState extends State<CartPage> {
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
+    // userProvider is used here just to get the role, no need for accessToken directly in build
     final userProvider = Provider.of<UserProvider>(context, listen: false);
 
-    // Chờ token từ SharedPrefsHelper
-    return FutureBuilder<String?>(
-      future: SharedPrefsHelper.getToken(), // Lấy token từ SharedPrefsHelper
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(
-                "Giỏ hàng",
-                style: TextStyle(fontSize: 18, color: Colors.black),
-              ),
-              backgroundColor: Colors.transparent,
-              elevation: 0.0,
-              iconTheme: IconThemeData(color: Colors.black),
-            ),
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return Scaffold(body: Center(child: Text("Lỗi khi lấy token!")));
-        }
-
-        final token = snapshot.data; // Token đã được lấy
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              "Giỏ hàng",
-              style: TextStyle(fontSize: 18, color: Colors.black),
-            ),
-            iconTheme: IconThemeData(color: Colors.black),
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed:
-                  () => Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => BottomNav()),
-                  ),
-            ),
-            actions: [
-              Consumer<NotificationProvider>(
-                builder:
-                    (ctx, provider, _) => Stack(
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.notifications),
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (ctx) => NotificationScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        if (provider.unreadCount > 0)
-                          Positioned(
-                            right: 8,
-                            top: 8,
-                            child: Container(
-                              padding: EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              constraints: BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
-                              ),
-                              child: Text(
-                                '${provider.unreadCount}',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-              ),
-            ],
+    // Directly use the isLoading state to show a loading indicator
+    if (isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            "Giỏ hàng",
+            style: TextStyle(fontSize: 18, color: Colors.black),
           ),
-          body:
-              isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : cartProvider.itemCart.isEmpty
-                  ? Center(child: Text("Giỏ hàng trống"))
-                  : Column(
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: cartProvider.itemCart.length,
-                          itemBuilder: (ctx, i) {
-                            final item = cartProvider.itemCart[i];
-                            return Card(
-                              // Sử dụng Card để có hiệu ứng đổ bóng nhẹ và bo góc
-                              margin: EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Stack(
-                                  // Sử dụng Stack để đặt nút xóa lên trên góc phải
+          backgroundColor: Colors.transparent,
+          elevation: 0.0,
+          iconTheme: IconThemeData(color: Colors.black),
+        ),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // After isLoading is false, 'token' will have the value set in _loadData
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Giỏ hàng",
+          style: TextStyle(fontSize: 18, color: Colors.black),
+        ),
+        iconTheme: IconThemeData(color: Colors.black),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed:
+              () => Navigator.of(
+                context,
+              ).pushReplacement(MaterialPageRoute(builder: (_) => BottomNav())),
+        ),
+        actions: [
+          Consumer<NotificationProvider>(
+            builder:
+                (ctx, provider, _) => Stack(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.notifications),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (ctx) => NotificationScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (provider.unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${provider.unreadCount}',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+          ),
+        ],
+      ),
+      body:
+          cartProvider.itemCart.isEmpty
+              ? Center(child: Text("Giỏ hàng trống"))
+              : Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: cartProvider.itemCart.length,
+                      itemBuilder: (ctx, i) {
+                        final item = cartProvider.itemCart[i];
+                        print("Giá: " + item.price.toStringAsFixed(0));
+                        print(
+                          "Tổng cộng: " +
+                              cartProvider.totalPrice.toStringAsFixed(0),
+                        );
+                        return Card(
+                          margin: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Stack(
+                              children: [
+                                Row(
                                   children: [
-                                    Row(
-                                      children: [
-                                        ClipRRect(
-                                          // Bo tròn góc hình ảnh
-                                          borderRadius: BorderRadius.circular(
-                                            8.0,
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Image.network(
+                                        item.productImage,
+                                        width: 70,
+                                        height: 70,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.productName,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
                                           ),
-                                          child: Image.network(
-                                            item.productImage,
-                                            width: 70,
-                                            height: 70,
-                                            fit: BoxFit.cover,
+                                          SizedBox(height: 4),
+                                          Text(
+                                            "Giá: ${formatCurrency(item.price.toStringAsFixed(0))}",
+                                            style: TextStyle(
+                                              color: Colors.grey[700],
+                                            ),
                                           ),
-                                        ),
-                                        SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'Thời gian đặt hàng: ${DateFormat('dd/MM/yyyy HH:mm').format(item.addedAt)}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          SizedBox(height: 8),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Text(
-                                                item.productName,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 16,
+                                              IconButton(
+                                                icon: Icon(
+                                                  Icons.remove_circle_outline,
                                                 ),
-                                              ),
-                                              SizedBox(height: 4),
-                                              Text(
-                                                "Giá: ${formatCurrency(item.productPrice.toStringAsFixed(0))}",
-                                                style: TextStyle(
-                                                  color: Colors.grey[700],
-                                                ),
-                                              ),
-                                              SizedBox(height: 4),
-                                              Text(
-                                                'Thời gian đặt hàng: ${DateFormat('dd/MM/yyyy HH:mm').format(item.addedAt)}',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey,
-                                                ),
-                                              ),
-                                              SizedBox(height: 8),
-                                              Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  IconButton(
-                                                    icon: Icon(
-                                                      Icons
-                                                          .remove_circle_outline,
-                                                    ),
-                                                    onPressed:
-                                                        item.quantity > 1
-                                                            ? () => cartProvider
-                                                                .updateQuantity(
-                                                                  cartId:
-                                                                      item.id,
-                                                                  quantity:
-                                                                      item.quantity -
-                                                                      1,
-                                                                  token: token!,
-                                                                )
-                                                            : null,
-                                                  ),
-                                                  Text(
-                                                    '${item.quantity}',
-                                                    style: TextStyle(
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                  IconButton(
-                                                    icon: Icon(
-                                                      Icons.add_circle_outline,
-                                                    ),
-                                                    onPressed:
-                                                        () => cartProvider
+                                                onPressed:
+                                                    item.quantity > 1
+                                                        ? () => cartProvider
                                                             .updateQuantity(
                                                               cartId: item.id,
                                                               quantity:
-                                                                  item.quantity +
+                                                                  item.quantity -
                                                                   1,
                                                               token: token!,
-                                                            ),
-                                                  ),
-                                                ],
+                                                            )
+                                                        : null,
+                                              ),
+                                              Text(
+                                                '${item.quantity}',
+                                                style: TextStyle(fontSize: 16),
+                                              ),
+                                              IconButton(
+                                                icon: Icon(
+                                                  Icons.add_circle_outline,
+                                                ),
+                                                onPressed:
+                                                    () => cartProvider
+                                                        .updateQuantity(
+                                                          cartId: item.id,
+                                                          quantity:
+                                                              item.quantity + 1,
+                                                          token: token!,
+                                                        ),
                                               ),
                                             ],
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    Positioned(
-                                      top: 0,
-                                      right: 0,
-                                      child: IconButton(
-                                        icon: Icon(
-                                          Icons.close,
-                                          color: Colors.grey,
-                                        ),
-                                        onPressed:
-                                            () => confirmRemoveItem(
-                                              context,
-                                              item.id,
-                                              token!,
-                                            ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              'Tổng tiền: ${formatCurrency(cartProvider.totalPrice.toStringAsFixed(0))}',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green[700],
-                              ),
-                            ),
-                            SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: IconButton(
+                                    icon: Icon(Icons.close, color: Colors.red),
                                     onPressed:
-                                        () => confirmClearCart(
+                                        () => confirmRemoveItem(
                                           context,
-                                          cartProvider,
+                                          item.id,
                                           token!,
                                         ),
-                                    icon: Icon(Icons.delete_forever),
-                                    label: Text("Xóa giỏ hàng"),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          8.0,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 16),
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: () => handleCheckout(context),
-                                    icon: Icon(Icons.payment),
-                                    label: Text("Thanh toán"),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green,
-                                      padding: EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          8.0,
-                                        ),
-                                      ),
-                                    ),
                                   ),
                                 ),
                               ],
                             ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Tổng cộng: ${formatCurrency(cartProvider.totalPrice.toStringAsFixed(0))}',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed:
+                                    () => confirmClearCart(
+                                      context,
+                                      cartProvider,
+                                      token!,
+                                    ),
+                                icon: Icon(Icons.delete_forever),
+                                label: Text("Xóa giỏ hàng"),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => handleCheckout(context),
+                                icon: Icon(Icons.payment),
+                                label: Text("Thanh toán"),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-        );
-      },
+                ],
+              ),
     );
   }
 }

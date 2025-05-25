@@ -35,41 +35,23 @@ class _ProductListCategoryState extends State<ProductListCategory> {
     super.initState();
     _loadData();
   }
+
   Future<void> _loadData() async {
     await Provider.of<UserProvider>(context, listen: false).fetchUserInfo();
-    userRole = Provider.of<UserProvider>(context, listen: false).role; // Lấy userRole từ provider
-    token = await SharedPrefsHelper.getToken(); // Lấy token
+    userRole =
+        Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).role; // Lấy userRole từ provider
+    token =
+        Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).accessToken; // Lấy token
     fetchProducts();
     _syncCart();
   }
-  void fetchUserRole() async {
-    final token = await SharedPrefsHelper.getToken();
-    if (token == null) return;
 
-    final apiUrl = '${dotenv.env['BASE_URL']}/auth/me';
-
-    try {
-      final response = await http.get(
-        Uri.parse(apiUrl),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          userRole = data['role'];
-          print("Người dùng $userRole");
-        });
-      } else {
-        print('Không thể lấy role. Status: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Lỗi khi lấy role: $e');
-    }
-  }
   // Thêm hàm format VNĐ
   String formatCurrency(num amount) {
     final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
@@ -84,17 +66,15 @@ class _ProductListCategoryState extends State<ProductListCategory> {
     }
   }
 
-
   void fetchProducts() async {
     final data = await ProductService.fetchProducts(widget.categoryId);
     setState(() => products = data);
   }
 
   Future<void> _syncCart() async {
-    final token = await SharedPrefsHelper.getToken();
     if (token != null) {
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
-      await cartProvider.fetchCart(token);
+      await cartProvider.fetchCart(token!);
     }
   }
 
@@ -136,34 +116,38 @@ class _ProductListCategoryState extends State<ProductListCategory> {
             subtitle: Text(
               formatCurrency(double.tryParse(prod['price'].toString()) ?? 0.0),
             ),
-            trailing: userRole != 'admin'
-                ? ElevatedButton(
+            trailing: ElevatedButton(
               onPressed: () async {
-                if (token != null) {
+                if (userRole == 'admin') {
+                  ToastService.showWarningToast(
+                    context,
+                    length: ToastLength.medium,
+                    expandedHeight: 100,
+                    message:
+                        "Bạn là tài khoản admin, nên không thể thêm sản phẩm giỏ hàng",
+                  );
+                } else {
                   Product product = Product.fromJson(prod);
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
-                      builder: (context) => AddToCartScreen(
-                        product: product,
-                        token: token!, // Sử dụng toán tử ! vì đã kiểm tra null
-                      ),
+                      builder:
+                          (context) => AddToCartScreen(
+                            product: product,
+                            token:
+                                token!, // Sử dụng toán tử ! vì đã kiểm tra null
+                          ),
                     ),
                   );
-                } else {
-                  // Xử lý trường hợp token là null (ví dụ: chưa đăng nhập)
-                  print("Token is null, cannot add to cart");
-                  // Có thể hiển thị thông báo cho người dùng
                 }
               },
-              child: Text("+Add"),
+              child: Text("+Thêm"),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
+                backgroundColor: Colors.deepPurple,
                 shape: StadiumBorder(),
               ),
-            )
-                : SizedBox.shrink(),
             ),
-          );
+          ),
+        );
       },
     );
   }

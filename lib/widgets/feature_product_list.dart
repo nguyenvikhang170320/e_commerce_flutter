@@ -5,6 +5,8 @@ import 'package:app_ecommerce/services/product_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:toasty_box/toast_enums.dart';
+import 'package:toasty_box/toast_service.dart';
 
 import '../models/products.dart';
 import '../providers/user_provider.dart';
@@ -74,35 +76,36 @@ class _FeaturedProductListState extends State<FeaturedProductList> {
               leading: Image.network(prod['image'], width: 50, height: 50),
               title: Text(prod['name']),
               subtitle: Text(formatCurrency(double.parse(prod['price']))),
-              trailing:
-                  userRole != 'admin'
-                      ? ElevatedButton(
-                        onPressed: () async {
-                          if (token != null) {
-                            Product product = Product.fromJson(prod);
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => AddToCartScreen(
-                                      product: product,
-                                      token:
-                                          token!, // Sử dụng toán tử ! vì đã kiểm tra null
-                                    ),
-                              ),
-                            );
-                          } else {
-                            // Xử lý trường hợp token là null (ví dụ: chưa đăng nhập)
-                            print("Token is null, cannot add to cart");
-                            // Có thể hiển thị thông báo cho người dùng
-                          }
-                        },
-                        child: Text("+Add"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
-                          shape: StadiumBorder(),
-                        ),
-                      )
-                      : SizedBox.shrink(),
+              trailing: ElevatedButton(
+                onPressed: () async {
+                  if (userRole == 'admin') {
+                    ToastService.showWarningToast(
+                      context,
+                      length: ToastLength.medium,
+                      expandedHeight: 100,
+                      message:
+                          "Bạn là tài khoản admin, nên không thể thêm sản phẩm giỏ hàng",
+                    );
+                  } else {
+                    Product product = Product.fromJson(prod);
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder:
+                            (context) => AddToCartScreen(
+                              product: product,
+                              token:
+                                  token!, // Sử dụng toán tử ! vì đã kiểm tra null
+                            ),
+                      ),
+                    );
+                  }
+                },
+                child: Text("+Thêm"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  shape: StadiumBorder(),
+                ),
+              ),
             ),
           ),
         );

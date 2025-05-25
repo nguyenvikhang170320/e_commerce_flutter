@@ -10,10 +10,14 @@ class CartService {
   static Future<CartItem?> addToCart({
     required int productId,
     required int quantity,
+    required double price,
+    required double discountPercent,
+    required double shippingFee,
     required String token,
   }) async {
     if (_isAdding) return null; // Prevent duplicate requests
     _isAdding = true;
+
     try {
       final url = Uri.parse("${dotenv.env['BASE_URL']}/carts");
 
@@ -23,15 +27,20 @@ class CartService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({'product_id': productId, 'quantity': quantity}),
+        body: jsonEncode({
+          'product_id': productId,
+          'quantity': quantity,
+          'price': price,
+          'discountPercent': discountPercent,
+          'shipping_fee': shippingFee,
+        }),
       );
 
       if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
-        // Check if the response has the expected 'data' field containing the cart item
+
         if (responseData['success'] == true && responseData['data'] != null) {
-          final cartItem = CartItem.fromJson(responseData['data']);
-          return cartItem;
+          return CartItem.fromJson(responseData['data']);
         } else {
           print(
             '❌ Không thể thêm sản phẩm vào giỏ hàng: ${responseData['error']}',

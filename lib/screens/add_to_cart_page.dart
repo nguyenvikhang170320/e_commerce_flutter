@@ -40,55 +40,49 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cartProvider = Provider.of<CartProvider>(context);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           "Thêm vào giỏ hàng",
           style: TextStyle(fontSize: 18, color: Colors.black),
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0.0,
-        iconTheme: IconThemeData(color: Colors.black),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed:
-              () => Navigator.of(
-                context,
-              ).pushReplacement(MaterialPageRoute(builder: (_) => BottomNav())),
-        ),
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           Consumer<NotificationProvider>(
             builder:
                 (ctx, provider, _) => Stack(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.notifications),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (ctx) => NotificationScreen(),
+                      icon: const Icon(Icons.notifications),
+                      onPressed:
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => NotificationScreen(),
+                            ),
                           ),
-                        );
-                      },
                     ),
                     if (provider.unreadCount > 0)
                       Positioned(
                         right: 8,
                         top: 8,
                         child: Container(
-                          padding: EdgeInsets.all(2),
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             color: Colors.red,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          constraints: BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
+                            shape: BoxShape.circle,
                           ),
                           child: Text(
                             '${provider.unreadCount}',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ),
@@ -96,134 +90,159 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                 ),
           ),
         ],
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.black,
+          ), // Keep back arrow black
+          onPressed: () {
+            Navigator.of(
+              context,
+            ).pushReplacement(MaterialPageRoute(builder: (ctx) => BottomNav()));
+          },
+        ),
       ),
+      backgroundColor: const Color(0xFFF9F9F9),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🖼 Ảnh + Tên sản phẩm
-            Row(
-              children: [
-                Image.network(
-                  widget.product.image!,
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    widget.product.name,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+            Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Hình + tên sản phẩm
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            widget.product.image!,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            widget.product.name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-            // 💰 Giá sản phẩm
-            Text(
-              "Giá: ${formatCurrency(productPrice.toStringAsFixed(0))}",
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 10),
+                    Text(
+                      "Giá: ${formatCurrency(productPrice.toStringAsFixed(0))}",
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 12),
 
-            // 🔢 Chọn số lượng
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const Text('Số lượng:', style: TextStyle(fontSize: 16)),
-                const SizedBox(width: 20),
-                IconButton(
-                  icon: const Icon(Icons.remove_circle),
-                  onPressed:
-                      quantity > 1
-                          ? () {
-                            setState(() {
-                              quantity--;
-                            });
-                          }
-                          : null,
-                ),
-                Text('$quantity', style: const TextStyle(fontSize: 16)),
-                IconButton(
-                  icon: const Icon(Icons.add_circle),
-                  onPressed: () {
-                    setState(() {
-                      quantity++;
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+                    // Số lượng
+                    Row(
+                      children: [
+                        const Text("Số lượng:", style: TextStyle(fontSize: 16)),
+                        const SizedBox(width: 16),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove),
+                                onPressed:
+                                    quantity > 1
+                                        ? () => setState(() => quantity--)
+                                        : null,
+                              ),
+                              Text(
+                                '$quantity',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add),
+                                onPressed: () => setState(() => quantity++),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
 
-            // 📉 Giảm giá
-            Text(
-              'Giảm giá: $discountPercent% (-${formatCurrency(discountAmount.toStringAsFixed(0))})',
-              style: const TextStyle(fontSize: 16, color: Colors.red),
-            ),
-            const SizedBox(height: 10),
+                    Text(
+                      'Giảm giá: $discountPercent% (-${formatCurrency(discountAmount.toStringAsFixed(0))})',
+                      style: const TextStyle(color: Colors.red, fontSize: 15),
+                    ),
+                    const SizedBox(height: 8),
 
-            // 🚚 Phí ship
-            Text(
-              'Phí vận chuyển: ${formatCurrency(shippingFee.toStringAsFixed(0))}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const Divider(height: 30, thickness: 1),
+                    Text(
+                      'Phí vận chuyển: ${formatCurrency(shippingFee.toStringAsFixed(0))}',
+                      style: const TextStyle(fontSize: 15),
+                    ),
 
-            // 💵 Tổng cộng
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Tổng cộng:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    const Divider(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Tổng cộng:',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          formatCurrency(total.toStringAsFixed(0)),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                Text(
-                  formatCurrency(total.toStringAsFixed(0)),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+              ),
             ),
             const Spacer(),
-
-            // 🛒 Nút thêm giỏ hàng
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 onPressed: () async {
-                  final userProvider = Provider.of<UserProvider>(
-                    context,
-                    listen: false,
-                  );
-                  final cartProvider = Provider.of<CartProvider>(
-                    context,
-                    listen: false,
-                  );
                   final notificationProvider =
-                      Provider.of<NotificationProvider>(
-                        context,
-                        listen: false,
-                      ); // Lấy CartProvider để truy cập _itemCart (nếu cần)
-
+                      Provider.of<NotificationProvider>(context, listen: false);
+                  print("Tổng: $total");
                   final added = await cartProvider.addToCart(
                     product: widget.product,
                     token: widget.token,
-                    currentUserName: userProvider.name ?? 'Khách',
+                    quantity: quantity,
+                    price: total,
+                    discountPercent: discountPercent,
+                    shippingFee: shippingFee,
+                    currentUserName: userProvider.name ?? '',
                   );
                   if (added) {
                     ToastService.showToast(
@@ -232,28 +251,26 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                       expandedHeight: 80,
                       message: "Đã thêm vào giỏ hàng",
                     );
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => CartPage()),
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => CartPage()),
                     );
                   }
+
                   notificationProvider.sendNotification(
-                    userId:
-                        widget
-                            .product
-                            .sellerId, // ✅ Sử dụng sellerId của sản phẩm
+                    userId: widget.product.sellerId,
                     title: 'Đơn hàng mới đã đặt!',
                     message:
-                        '${userProvider.name ?? 'Khách'} vừa thêm ${widget.product.name} vào giỏ hàng.', // ✅ Sửa nội suy chuỗi
+                        '${userProvider.name ?? 'Khách'} vừa thêm ${widget.product.name} vào giỏ hàng.',
                     type: 'order',
                   );
                   notificationProvider.loadUnreadCount(
                     notificationProvider.authToken!,
                   );
                 },
-
                 child: const Text(
-                  'Thêm vào giỏ hàng',
-                  style: TextStyle(fontSize: 16),
+                  "Thêm vào giỏ hàng",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
                 ),
               ),
             ),

@@ -1,11 +1,10 @@
 import 'package:app_ecommerce/models/cartItem.dart';
 import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/services/cart_service.dart';
-
 import 'package:flutter/material.dart';
 
 class CartProvider with ChangeNotifier {
-  List<CartItem> _itemCart = []; // Quản lý giỏ hàng
+  List<CartItem> _itemCart = [];
 
   List<CartItem> get itemCart => _itemCart;
 
@@ -13,12 +12,18 @@ class CartProvider with ChangeNotifier {
   Future<bool> addToCart({
     required Product product,
     required String token,
+    required int quantity,
+    required double price,
+    required double discountPercent,
+    required double shippingFee,
     String? currentUserName,
   }) async {
-    const int quantity = 1;
     final cartItem = await CartService.addToCart(
       productId: product.id,
       quantity: quantity,
+      price: price,
+      discountPercent: discountPercent,
+      shippingFee: shippingFee,
       token: token,
     );
 
@@ -32,8 +37,6 @@ class CartProvider with ChangeNotifier {
         _itemCart.add(cartItem);
       }
 
-      // ✅ tên người dùng mặc định là 'Khách'
-
       notifyListeners();
       return true;
     } else {
@@ -46,7 +49,6 @@ class CartProvider with ChangeNotifier {
   Future<void> fetchCart(String token) async {
     try {
       final data = await CartService.fetchCart(token);
-      print('Dữ liệu giỏ hàng từ API: $data');
       _itemCart = data.map<CartItem>((e) => CartItem.fromJson(e)).toList();
       notifyListeners();
     } catch (e) {
@@ -54,7 +56,7 @@ class CartProvider with ChangeNotifier {
     }
   }
 
-  // ✅ Cập nhật số lượng sản phẩm trong giỏ
+  // ✅ Cập nhật số lượng
   Future<void> updateQuantity({
     required int cartId,
     required int quantity,
@@ -65,6 +67,7 @@ class CartProvider with ChangeNotifier {
       quantity: quantity,
       token: token,
     );
+
     final index = _itemCart.indexWhere((item) => item.id == cartId);
     if (index != -1) {
       _itemCart[index].quantity = quantity;
@@ -72,20 +75,17 @@ class CartProvider with ChangeNotifier {
     }
   }
 
-  // ✅ Xóa sản phẩm khỏi giỏ hàng
+  // ✅ Xóa sản phẩm
   Future<void> removeItem({required int cartId, required String token}) async {
     await CartService.deleteCartItem(cartId: cartId, token: token);
     _itemCart.removeWhere((item) => item.id == cartId);
     notifyListeners();
   }
 
-  // ✅ Số lượng sản phẩm trong giỏ
-  int get itemCount => _itemCart.length;
-
-  // ✅ Tổng giá trị giỏ hàng
+  // Tổng phí ship toàn giỏ
   double get totalPrice {
     return _itemCart.fold(0, (sum, item) {
-      return sum + item.productPrice * item.quantity;
+      return sum + item.price;
     });
   }
 
@@ -101,7 +101,7 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Dọn sạch local (nếu cần)
+  // ✅ Dọn local
   void cleanCart() {
     _itemCart.clear();
     notifyListeners();

@@ -38,14 +38,10 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
     switch (status) {
       case 'pending':
         return 'Đang xử lý';
-      case 'processing':
-        return 'Đang chuẩn bị hàng';
       case 'shipping':
         return 'Chờ vận chuyển';
-      case 'delivered':
-        return 'Đã giao hàng';
       case 'completed':
-        return 'Đã thanh toán';
+        return 'Đã giao hàng';
       case 'cancelled':
         return 'Đã hủy';
       default:
@@ -56,12 +52,8 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'pending':
-        return Colors.orange;
-      case 'processing':
-        return Colors.blue;
+        return Colors.grey;
       case 'shipping':
-        return Colors.teal;
-      case 'delivered':
         return Colors.yellow;
       case 'completed':
         return Colors.green;

@@ -29,7 +29,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
       _deliveryCoordinates = location;
       _deliveryAddress = address;
     });
-    print('Địa chỉ đã chọn (OrderPage): $_deliveryAddress, tọa độ: $_deliveryCoordinates');
+    print(
+      'Địa chỉ đã chọn (OrderPage): $_deliveryAddress, tọa độ: $_deliveryCoordinates',
+    );
     // Cập nhật trường địa chỉ trên UI của trang hóa đơn
   }
 
@@ -56,9 +58,11 @@ class _CustomDrawerState extends State<CustomDrawer> {
                           : null,
                 ),
                 SizedBox(width: 10),
-                Text(
-                  'Hi ${userProvider.name ?? 'Ecommerce'}',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
+                Expanded(
+                  child: Text(
+                    'Xin chào ${userProvider.name ?? 'Ecommerce'}',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
                 ),
               ],
             ),
@@ -98,7 +102,11 @@ class _CustomDrawerState extends State<CustomDrawer> {
               Navigator.pop(context); // đóng drawer
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => MapsPage(onLocationSelected: _handleLocationSelected)),
+                MaterialPageRoute(
+                  builder:
+                      (context) =>
+                          MapsPage(onLocationSelected: _handleLocationSelected),
+                ),
               );
             },
           ),

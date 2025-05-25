@@ -76,14 +76,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     setState(() {
       orderDetail = detail;
       final apiStatus = detail?['order']?['status'];
-      final apiPaymentStatus =
-          detail?['order']?['payment_status'];
-      address = detail?['order']?['address'];// Lấy payment_status từ API
+      final apiPaymentStatus = detail?['order']?['payment_status'];
+      address = detail?['order']?['address']; // Lấy payment_status từ API
       print("Địa chỉ $address");
       _selectedStatus = apiStatus?.toLowerCase().trim();
-      _selectedPaymentStatus =
-          apiPaymentStatus?.toLowerCase().trim();
-      _extractCoordinates(address);// Lưu payment_status
+      _selectedPaymentStatus = apiPaymentStatus?.toLowerCase().trim();
+      _extractCoordinates(address); // Lưu payment_status
       print('Trạng thái thanh toán từ API: ${_selectedPaymentStatus}');
       print('Trạng thái đơn hàng từ API: ${_selectedStatus}');
     });
@@ -93,13 +91,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Future<void> _extractCoordinates(String? address) async {
     if (address != null && address.isNotEmpty) {
       try {
-        List<Location> locations = await locationFromAddress(
-          address,
-        );
+        List<Location> locations = await locationFromAddress(address);
         if (locations.isNotEmpty) {
           setState(() {
-            _deliveryCoordinates =
-                LatLng(locations.first.latitude, locations.first.longitude);
+            _deliveryCoordinates = LatLng(
+              locations.first.latitude,
+              locations.first.longitude,
+            );
           });
         } else {
           print('Không tìm thấy tọa độ cho địa chỉ: $address');
@@ -109,6 +107,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
     }
   }
+
   void _handleLocationSelected(LatLng location, String address) {
     setState(() {
       // Cập nhật địa chỉ hiển thị (nếu cần)
@@ -116,21 +115,27 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       _deliveryCoordinates = location;
     });
     // Bạn có thể gọi API để cập nhật địa chỉ đơn hàng ở đây nếu cần
-    print('Địa chỉ đã chọn: $address, tọa độ: <span class="math-inline">location');
-    }
-// Hàm điều hướng đến trang MapsPage
+    print(
+      'Địa chỉ đã chọn: $address, tọa độ: <span class="math-inline">location',
+    );
+  }
+
+  // Hàm điều hướng đến trang MapsPage
   void _navigateToMapPage() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MapsPage(
-          onLocationSelected: _handleLocationSelected)));
+        builder:
+            (context) => MapsPage(onLocationSelected: _handleLocationSelected),
+      ),
+    );
     // Bạn có thể xử lý kết quả trả về từ MapsPage nếu cần
     if (result != null) {
       // Ví dụ: Cập nhật lại thông tin đơn hàng nếu địa chỉ thay đổi
       _fetchOrderDetail();
     }
   }
+
   // Cập nhật trạng thái đơn hàng và thanh toán
   Future<void> _updateOrderStatus(
     String newStatus,
@@ -168,14 +173,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     switch (status) {
       case 'pending':
         return 'Đang xử lý';
-      case 'processing':
-        return 'Đang chuẩn bị hàng';
       case 'shipping':
         return 'Chờ vận chuyển';
-      case 'delivered':
-        return 'Đã giao hàng';
       case 'completed':
-        return 'Đã thanh toán';
+        return 'Đã giao hàng';
       case 'cancelled':
         return 'Đã hủy';
       default:
@@ -223,42 +224,42 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ),
         actions: [
           Consumer<NotificationProvider>(
-            builder: (ctx, provider, _) => Stack(
-              children: [
-                IconButton(
-                  icon: Icon(Icons.notifications),
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (ctx) => NotificationScreen(),
-                    ));
-                  },
-                ),
-                if (provider.unreadCount > 0)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      padding: EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      constraints: BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      child: Text(
-                        '${provider.unreadCount}',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+            builder:
+                (ctx, provider, _) => Stack(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.notifications),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (ctx) => NotificationScreen(),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-              ],
-            ),
+                    if (provider.unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${provider.unreadCount}',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
           ),
         ],
       ),
@@ -270,7 +271,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           children: [
             _buildSectionTitle('Thông tin đơn hàng'),
             _buildOrderDetailItem(
-              'Trạng thái thanh toán tiền mặt',
+              'Trạng thái đơn hàng',
               _mapOrderStatusToVietnamese(currentStatus),
               style: TextStyle(
                 fontSize: 18,
@@ -279,7 +280,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ),
             ),
             _buildOrderDetailItem(
-              'Trạng thái thanh toán điện tử', // Thêm trạng thái thanh toán
+              'Trạng thái thanh toán', // Thêm trạng thái thanh toán
               _mapPaymentStatusToVietnamese(currentPaymentStatus),
               style: TextStyle(
                 fontSize: 18,
@@ -464,6 +465,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.grey;
+      case 'shipping':
+        return Colors.yellow;
+      case 'completed':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.black87;
+    }
+  }
+
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -486,13 +502,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         children: [
           Text(label, style: TextStyle(fontWeight: FontWeight.w500)),
           SizedBox(width: 10),
-           Expanded(
-              child: Text(value, textAlign: TextAlign.right, style: style),
-            ),
+          Expanded(
+            child: Text(value, textAlign: TextAlign.right, style: style),
+          ),
         ],
       ),
     );
   }
+
   Widget _buildOrderAdress(String label, String value, {TextStyle? style}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -507,29 +524,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               child: Text(
                 value,
                 textAlign: TextAlign.right,
-                style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+                style: TextStyle(
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
+                ),
               ),
-          ),
+            ),
           ),
         ],
       ),
     );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'pending':
-        return Colors.orange;
-      case 'processing':
-        return Colors.blue;
-      case 'shipping':
-        return Colors.teal;
-      case 'delivered':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.black87;
-    }
   }
 }

@@ -12,6 +12,7 @@ class OrderService {
   }
 
   // Tạo đơn hàng mới
+  // Tạo đơn hàng mới
   Future<bool> createOrder({
     required String address,
     required String phone,
@@ -29,6 +30,7 @@ class OrderService {
     );
 
     if (res.statusCode == 201) {
+      print('Tạo đơn hàng thành công: ${res.body}');
       return true;
     } else {
       print('❌ Lỗi tạo đơn: ${res.body}');
@@ -68,24 +70,6 @@ class OrderService {
       return jsonDecode(res.body);
     } else {
       print('❌ Lỗi lấy tất cả đơn: ${res.body}');
-      return [];
-    }
-  }
-
-  // Phương thức để lấy đơn hàng theo vai trò
-  Future<List<dynamic>> getOrdersByRole(String role) async {
-    final token = await _getToken();
-    final url = role == 'user' ? Uri.parse(baseUrl) : Uri.parse('$baseUrl/all');
-
-    final res = await http.get(
-      url,
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    if (res.statusCode == 200) {
-      return jsonDecode(res.body);
-    } else {
-      print('❌ Lỗi lấy đơn hàng: ${res.body}');
       return [];
     }
   }

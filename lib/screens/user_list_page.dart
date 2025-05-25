@@ -28,6 +28,13 @@ class _UserListScreenState extends State<UserListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed:
+              () => Navigator.of(
+                context,
+              ).pushReplacement(MaterialPageRoute(builder: (_) => BottomNav())),
+        ),
         title: const Text(
           'Thông tin tất cả tài khoản',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),

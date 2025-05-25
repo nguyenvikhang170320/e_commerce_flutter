@@ -16,7 +16,9 @@ class NotificationService {
       List data = json.decode(response.body);
       return data.map((e) => NotificationItem.fromJson(e)).toList();
     } else {
-      print('Failed to fetch notifications - Status Code: ${response.statusCode}');
+      print(
+        'Failed to fetch notifications - Status Code: ${response.statusCode}',
+      );
       print('Failed to fetch notifications - Body: ${response.body}');
       throw Exception('Failed to fetch notifications');
     }
@@ -31,7 +33,9 @@ class NotificationService {
       final data = json.decode(response.body);
       return data['unread_count'] ?? 0;
     } else {
-      print('Failed to fetch unread count - Status Code: ${response.statusCode}');
+      print(
+        'Failed to fetch unread count - Status Code: ${response.statusCode}',
+      );
       print('Failed to fetch unread count - Body: ${response.body}');
       throw Exception('Failed to fetch unread count');
     }
@@ -43,7 +47,9 @@ class NotificationService {
       headers: {'Authorization': 'Bearer $authToken'},
     );
     if (response.statusCode != 200) {
-      print('Failed to mark notification as read - Status Code: ${response.statusCode}');
+      print(
+        'Failed to mark notification as read - Status Code: ${response.statusCode}',
+      );
       print('Failed to mark notification as read - Body: ${response.body}');
       throw Exception('Failed to mark notification as read');
     }
@@ -73,10 +79,38 @@ class NotificationService {
           // 'token': authToken, // 👈 Backend không cần token này nữa cho việc tạo thông báo
         }),
       );
-      print('Send notification response: ${response.statusCode} ${response.body}');
+      print(
+        'Send notification response: ${response.statusCode} ${response.body}',
+      );
       return response.statusCode == 201;
     } catch (e) {
       print('Error sending notification: $e');
+      return false;
+    }
+  }
+
+  // 🆕 Phương thức mới để đánh dấu tất cả thông báo là đã đọc
+  Future<bool> markAllAsRead(String authToken) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/mark-all-as-read'), // Gọi endpoint mới ở backend
+        headers: {'Authorization': 'Bearer $authToken'},
+      );
+
+      if (response.statusCode == 200) {
+        print('Successfully marked all notifications as read.');
+        return true;
+      } else {
+        print(
+          'Failed to mark all notifications as read - Status Code: ${response.statusCode}',
+        );
+        print(
+          'Failed to mark all notifications as read - Body: ${response.body}',
+        );
+        throw Exception('Failed to mark all notifications as read');
+      }
+    } catch (e) {
+      print('Error marking all notifications as read: $e');
       return false;
     }
   }

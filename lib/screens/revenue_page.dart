@@ -51,12 +51,17 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> {
     });
 
     final int sellerId = widget.sellerId;
+    print(sellerId);
     final int? year = _selectedYear;
     final int? month = _selectedMonth;
 
     try {
       // 1. Lấy doanh thu hàng năm
       final yearlyRevenueResponse = await http.get(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
         Uri.parse(
           '${dotenv.env['BASE_URL']}/revenues/yearly/$sellerId?year=$year',
         ),
@@ -76,6 +81,10 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> {
 
       // 2. Fetch Monthly Orders Count
       final monthlyOrdersCountResponse = await http.get(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
         Uri.parse(
           '${dotenv.env['BASE_URL']}/revenues/orders-count/$sellerId?month=$month&year=$year',
         ),
@@ -96,6 +105,10 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> {
 
       // 3. Fetch Top Products
       final topProductsResponse = await http.get(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
         Uri.parse(
           '${dotenv.env['BASE_URL']}/revenues/top-products/$sellerId?month=$month&year=$year',
         ),
@@ -111,6 +124,10 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> {
 
       // 4. Fetch Monthly Revenue
       final monthlyRevenueResponse = await http.get(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
         Uri.parse(
           '${dotenv.env['BASE_URL']}/revenues/revenue/$sellerId?month=$month&year=$year',
         ),
@@ -164,42 +181,42 @@ class _SellerRevenueScreenState extends State<SellerRevenueScreen> {
         ),
         actions: <Widget>[
           Consumer<NotificationProvider>(
-            builder: (ctx, provider, _) => Stack(
-              children: [
-                IconButton(
-                  icon: Icon(Icons.notifications),
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (ctx) => NotificationScreen(),
-                    ));
-                  },
-                ),
-                if (provider.unreadCount > 0)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      padding: EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      constraints: BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      child: Text(
-                        '${provider.unreadCount}',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+            builder:
+                (ctx, provider, _) => Stack(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.notifications),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (ctx) => NotificationScreen(),
+                          ),
+                        );
+                      },
                     ),
-                  ),
-              ],
-            ),
+                    if (provider.unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${provider.unreadCount}',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
           ),
         ],
       ),

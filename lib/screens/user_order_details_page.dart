@@ -1,9 +1,12 @@
+import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
 import 'package:app_ecommerce/screens/order_detail_page.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:toasty_box/toast_enums.dart';
+import 'package:toasty_box/toast_service.dart';
 import '../providers/notification_provider.dart';
 import '../services/order_service.dart';
 import '../services/share_preference.dart';
@@ -15,6 +18,7 @@ class UserOrdersScreen extends StatefulWidget {
 
 class _UserOrdersScreenState extends State<UserOrdersScreen> {
   final orderService = OrderService();
+  String? userRole;
   String? token;
 
   @override
@@ -24,8 +28,23 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
   }
 
   Future<void> _loadData() async {
-    // Lấy userRole từ provider
-    token = await SharedPrefsHelper.getToken(); // Lấy token
+    await Provider.of<UserProvider>(context, listen: false).fetchUserInfo();
+    userRole =
+        Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).role; // Lấy userRole từ provider
+    token =
+        Provider.of<UserProvider>(
+          context,
+          listen: false,
+        ).accessToken; // Lấy token
+    if (token != null) {
+      // Gọi fetchCart với token đã lấy được
+      print("Token: " + token!);
+    } else {
+      print("❌ Không có token để xác thực");
+    }
   }
 
   String formatCurrency(String amountStr) {
@@ -38,14 +57,10 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
     switch (status) {
       case 'pending':
         return 'Đang xử lý';
-      case 'processing':
-        return 'Đang chuẩn bị hàng';
       case 'shipping':
         return 'Chờ vận chuyển';
-      case 'delivered':
-        return 'Đã giao hàng';
       case 'completed':
-        return 'Đã thanh toán';
+        return 'Đã giao hàng';
       case 'cancelled':
         return 'Đã hủy';
       default:
@@ -56,12 +71,8 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'pending':
-        return Colors.orange;
-      case 'processing':
-        return Colors.blue;
+        return Colors.grey;
       case 'shipping':
-        return Colors.teal;
-      case 'delivered':
         return Colors.yellow;
       case 'completed':
         return Colors.green;
