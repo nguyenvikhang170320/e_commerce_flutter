@@ -14,16 +14,12 @@ class CartProvider with ChangeNotifier {
     required String token,
     required int quantity,
     required double price,
-    required double discountPercent,
-    required double shippingFee,
     String? currentUserName,
   }) async {
     final cartItem = await CartService.addToCart(
       productId: product.id,
       quantity: quantity,
       price: price,
-      discountPercent: discountPercent,
-      shippingFee: shippingFee,
       token: token,
     );
 

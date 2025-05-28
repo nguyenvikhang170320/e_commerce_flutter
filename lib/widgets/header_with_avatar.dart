@@ -1,6 +1,7 @@
 import 'package:app_ecommerce/providers/category_provider.dart';
 import 'package:app_ecommerce/screens/category_page.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
+import 'package:app_ecommerce/screens/product_page.dart';
 import 'package:app_ecommerce/screens/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,11 +16,19 @@ class HeaderWithAvatar extends StatefulWidget {
 
 class _HeaderWithAvatarState extends State<HeaderWithAvatar> {
   String? token;
-
+  int? selectedCategoryId;
+  bool isCategorySelected = false;
   @override
   void initState() {
     super.initState();
     _loadData();
+  }
+
+  void onCategoryChanged(int categoryId) {
+    setState(() {
+      selectedCategoryId = categoryId;
+      isCategorySelected = true;
+    });
   }
 
   Future<void> _loadData() async {
@@ -93,12 +102,20 @@ class _HeaderWithAvatarState extends State<HeaderWithAvatar> {
                   //chuyển sang trang danh mục
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const CategoryScreen(),
-                    ),
+                    MaterialPageRoute(builder: (context) => CategoryScreen()),
                   );
                 },
                 child: Icon(Icons.category, size: 28),
+              ),
+              GestureDetector(
+                onTap: () {
+                  //chuyển sang trang danh mục
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProductScreen()),
+                  );
+                },
+                child: Icon(Icons.production_quantity_limits_sharp, size: 28),
               ),
               GestureDetector(
                 onTap: () {

@@ -240,8 +240,6 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     token: widget.token,
                     quantity: quantity,
                     price: total,
-                    discountPercent: discountPercent,
-                    shippingFee: shippingFee,
                     currentUserName: userProvider.name ?? '',
                   );
                   if (added) {

@@ -354,38 +354,9 @@ class _CartPageState extends State<CartPage> {
                                           Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              IconButton(
-                                                icon: Icon(
-                                                  Icons.remove_circle_outline,
-                                                ),
-                                                onPressed:
-                                                    item.quantity > 1
-                                                        ? () => cartProvider
-                                                            .updateQuantity(
-                                                              cartId: item.id,
-                                                              quantity:
-                                                                  item.quantity -
-                                                                  1,
-                                                              token: token!,
-                                                            )
-                                                        : null,
-                                              ),
                                               Text(
-                                                '${item.quantity}',
+                                                'Số lượng đã đặt: ${item.quantity}',
                                                 style: TextStyle(fontSize: 16),
-                                              ),
-                                              IconButton(
-                                                icon: Icon(
-                                                  Icons.add_circle_outline,
-                                                ),
-                                                onPressed:
-                                                    () => cartProvider
-                                                        .updateQuantity(
-                                                          cartId: item.id,
-                                                          quantity:
-                                                              item.quantity + 1,
-                                                          token: token!,
-                                                        ),
                                               ),
                                             ],
                                           ),

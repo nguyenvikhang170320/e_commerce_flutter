@@ -7,8 +7,6 @@ class CartItem {
   int quantity;
   final DateTime addedAt; // Thêm thời gian thêm vào giỏ hàng
   // ✅ Thêm 2 thuộc tính mới
-  final double discountPercent;
-  final double shippingFee;
   CartItem({
     required this.id,
     required this.productId,
@@ -17,8 +15,6 @@ class CartItem {
     required this.productImage,
     required this.quantity,
     required this.addedAt,
-    this.discountPercent = 0.0,
-    this.shippingFee = 0.0, // ✅ nhớ thêm vào constructor
   });
 
   // Factory constructor để tạo CartItem từ JSON
@@ -33,7 +29,7 @@ class CartItem {
               : json['price'].toDouble(),
       productImage: json['image'] ?? '',
       quantity: json['quantity'],
-      addedAt: _parseDate(json['added_at']), // ✅ dùng hàm an toàn
+      addedAt: _parseDate(json['added_at']),
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/screens/add_to_cart_page.dart';
 import 'package:app_ecommerce/screens/create_product_page.dart';
+import 'package:app_ecommerce/screens/global_search_page.dart';
 import 'package:app_ecommerce/screens/update_product_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
@@ -100,10 +101,7 @@ class _ProductScreenState extends State<ProductScreen> {
     }
   }
 
-  void _showEditDeleteDialog(
-    BuildContext context,
-    Map<String, dynamic> product,
-  ) {
+  void _showEditDeleteDialog(BuildContext context, Product prod) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -124,15 +122,23 @@ class _ProductScreenState extends State<ProductScreen> {
                   );
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
-                      builder: (ctx) => UpdateProductScreen(product: product),
+                      builder: (ctx) => UpdateProductScreen(product: prod),
                     ),
                   );
+                  Provider.of<ProductProvider>(
+                    context,
+                    listen: false,
+                  ).fetchProducts();
                 },
               ),
               ListTile(
                 leading: Icon(Icons.delete, color: Colors.red),
                 title: Text('Xóa', style: TextStyle(color: Colors.red)),
                 onTap: () async {
+                  final productProvider = Provider.of<ProductProvider>(
+                    context,
+                    listen: false,
+                  );
                   Navigator.of(context).pop(); // Đóng dialog trước
 
                   final confirm = await showDialog<bool>(
@@ -157,14 +163,13 @@ class _ProductScreenState extends State<ProductScreen> {
                   );
 
                   if (confirm == true) {
-                    await ProductService.deleteProduct(
-                      product['id'].toString(),
-                    );
+                    await ProductService.deleteProduct(prod.id.toString());
+                    productProvider.fetchProducts();
                     ToastService.showSuccessToast(
                       context,
                       length: ToastLength.medium,
                       expandedHeight: 100,
-                      message: "✅ Đã xóa sản phẩm: ${product['name']}",
+                      message: "✅ Đã xóa sản phẩm: ${prod.name}",
                     );
                   }
                 },
@@ -192,7 +197,14 @@ class _ProductScreenState extends State<ProductScreen> {
         ),
         title: Text('Danh sách sản phẩm', style: TextStyle(fontSize: 18)),
         actions: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.search)),
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (ctx) => GlobalSearchScreen()),
+              );
+            },
+            icon: Icon(Icons.search),
+          ),
           IconButton(
             icon: Icon(Icons.create),
             onPressed: () => _showCreateOnlyDialog(context),
@@ -201,12 +213,12 @@ class _ProductScreenState extends State<ProductScreen> {
       ),
       body: Consumer<ProductProvider>(
         builder: (context, productProvider, child) {
-          final products = productProvider.products;
-          return products.isEmpty
+          final productsFromProvider = productProvider.products;
+          return productsFromProvider.isEmpty
               ? Center(child: Text('Không có sản phẩm'))
               : GridView.builder(
                 padding: EdgeInsets.all(12),
-                itemCount: products.length,
+                itemCount: productsFromProvider.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   mainAxisExtent: 260,
@@ -214,9 +226,10 @@ class _ProductScreenState extends State<ProductScreen> {
                   mainAxisSpacing: 12,
                 ),
                 itemBuilder: (context, index) {
-                  final prod = products[index];
+                  final prod = productsFromProvider[index];
+
                   final isFavorite = favoriteProvider.isProductFavorite(
-                    prod['id'],
+                    prod.id,
                   );
 
                   return Stack(
@@ -245,7 +258,7 @@ class _ProductScreenState extends State<ProductScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Image.network(
-                                      prod['image'],
+                                      prod.image!,
                                       fit: BoxFit.contain,
                                     ),
                                   ),
@@ -258,7 +271,7 @@ class _ProductScreenState extends State<ProductScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Text(
-                                      prod['name'],
+                                      prod.name,
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 12,
@@ -269,7 +282,7 @@ class _ProductScreenState extends State<ProductScreen> {
                                     ),
                                     SizedBox(height: 4),
                                     Text(
-                                      formatCurrency(prod['price'].toString()),
+                                      formatCurrency(prod.price.toString()),
                                       style: TextStyle(
                                         color: Colors.black87,
                                         fontSize: 14,
@@ -283,8 +296,6 @@ class _ProductScreenState extends State<ProductScreen> {
                                           final token =
                                               await SharedPrefsHelper.getToken();
                                           if (token != null) {
-                                            Product productObj =
-                                                Product.fromJson(prod);
                                             Navigator.of(
                                               context,
                                             ).pushReplacement(
@@ -292,7 +303,7 @@ class _ProductScreenState extends State<ProductScreen> {
                                                 builder:
                                                     (context) =>
                                                         AddToCartScreen(
-                                                          product: productObj,
+                                                          product: prod,
                                                           token: token,
                                                         ),
                                               ),
@@ -310,15 +321,18 @@ class _ProductScreenState extends State<ProductScreen> {
                                         child:
                                             _isAddingToCart
                                                 ? CircularProgressIndicator()
-                                                : Text('+Add'),
+                                                : Text('+Thêm'),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.orange,
+                                          backgroundColor: Colors.amber,
                                           shape: StadiumBorder(),
                                           padding: EdgeInsets.symmetric(
                                             horizontal: 12,
                                             vertical: 6,
                                           ),
-                                          textStyle: TextStyle(fontSize: 12),
+                                          textStyle: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
                                   ],
@@ -335,8 +349,7 @@ class _ProductScreenState extends State<ProductScreen> {
                           right: 8,
                           child: GestureDetector(
                             onTap: () {
-                              Product product = Product.fromJson(prod);
-                              favoriteProvider.toggleFavorite(product);
+                              favoriteProvider.toggleFavorite(prod);
                             },
                             child: Icon(
                               isFavorite

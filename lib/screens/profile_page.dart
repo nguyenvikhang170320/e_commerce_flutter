@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:app_ecommerce/providers/favorite_provider.dart';
 import 'package:app_ecommerce/screens/change_password_page.dart';
 import 'package:app_ecommerce/screens/edit_profile_page.dart';
 import 'package:app_ecommerce/screens/favorite_list_page.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:provider/provider.dart';
 import '../widgets/bottom_nav.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -188,6 +190,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     )
                                     : null,
                           ),
+
                           if (_verificationStatus != null &&
                               _verificationStatus == 'approved')
                             const CircleAvatar(

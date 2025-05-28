@@ -81,6 +81,10 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (ctx) => ProductScreen()),
             );
+            Provider.of<ProductProvider>(
+              context,
+              listen: false,
+            ).fetchProducts();
           } else {
             ToastService.showErrorToast(
               context,

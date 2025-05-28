@@ -1,5 +1,5 @@
 import 'package:app_ecommerce/widgets/custom_drawer.dart';
-import 'package:app_ecommerce/widgets/product_list_category.dart';
+import 'package:app_ecommerce/widgets/product_list.dart';
 import 'package:flutter/material.dart';
 import '../widgets/header_with_avatar.dart';
 import '../widgets/banner_carousel.dart';
@@ -27,22 +27,24 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       drawer: CustomDrawer(),
       body: SafeArea(
-        child: Column(
-          children: [
-            HeaderWithAvatar(),
-            SizedBox(height: 10),
-            BannerCarousel(),
-            SizedBox(height: 10),
-            CategoryList(onCategorySelected: onCategoryChanged),
-            SizedBox(height: 10),
-            // Hiển thị danh sách sản phẩm:
-            Expanded(
-              child:
-                  isCategorySelected
-                      ? ProductListCategory(categoryId: selectedCategoryId!)
-                      : FeaturedProductList(), // sản phẩm nổi bật ban đầu
-            ), // List scrollable
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              HeaderWithAvatar(),
+              SizedBox(height: 10),
+              BannerCarousel(),
+              SizedBox(height: 10),
+              CategoryList(onCategorySelected: onCategoryChanged),
+              SizedBox(height: 10),
+              SizedBox(
+                height: 500, // hoặc MediaQuery.of(context).size.height * 0.5
+                child:
+                    isCategorySelected
+                        ? ProductList(categoryId: selectedCategoryId!)
+                        : FeaturedProductList(),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -25,6 +25,7 @@ class CategoryProvider with ChangeNotifier {
     try {
       await CategoriesService.addCategory(name, description);
       await fetchCategories();
+      notifyListeners();
     } catch (e) {
       print('Error adding category: $e');
     }
@@ -34,6 +35,7 @@ class CategoryProvider with ChangeNotifier {
     try {
       await CategoriesService.updateCategory(id, name, description);
       await fetchCategories();
+      notifyListeners();
     } catch (e) {
       print('Error updating category: $e');
     }
@@ -43,6 +45,7 @@ class CategoryProvider with ChangeNotifier {
     try {
       await CategoriesService.deleteCategory(id);
       await fetchCategories();
+      notifyListeners();
     } catch (e) {
       print('Error deleting category: $e');
     }

@@ -1,30 +1,88 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class ProductService {
+  //tìm kiếm sản phẩm
+  static Future<List<Product>> searchProducts(String query) async {
+    // Đảm bảo đường dẫn API là chính xác: /api/products/search
+    final url = Uri.parse('${dotenv.env['BASE_URL']}/products/search?q=$query');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final dynamic responseData = json.decode(response.body);
+
+        // Trường hợp 1: API trả về một đối tượng có key 'products' (khi không tìm thấy hoặc có thông báo)
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('products')) {
+          final List<dynamic> productList = responseData['products'];
+          return productList
+              .map((json) => Product.fromJson(json as Map<String, dynamic>))
+              .toList();
+        }
+        // Trường hợp 2: API trả về trực tiếp một danh sách sản phẩm (khi tìm thấy sản phẩm)
+        else if (responseData is List) {
+          return responseData
+              .map((json) => Product.fromJson(json as Map<String, dynamic>))
+              .toList();
+        }
+        // Trường hợp không mong muốn (ví dụ: response rỗng, hoặc định dạng khác)
+        else {
+          print(
+            'Error: Unexpected response format for products search: ${response.body}',
+          );
+          // Trả về một danh sách rỗng thay vì ném Exception nếu bạn muốn handle nhẹ nhàng hơn
+          return [];
+        }
+      } else {
+        // Xử lý lỗi từ server (ví dụ: status 400 nếu thiếu query, 500 server error)
+        final errorData = json.decode(response.body);
+        throw Exception(
+          'Failed to search products: ${errorData['message'] ?? 'Status Code: ${response.statusCode}'}',
+        );
+      }
+    } catch (e) {
+      print('Error searching products: $e');
+      throw Exception(
+        'Failed to connect to the server or search products. Error: $e',
+      );
+    }
+  }
+
   //Lấy danh sách sản phẩm theo categoryId
-  static Future<List<dynamic>> fetchProducts(int categoryId) async {
-    final res = await http.get(
-      Uri.parse(
-        '${dotenv.env['BASE_URL']}/products/category?category_id=$categoryId',
-      ),
+
+  static Future<List<Map<String, dynamic>>> fetchProducts(
+    int categoryId,
+  ) async {
+    final url = Uri.parse(
+      '${dotenv.env['BASE_URL']}/products/category/$categoryId',
     );
-    if (res.statusCode == 200) {
-      return jsonDecode(res.body);
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body); // 👈 có thể là List<dynamic>
+      return List<Map<String, dynamic>>.from(data); // ✅ Ép kiểu đúng
     } else {
       throw Exception('Failed to load products');
     }
   }
 
   //Lấy danh sách sản phẩm nổi bật
-  static Future<List> fetchFeaturedProducts() async {
+  static Future<List<Product>> fetchFeaturedProducts() async {
     final url = Uri.parse('${dotenv.env['BASE_URL']}/products/featured');
     final res = await http.get(url);
+
     if (res.statusCode == 200) {
-      return jsonDecode(res.body);
+      final List<dynamic> jsonData = jsonDecode(res.body);
+      print("DATA $jsonData");
+      return jsonData
+          .map((item) => Product.fromJson(item as Map<String, dynamic>))
+          .toList();
     } else {
       throw Exception("Failed to load featured products: ${res.body}");
     }
@@ -43,12 +101,17 @@ class ProductService {
   }
 
   //Lấy tất cả sản phẩm (có phân trang + lọc theo category)
-  static Future<List<dynamic>> fetchAllProducts() async {
+  static Future<List<Product>> fetchAllProducts() async {
     try {
       final url = '${dotenv.env['BASE_URL']}/products';
       final response = await http.get(Uri.parse(url));
+
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final List<dynamic> jsonData = json.decode(response.body);
+        print("DATA sản phẩm: $jsonData");
+        return jsonData
+            .map((item) => Product.fromJson(item as Map<String, dynamic>))
+            .toList();
       } else {
         print('❌ Lỗi khi fetch sản phẩm: ${response.body}');
         return [];

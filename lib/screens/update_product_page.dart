@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/screens/product_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +9,7 @@ import 'package:toasty_box/toast_enums.dart';
 import 'package:toasty_box/toast_service.dart';
 
 class UpdateProductScreen extends StatefulWidget {
-  final Map<String, dynamic> product;
+  final Product product;
 
   UpdateProductScreen({required this.product});
 
@@ -31,14 +32,14 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
   @override
   void initState() {
     super.initState();
-    name = widget.product['name'];
-    price = widget.product['price'].toString();
-    stock = widget.product['stock'].toString();
-    imageUrl = widget.product['image'];
+    name = widget.product.name;
+    price = widget.product.price.toString();
+    stock = widget.product.stock.toString();
+    imageUrl = widget.product.image;
     imagePath = null; // mặc định chưa chọn ảnh mới
-    description = widget.product['description'];
+    description = widget.product.description!;
     selectedCategoryId =
-        widget.product['category_id'].toString(); // Lưu category id đã chọn
+        widget.product.categoryId.toString(); // Lưu category id đã chọn
     _fetchCategories(); // Tải danh sách category khi màn hình được khởi tạo
   }
 
@@ -55,15 +56,19 @@ class _UpdateProductScreenState extends State<UpdateProductScreen> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      print(stock);
+      print(selectedCategoryId);
       final updatedProduct = {
-        'id': widget.product['id'],
+        'id': widget.product.id,
         'name': name,
         'description': description,
         'price': double.tryParse(price) ?? 0.0,
         'image':
             imagePath ?? imageUrl ?? '', // Ưu tiên ảnh mới, sau đó là ảnh cũ
-        'category_id': selectedCategoryId, // Sử dụng category đã chọn
-        'stock': stock, // Cập nhật stock nếu cần
+        'category_id':
+            int.tryParse(selectedCategoryId ?? '') ??
+            0, // Sử dụng category đã chọn
+        'stock': int.tryParse(stock ?? '') ?? 0, // Cập nhật stock nếu cần
         'is_featured': 0, // Có thể thay đổi theo nhu cầu
       };
       Provider.of<ProductProvider>(

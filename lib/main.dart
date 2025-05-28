@@ -5,6 +5,7 @@ import 'package:app_ecommerce/providers/message_provider.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart'; // Import NotificationProvider
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
+import 'package:app_ecommerce/providers/search_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/login_page.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
@@ -29,6 +30,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => SearchProvider()),
         ChangeNotifierProvider(
           create: (context) {
             final notificationProvider = NotificationProvider();

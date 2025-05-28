@@ -1,3 +1,6 @@
+import 'package:app_ecommerce/providers/product_provider.dart';
+import 'package:app_ecommerce/screens/global_search_page.dart';
+import 'package:app_ecommerce/widgets/product_list.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/category_provider.dart';
@@ -8,8 +11,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CategoryScreen extends StatefulWidget {
-  const CategoryScreen({Key? key}) : super(key: key);
-
   @override
   _CategoryScreenState createState() => _CategoryScreenState();
 }
@@ -17,6 +18,7 @@ class CategoryScreen extends StatefulWidget {
 class _CategoryScreenState extends State<CategoryScreen> {
   String? userRole;
 
+  int selectedId = 0;
   @override
   void initState() {
     super.initState();
@@ -118,11 +120,23 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   Widget build(BuildContext context) {
     final categoryProvider = Provider.of<CategoryProvider>(context);
+    final productProvider = Provider.of<ProductProvider>(
+      context,
+      listen: false,
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Danh mục', style: TextStyle(fontSize: 18)),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (ctx) => GlobalSearchScreen()),
+              );
+            },
+            icon: Icon(Icons.search),
+          ),
           if (userRole == 'admin' || userRole == 'seller')
             IconButton(
               icon: const Icon(Icons.add),
@@ -138,41 +152,56 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 child: ListView.builder(
                   itemCount: categoryProvider.categories.length,
                   itemBuilder: (context, index) {
+                    print(1);
                     final category = categoryProvider.categories[index];
-                    return ListTile(
-                      title: Text(category.name),
-                      subtitle: Text(category.description),
-                      trailing:
-                          (userRole == 'admin' || userRole == 'seller')
-                              ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.edit,
-                                      color: Colors.blue,
+                    int categoryId = category.id;
+                    return GestureDetector(
+                      onTap: () {
+                        print(22);
+                        productProvider.fetchProductsByCategoryId(categoryId);
+                        //chuyển trang
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder:
+                                (ctx) => ProductList(categoryId: categoryId),
+                          ),
+                        );
+                      },
+                      child: ListTile(
+                        title: Text(category.name),
+                        subtitle: Text(category.description),
+                        trailing:
+                            (userRole == 'admin' || userRole == 'seller')
+                                ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit,
+                                        color: Colors.blue,
+                                      ),
+                                      onPressed:
+                                          () => _showCategoryDialog(
+                                            context,
+                                            category: category,
+                                          ),
                                     ),
-                                    onPressed:
-                                        () => _showCategoryDialog(
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () async {
+                                        await Provider.of<CategoryProvider>(
                                           context,
-                                          category: category,
-                                        ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
+                                          listen: false,
+                                        ).deleteCategory(category.id);
+                                      },
                                     ),
-                                    onPressed: () async {
-                                      await Provider.of<CategoryProvider>(
-                                        context,
-                                        listen: false,
-                                      ).deleteCategory(category.id);
-                                    },
-                                  ),
-                                ],
-                              )
-                              : null,
+                                  ],
+                                )
+                                : null,
+                      ),
                     );
                   },
                 ),

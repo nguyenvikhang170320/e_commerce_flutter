@@ -39,6 +39,7 @@ class _CategoryListState extends State<CategoryList> {
         separatorBuilder: (_, __) => SizedBox(width: 10),
         itemBuilder: (context, index) {
           final cat = categories[index];
+
           final isSelected = cat.id == selectedId;
           return GestureDetector(
             onTap: () {

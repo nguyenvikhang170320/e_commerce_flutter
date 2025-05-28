@@ -367,9 +367,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 items:
                     <String>[
                       'pending',
-                      'processing',
                       'shipping',
-                      'delivered',
                       'completed',
                       'cancelled',
                     ].map((String value) {
