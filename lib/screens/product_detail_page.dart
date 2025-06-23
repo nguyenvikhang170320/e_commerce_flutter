@@ -1,3 +1,4 @@
+import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import '../models/products.dart';
 import 'package:intl/intl.dart';
@@ -16,7 +17,18 @@ class ProductDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(product.name)),
+      appBar: AppBar(
+        title: Text(product.name, style: TextStyle(fontSize: 18)),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(
+              context,
+            ).pushReplacement(MaterialPageRoute(builder: (ctx) => BottomNav()));
+          },
+        ),
+
+      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -36,17 +48,17 @@ class ProductDetailScreen extends StatelessWidget {
                 ),
             SizedBox(height: 16),
             Text(
-              product.name,
+              "Sản phẩm: ${product.name}",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
             Text(
-              formatCurrency(product.price),
+              "Giá: ${formatCurrency(product.price)}",
               style: TextStyle(fontSize: 20, color: Colors.deepPurple),
             ),
             SizedBox(height: 16),
             Text(
-              product.description ?? "Không có mô tả",
+              "Mô tả: ${product.description}",
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 16),
@@ -58,23 +70,6 @@ class ProductDetailScreen extends StatelessWidget {
             Text(
               "Danh mục: ${product.categoryId ?? 'Không xác định'}",
               style: TextStyle(fontSize: 16),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton.icon(
-              icon: Icon(Icons.shopping_cart),
-              label: Text("Thêm vào giỏ hàng"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                minimumSize: Size(double.infinity, 50),
-              ),
-              onPressed: () {
-                // TODO: Thêm xử lý thêm sản phẩm vào giỏ hàng hoặc chuyển sang màn hình thêm giỏ hàng
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Bạn vừa thêm sản phẩm vào giỏ hàng!'),
-                  ),
-                );
-              },
             ),
           ],
         ),

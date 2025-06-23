@@ -55,7 +55,6 @@ class ProductService {
   }
 
   //Lấy danh sách sản phẩm theo categoryId
-
   static Future<List<Map<String, dynamic>>> fetchProducts(
     int categoryId,
   ) async {

@@ -1,9 +1,5 @@
-import 'package:app_ecommerce/models/cartItem.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/screens/create_order_page.dart';
-import 'package:app_ecommerce/screens/payment_page.dart';
-import 'package:app_ecommerce/services/cart_service.dart';
-import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -49,6 +45,7 @@ class _CartPageState extends State<CartPage> {
           listen: false,
         ).accessToken; // Lấy token
     if (token != null) {
+
       // Gọi fetchCart với token đã lấy được
       if (userRole == 'admin') {
         ToastService.showWarningToast(
@@ -58,10 +55,11 @@ class _CartPageState extends State<CartPage> {
           message: "Bạn là tài khoản admin, nên sẽ hiển thị giỏ hàng trống",
         );
       }
-      await Provider.of<CartProvider>(context, listen: false).fetchCart(token!);
+
     } else {
       print("❌ Không có token để xác thực");
     }
+    await Provider.of<CartProvider>(context, listen: false).fetchCart(token!);
     setState(() => isLoading = false);
   }
 

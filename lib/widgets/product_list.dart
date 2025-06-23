@@ -4,6 +4,7 @@ import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/screens/category_page.dart';
+import 'package:app_ecommerce/screens/product_detail_page.dart';
 import 'package:app_ecommerce/screens/product_page.dart';
 import 'package:app_ecommerce/services/product_service.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
@@ -130,7 +131,7 @@ class _ProductListState extends State<ProductList> {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder:
-                              (ctx) => ProductScreen(), // Truyền ID sản phẩm
+                              (ctx) => ProductDetailScreen(product: prod,), // Truyền ID sản phẩm
                         ),
                       );
                     },

@@ -1,6 +1,7 @@
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/add_to_cart_page.dart';
+import 'package:app_ecommerce/screens/product_detail_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -60,41 +61,48 @@ class _FeaturedProductListState extends State<FeaturedProductList> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: ListTile(
-                leading: Image.network(
-                  prod.image ?? '',
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                ),
-                title: Text(prod.name),
-                subtitle: Text(formatCurrency(prod.price)),
-                trailing: ElevatedButton(
-                  onPressed: () async {
-                    if (userRole == 'admin') {
-                      ToastService.showWarningToast(
-                        context,
-                        length: ToastLength.medium,
-                        expandedHeight: 100,
-                        message:
-                            "Bạn là tài khoản admin, nên không thể thêm sản phẩm giỏ hàng",
-                      );
-                    } else {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder:
-                              (context) => AddToCartScreen(
-                                product: prod,
-                                token: token!, // đã check null
-                              ),
-                        ),
-                      );
-                    }
-                  },
-                  child: Text("+Thêm", style: TextStyle(color: Colors.white70)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    shape: StadiumBorder(),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (ctx) => ProductDetailScreen(product: prod)),
+                  );
+                },
+                child: ListTile(
+                  leading: Image.network(
+                    prod.image ?? '',
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                  ),
+                  title: Text(prod.name),
+                  subtitle: Text(formatCurrency(prod.price)),
+                  trailing: ElevatedButton(
+                    onPressed: () async {
+                      if (userRole == 'admin') {
+                        ToastService.showWarningToast(
+                          context,
+                          length: ToastLength.medium,
+                          expandedHeight: 100,
+                          message:
+                              "Bạn là tài khoản admin, nên không thể thêm sản phẩm giỏ hàng",
+                        );
+                      } else {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder:
+                                (context) => AddToCartScreen(
+                                  product: prod,
+                                  token: token!, // đã check null
+                                ),
+                          ),
+                        );
+                      }
+                    },
+                    child: Text("+Thêm", style: TextStyle(color: Colors.white70)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      shape: StadiumBorder(),
+                    ),
                   ),
                 ),
               ),

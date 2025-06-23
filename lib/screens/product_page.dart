@@ -5,6 +5,7 @@ import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/screens/add_to_cart_page.dart';
 import 'package:app_ecommerce/screens/create_product_page.dart';
 import 'package:app_ecommerce/screens/global_search_page.dart';
+import 'package:app_ecommerce/screens/product_detail_page.dart';
 import 'package:app_ecommerce/screens/update_product_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
@@ -57,6 +58,7 @@ class _ProductScreenState extends State<ProductScreen> {
         setState(() {
           userRole = data['role'];
           print("Người dùng $userRole");
+          Provider.of<ProductProvider>(context, listen: false).fetchProducts();
         });
       } else {
         print('Không thể lấy role. Status: ${response.statusCode}');
@@ -235,6 +237,11 @@ class _ProductScreenState extends State<ProductScreen> {
                   return Stack(
                     children: [
                       GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(builder: (ctx) => ProductDetailScreen(product: prod)),
+                          );
+                        },
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,

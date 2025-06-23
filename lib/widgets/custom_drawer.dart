@@ -1,15 +1,14 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
-import 'package:app_ecommerce/screens/chat_page.dart';
 import 'package:app_ecommerce/screens/chat_list_page.dart';
 import 'package:app_ecommerce/screens/favorite_list_page.dart';
-import 'package:app_ecommerce/screens/home_page.dart';
 import 'package:app_ecommerce/screens/login_page.dart';
 import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/screens/profile_page.dart';
 import 'package:app_ecommerce/screens/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
+import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
@@ -74,7 +73,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
               Navigator.pop(context); // đóng drawer
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => HomePage()),
+                MaterialPageRoute(builder: (context) => BottomNav()),
               ); // đóng drawer
               // Thêm điều hướng nếu cần
             },
