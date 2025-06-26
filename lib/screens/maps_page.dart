@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+// import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http; // Import http
@@ -33,7 +33,7 @@ class MapsPageState extends State<MapsPage> {
   String? _pickedAddress;
   final Set<Marker> _markers = {};
   List<LatLng> _polylineCoordinates = [];
-  final PolylinePoints _polylinePoints = PolylinePoints();
+  // final PolylinePoints _polylinePoints = PolylinePoints();
   final String? _googleApiKey = dotenv.env['Maps_API_KEY'];
   bool _disposed = false;
 
@@ -180,7 +180,7 @@ class MapsPageState extends State<MapsPage> {
           );
         });
         _goToLocation(_pickedLocation!); // Di chuyển camera đến vị trí đã lưu
-        _drawPolyline(); // Vẽ đường đi nếu có cả current và picked
+        // _drawPolyline(); // Vẽ đường đi nếu có cả current và picked
         print('Đã tải vị trí đích từ DB: $_pickedAddress');
         return; // Đã tìm thấy và xử lý, thoát
       } else if (response.statusCode == 404) {
@@ -235,7 +235,7 @@ class MapsPageState extends State<MapsPage> {
         _goToLocation(
           _pickedLocation!,
         ); // Di chuyển camera đến vị trí đã Geocoding
-        _drawPolyline(); // Vẽ đường đi nếu có cả current và picked
+        // _drawPolyline(); // Vẽ đường đi nếu có cả current và picked
 
         // 3. Lưu tọa độ vừa Geocoding vào backend
         await _saveLocationToBackend(
@@ -353,7 +353,7 @@ class MapsPageState extends State<MapsPage> {
     _polylineCoordinates.clear(); // Xóa polyline cũ
     await _getAddress(position); // Gọi _getAddress để lấy địa chỉ
     _safeSetState(() {});
-    _drawPolyline(); // Vẽ lại đường đi sau khi chọn vị trí mới
+    // _drawPolyline(); // Vẽ lại đường đi sau khi chọn vị trí mới
   }
 
   Future<void> _getAddress(LatLng position) async {
@@ -378,66 +378,66 @@ class MapsPageState extends State<MapsPage> {
   }
 
   // Vẽ đường đi giữa vị trí hiện tại và vị trí đã chọn
-  void _drawPolyline() async {
-    if (_currentLocation == null || _pickedLocation == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Vui lòng chọn vị trí hiện tại và vị trí đến.'),
-          ),
-        );
-      }
-      return;
-    }
-
-    // Đảm bảo _googleApiKey đã được tải
-    if (_googleApiKey == null || _googleApiKey!.isEmpty) {
-      print("Lỗi: Không có Maps_API_KEY để vẽ đường đi.");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Lỗi: Thiếu Google Maps API Key để vẽ đường đi.'),
-          ),
-        );
-      }
-      return;
-    }
-
-    PolylineResult result = await _polylinePoints.getRouteBetweenCoordinates(
-      googleApiKey: _googleApiKey!,
-      request: PolylineRequest(
-        origin: PointLatLng(
-          _currentLocation!.latitude,
-          _currentLocation!.longitude,
-        ),
-        destination: PointLatLng(
-          _pickedLocation!.latitude,
-          _pickedLocation!.longitude,
-        ),
-        mode: TravelMode.driving,
-      ),
-    );
-
-    if (result.points.isNotEmpty) {
-      _safeSetState(() {
-        _polylineCoordinates =
-            result.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
-      });
-      // Căn chỉnh camera để hiển thị toàn bộ đường đi
-      _fitMapToRoute();
-    } else {
-      print("Không tìm thấy đường đi: ${result.errorMessage}");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Không tìm thấy đường đi: ${result.errorMessage ?? 'Lỗi không xác định'}',
-            ),
-          ),
-        );
-      }
-    }
-  }
+  // void _drawPolyline() async {
+  //   if (_currentLocation == null || _pickedLocation == null) {
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('Vui lòng chọn vị trí hiện tại và vị trí đến.'),
+  //         ),
+  //       );
+  //     }
+  //     return;
+  //   }
+  //
+  //   // Đảm bảo _googleApiKey đã được tải
+  //   if (_googleApiKey == null || _googleApiKey!.isEmpty) {
+  //     print("Lỗi: Không có Maps_API_KEY để vẽ đường đi.");
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text('Lỗi: Thiếu Google Maps API Key để vẽ đường đi.'),
+  //         ),
+  //       );
+  //     }
+  //     return;
+  //   }
+  //
+  //   PolylineResult result = await _polylinePoints.getRouteBetweenCoordinates(
+  //     googleApiKey: _googleApiKey!,
+  //     request: PolylineRequest(
+  //       origin: PointLatLng(
+  //         _currentLocation!.latitude,
+  //         _currentLocation!.longitude,
+  //       ),
+  //       destination: PointLatLng(
+  //         _pickedLocation!.latitude,
+  //         _pickedLocation!.longitude,
+  //       ),
+  //       mode: TravelMode.driving,
+  //     ),
+  //   );
+  //
+  //   if (result.points.isNotEmpty) {
+  //     _safeSetState(() {
+  //       _polylineCoordinates =
+  //           result.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+  //     });
+  //     // Căn chỉnh camera để hiển thị toàn bộ đường đi
+  //     _fitMapToRoute();
+  //   } else {
+  //     print("Không tìm thấy đường đi: ${result.errorMessage}");
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text(
+  //             'Không tìm thấy đường đi: ${result.errorMessage ?? 'Lỗi không xác định'}',
+  //           ),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 
   // Căn chỉnh camera để hiển thị toàn bộ đường đi
   void _fitMapToRoute() {
@@ -538,7 +538,9 @@ class MapsPageState extends State<MapsPage> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: ElevatedButton(
-                          onPressed: _drawPolyline,
+                          onPressed: () {
+                            // _drawPolyline
+                          },
                           child: const Text('Vẽ đường đi từ vị trí hiện tại'),
                         ),
                       ),

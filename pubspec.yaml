@@ -50,9 +50,9 @@ dependencies:
   google_maps_flutter: ^2.6.0 #maps
   geolocator: ^13.0.2 #maps
   geocoding: ^3.0.0 #maps
-  flutter_polyline_points: ^2.1.0 #vẽ bản đồ
   webview_flutter: ^4.11.0
   dio: ^5.7.0
+  url_launcher: ^6.2.5 #link maps
 
 
 dev_dependencies:

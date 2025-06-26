@@ -1,6 +1,7 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/category_provider.dart';
 import 'package:app_ecommerce/providers/favorite_provider.dart';
+import 'package:app_ecommerce/providers/location_provider.dart';
 import 'package:app_ecommerce/providers/message_provider.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart'; // Import NotificationProvider
 import 'package:app_ecommerce/providers/product_provider.dart';
@@ -25,6 +26,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),

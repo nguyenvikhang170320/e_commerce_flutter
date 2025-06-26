@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:app_ecommerce/providers/location_provider.dart';
 import 'package:app_ecommerce/screens/all_order_page.dart';
 import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
@@ -6,11 +9,14 @@ import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:app_ecommerce/services/order_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/notification_provider.dart';
 
@@ -87,7 +93,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     });
   }
 
-  //địa chỉ maps
   Future<void> _extractCoordinates(String? address) async {
     if (address != null && address.isNotEmpty) {
       try {
@@ -98,9 +103,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               locations.first.latitude,
               locations.first.longitude,
             );
+            print(locations.first.latitude);
+            print(locations.first.longitude);
           });
-        } else {
-          print('Không tìm thấy tọa độ cho địa chỉ: $address');
         }
       } catch (e) {
         print('Lỗi khi lấy tọa độ từ địa chỉ: $e');
@@ -108,33 +113,78 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
-  void _handleLocationSelected(LatLng location, String address) {
-    setState(() {
-      // Cập nhật địa chỉ hiển thị (nếu cần)
-      orderDetail!['order']['address'] = address;
-      _deliveryCoordinates = location;
-    });
-    // Bạn có thể gọi API để cập nhật địa chỉ đơn hàng ở đây nếu cần
-    print(
-      'Địa chỉ đã chọn: $address, tọa độ: <span class="math-inline">location',
+  Future<void> getAndLaunchDirection(String origin, String destination) async {
+    final response = await http.post(
+      Uri.parse('${dotenv.env['BASE_URL']}/maps/direction-link'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'origin': origin, // Đã được truyền mặc định từ ngoài rồi
+        'destination': destination,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final url = jsonDecode(response.body)['url'];
+      if (await canLaunchUrl(Uri.parse(url))) {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      }
+    }
+  }
+
+
+  Widget _buildOrderAdress(String label, String value, {TextStyle? style}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontWeight: FontWeight.w500)),
+          SizedBox(width: 10),
+          Expanded(
+            child: InkWell(
+              onTap: () async {
+                //nếu về sau cần lấy địa chỉ hiện tại, không dùng địa chỉ mặc định, thì mở dòng này lên
+                // final locationProvider = Provider.of<LocationProvider>(context, listen: false);
+                // await locationProvider.fetchCurrentLocation();
+                // String? origin = locationProvider.currentLocation;
+                String origin = "10.157502,105.666427"; //ĐLA-TÂN AN-TÂN-PHÚ-TÂN QUỚI,Đinh Hoà, Lai Vung, Đồng Tháp, Việt Nam
+                print("📍 Dùng vị trí mặc định làm origin: $origin");
+                final destination = value;
+
+                // // Nếu origin bị null hoặc không hợp lệ => fallback luôn
+                // if (origin == null || !origin.contains(',') || origin.startsWith('0.0')) {
+                //   origin = "22 Đ. Tôn Đức Thắng, P, Sa Đéc, Đồng Tháp 870000, Việt Nam";
+                //   print("⛳️ Không lấy được vị trí hoặc vị trí sai, dùng địa chỉ mặc định: $origin");
+                // } else {
+                //   print("📍 Lấy được vị trí: $origin");
+                // }
+
+                if (destination.isNotEmpty) {
+                  await getAndLaunchDirection(origin!, destination);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Địa chỉ đích không hợp lệ")),
+                  );
+                }
+              },
+
+              child: Text(
+                value,
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  // Hàm điều hướng đến trang MapsPage
-  void _navigateToMapPage() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => MapsPage(onLocationSelected: _handleLocationSelected),
-      ),
-    );
-    // Bạn có thể xử lý kết quả trả về từ MapsPage nếu cần
-    if (result != null) {
-      // Ví dụ: Cập nhật lại thông tin đơn hàng nếu địa chỉ thay đổi
-      _fetchOrderDetail();
-    }
-  }
+
+
 
   // Cập nhật trạng thái đơn hàng và thanh toán
   Future<void> _updateOrderStatus(
@@ -508,29 +558,4 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  Widget _buildOrderAdress(String label, String value, {TextStyle? style}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontWeight: FontWeight.w500)),
-          SizedBox(width: 10),
-          Expanded(
-            child: InkWell(
-              onTap: _navigateToMapPage, // Gọi hàm điều hướng khi nhấn
-              child: Text(
-                value,
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  color: Colors.blue,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
