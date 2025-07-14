@@ -1,11 +1,14 @@
 import 'package:app_ecommerce/providers/notification_provider.dart';
-import 'package:app_ecommerce/screens/create_order_page.dart';
+import 'package:app_ecommerce/services/order_service.dart';
+import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toasty_box/toast_enums.dart';
 import 'package:toasty_box/toast_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/cart_provider.dart';
 import '../providers/user_provider.dart';
 import 'notification_page.dart';
@@ -20,10 +23,61 @@ class _CartPageState extends State<CartPage> {
   bool isLoading = true;
   String? token;
   String? userRole;
+
   @override
   void initState() {
     super.initState();
     _loadData();
+    // _checkLastOrderStatus();
+  }
+
+  Future<void> _checkLastOrderStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastOrderId = prefs.getString('lastOrderId');
+    final isHandled = prefs.getBool('isOrderHandled') ?? false;
+    if (lastOrderId == null) return;
+
+    try {
+      final token = await SharedPrefsHelper.getToken(); // nếu bạn đang dùng token
+      final response = await Dio().get(
+        'http://192.168.1.7:5000/api/orders/$lastOrderId',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        print('📦 Response data: $data');
+
+        if (data['order'] == null) {
+          print('⚠️ Không tìm thấy đơn hàng trong response');
+          return;
+        }
+
+        final order = data['order'];
+        final paymentStatus = order['payment_status'];
+        print('💰 payment_status = $paymentStatus');
+
+        if (paymentStatus == 'pending') {
+          Provider.of<CartProvider>(context, listen: false).cleanCart();
+
+          ToastService.showSuccessToast(
+            context,
+            message: 'Thanh toán đơn hàng #$lastOrderId thành công!',
+          );
+
+          // 🔒 Đánh dấu đã xử lý đơn hàng => không xử lý lại nữa
+          await prefs.setBool('isOrderHandled', true);
+          // Hoặc có thể xóa luôn cả 2 key nếu không cần giữ lại
+          await prefs.remove('lastOrderId');
+          await prefs.remove('isOrderHandled');
+        }
+      }
+    } catch (e, stack) {
+      print('❌ Lỗi khi kiểm tra trạng thái đơn hàng: $e');
+      print('🔍 Stacktrace: $stack');
+    }
   }
 
   //giá tiền
@@ -45,7 +99,6 @@ class _CartPageState extends State<CartPage> {
           listen: false,
         ).accessToken; // Lấy token
     if (token != null) {
-
       // Gọi fetchCart với token đã lấy được
       if (userRole == 'admin') {
         ToastService.showWarningToast(
@@ -55,11 +108,10 @@ class _CartPageState extends State<CartPage> {
           message: "Bạn là tài khoản admin, nên sẽ hiển thị giỏ hàng trống",
         );
       }
-
+      await Provider.of<CartProvider>(context, listen: false).fetchCart(token!);
     } else {
       print("❌ Không có token để xác thực");
     }
-    await Provider.of<CartProvider>(context, listen: false).fetchCart(token!);
     setState(() => isLoading = false);
   }
 
@@ -139,73 +191,210 @@ class _CartPageState extends State<CartPage> {
   }
 
   void handleCheckout(BuildContext context) async {
-    print("handleCheckout $token");
-    if (token == null) {
-      ToastService.showToast(
-        context,
-        length: ToastLength.medium,
-        expandedHeight: 80,
-        message: "Token không hợp lệ hoặc người dùng chưa đăng nhập.",
-      );
-      return;
-    }
-    // Ví dụ orderId có thể lấy từ backend hoặc tạo tạm thời
-    String orderId = DateTime.now().millisecondsSinceEpoch.toString();
-
-    // Lấy tổng tiền từ CartProvider (lưu ý là double, chưa format)
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
-    double totalAmount =
-        cartProvider.totalPrice; // giả sử totalPrice kiểu double
+    final userId = Provider.of<UserProvider>(context, listen: false).userId;
+
+    final TextEditingController addressController = TextEditingController();
+    final TextEditingController phoneController = TextEditingController();
 
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: Text("Xác nhận thanh toán"),
-            content: Text("Chọn phương thức thanh toán của bạn:"),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(), // Đóng dialog (Hủy)
-                child: Text("Hủy"),
-              ),
-              TextButton(
-                onPressed: () {
-                  ToastService.showToast(
-                    context,
-                    length: ToastLength.medium,
-                    expandedHeight: 80,
-                    message: "Thanh toán tiền mặt",
-                  );
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CreateOrderScreen(),
-                    ),
-                  );
-                },
-                child: Text(
-                  "Thanh toán tiền mặt",
-                  style: TextStyle(color: Colors.green),
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text("Xác nhận thanh toán"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Chọn phương thức thanh toán của bạn:"),
+                SizedBox(height: 12),
+                TextField(
+                  controller: addressController,
+                  decoration: InputDecoration(
+                    labelText: "Địa chỉ giao hàng",
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              TextButton(
-                onPressed: () async {
-                  ToastService.showToast(
-                    context,
-                    length: ToastLength.medium,
-                    expandedHeight: 80,
-                    message: "Thông cảm, chức năng tạm thời đang phát triển",
-                  );
-                },
-                child: Text(
-                  "Thanh toán VNPAY",
-                  style: TextStyle(color: Colors.blue),
+                SizedBox(height: 12),
+                TextField(
+                  controller: phoneController,
+                  decoration: InputDecoration(
+                    labelText: "Số điện thoại",
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.phone,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text("Hủy"),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop(); // Đóng dialog
+                final address = addressController.text.trim();
+                final phone = phoneController.text.trim();
+
+                if (address.isEmpty || phone.isEmpty) {
+                  ToastService.showWarningToast(
+                    context,
+                    message: "Vui lòng nhập đầy đủ địa chỉ và số điện thoại.",
+                  );
+                  return;
+                }
+                final notificationProvider = Provider.of<NotificationProvider>(
+                  context,
+                  listen: false,
+                );
+                final userProvider = Provider.of<UserProvider>(context, listen: false);
+                final orderService = OrderService();
+
+                  bool success = await orderService.createOrder(
+                    address: address,
+                    phone: phone,
+                    // Nếu cần gửi tọa độ thì thêm:
+                    // lat: _selectedLatLng?.latitude,
+                    // lng: _selectedLatLng?.longitude,
+                  );
+
+                  if (success) {
+                    Provider.of<CartProvider>(context, listen: false).cleanCart();
+                    ToastService.showSuccessToast(
+                      context,
+                      length: ToastLength.medium,
+                      expandedHeight: 80,
+                      message: "Đặt hàng thành công",
+                    );
+                    notificationProvider.sendNotification(
+                      userId: userProvider.userId!,
+                      title: 'Đơn hàng đã thanh toán',
+                      message: '${userProvider.name ?? 'Khách'} vừa thanh toán.',
+                      type: 'order',
+                    );
+                    notificationProvider.loadUnreadCount(notificationProvider.authToken!);
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => BottomNav()),
+                    );
+                  } else {
+                    ToastService.showErrorToast(
+                      context,
+                      length: ToastLength.medium,
+                      expandedHeight: 80,
+                      message: "Lỗi khi đặt hàng",
+                    );
+                  }
+              },
+              child: Text("Thanh toán tiền mặt", style: TextStyle(color: Colors.green)),
+            ),
+            TextButton(
+              onPressed: () async {
+                final address = addressController.text.trim();
+                final phone = phoneController.text.trim();
+                final notificationProvider = Provider.of<NotificationProvider>(
+                  context,
+                  listen: false,
+                );
+                final userProvider = Provider.of<UserProvider>(context, listen: false);
+                if (address.isEmpty || phone.isEmpty) {
+                  ToastService.showWarningToast(
+                    context,
+                    message: "Vui lòng nhập đầy đủ địa chỉ và số điện thoại.",
+                  );
+                  return;
+                }
+
+                try {
+                  ToastService.showToast(
+                    context,
+                    message: "Đang tạo đơn hàng...",
+                    length: ToastLength.short,
+                  );
+
+                  final items = cartProvider.itemCart.map((item) => {
+                    "product_id": item.productId,
+                    "quantity": item.quantity,
+                    "price": item.price,
+                  }).toList();
+
+                  final response = await Dio().post(
+                    'http://192.168.1.7:5000/api/orders/with-payment-url',
+                    data: {
+                      "user_id": userId,
+                      "total_amount": cartProvider.totalPrice,
+                      "address": addressController.text,
+                      "phone": phoneController.text,
+                      "items": items, // 👈 Gửi danh sách sản phẩm
+                    },
+                  );
+
+                  if (response.statusCode == 200) {
+                    final data = response.data;
+                    final int orderId = data['orderId'];
+                    final String paymentUrl = data['paymentUrl'];
+                    print("✅ Đơn hàng ID: $orderId");
+                    print("🔗 URL thanh toán (${paymentUrl.length} ký tự): $paymentUrl");
+                    final uri = Uri.parse(paymentUrl);
+                    print("✅ URI hợp lệ: ${uri.toString()}");
+                    // await SharedPrefsHelper.saveLastOrderId(orderId.toString());
+                    Provider.of<CartProvider>(context, listen: false).cleanCart();
+
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      notificationProvider.sendNotification(
+                        userId: userProvider.userId!,
+                        title: 'Đơn hàng đã thanh toán',
+                        message: '${userProvider.name ?? 'Khách'} vừa thanh toán.',
+                        type: 'order',
+                      );
+                      notificationProvider.loadUnreadCount(notificationProvider.authToken!);
+                      ToastService.showToast(
+                        context,
+                        message: "Vui lòng hoàn tất thanh toán trong trình duyệt.",
+                        length: ToastLength.short,
+                      );
+
+                      ToastService.showSuccessToast(
+                        context,
+                        message: "Đơn hàng thanh toán thành công",
+                        length: ToastLength.short,
+                      );
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (ctx) => BottomNav()),
+                      );
+                    } else {
+                      ToastService.showErrorToast(
+                        context,
+                        message: "Không thể mở trang thanh toán VNPAY.",
+                      );
+                    }
+                  } else {
+                    ToastService.showWarningToast(
+                      context,
+                      message: "Không tạo được đơn hàng VNPAY.",
+                    );
+                  }
+                } catch (e) {
+                  print("❌ Lỗi khi gọi API VNPAY: $e");
+                  ToastService.showErrorToast(
+                    context,
+                    message: "Không kết nối được máy chủ.",
+                  );
+                }
+
+
+              },
+              child: Text("Thanh toán VNPAY", style: TextStyle(color: Colors.blue)),
+            ),
+          ],
+        );
+      },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
