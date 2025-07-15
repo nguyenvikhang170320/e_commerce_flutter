@@ -1,117 +1,74 @@
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-
 import '../models/notification.dart';
 
 class NotificationService {
-  final String baseUrl = '${dotenv.env['BASE_URL']}/notifications';
+  final String baseUrl;
 
-  Future<List<NotificationItem>> fetchNotifications(String authToken) async {
+  NotificationService({required this.baseUrl});
+
+  Future<List<NotificationItem>> fetchNotifications(String token) async {
     final response = await http.get(
-      Uri.parse(baseUrl),
-      headers: {'Authorization': 'Bearer $authToken'},
+      Uri.parse('$baseUrl/notifications'),
+      headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode == 200) {
-      List data = json.decode(response.body);
+      final List data = json.decode(response.body)['data'];
       return data.map((e) => NotificationItem.fromJson(e)).toList();
     } else {
-      print(
-        'Failed to fetch notifications - Status Code: ${response.statusCode}',
-      );
-      print('Failed to fetch notifications - Body: ${response.body}');
       throw Exception('Failed to fetch notifications');
     }
   }
-
-  Future<int> fetchUnreadCount(String authToken) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/count'),
-      headers: {'Authorization': 'Bearer $authToken'},
-    );
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return data['unread_count'] ?? 0;
-    } else {
-      print(
-        'Failed to fetch unread count - Status Code: ${response.statusCode}',
-      );
-      print('Failed to fetch unread count - Body: ${response.body}');
-      throw Exception('Failed to fetch unread count');
-    }
-  }
-
-  Future<void> markAsRead(int id, String authToken) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/$id/read'),
-      headers: {'Authorization': 'Bearer $authToken'},
-    );
-    if (response.statusCode != 200) {
-      print(
-        'Failed to mark notification as read - Status Code: ${response.statusCode}',
-      );
-      print('Failed to mark notification as read - Body: ${response.body}');
-      throw Exception('Failed to mark notification as read');
-    }
-  }
-
-  Future<bool> sendNotification({
-    required int userId,
+  Future<void> sendNotification({
+    required List<int> receivers,
     required String title,
     required String message,
     required String type,
-    Map<String, dynamic>? extraData,
-    required String authToken, // 👈 Đổi tên rõ ràng để chỉ token xác thực
   }) async {
-    try {
-      final response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $authToken', // 👈 Thêm Authorization header
-        },
-        body: json.encode({
-          'userId': userId,
-          'title': title,
-          'message': message,
-          'type': type,
-          'extraData': extraData ?? {},
-          // 'token': authToken, // 👈 Backend không cần token này nữa cho việc tạo thông báo
-        }),
-      );
-      print(
-        'Send notification response: ${response.statusCode} ${response.body}',
-      );
-      return response.statusCode == 201;
-    } catch (e) {
-      print('Error sending notification: $e');
-      return false;
+    final response = await http.post(
+      Uri.parse('$baseUrl/notifications'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'receivers': receivers,
+        'title': title,
+        'message': message,
+        'type': type,
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      print('❌ Gửi thông báo thất bại: ${response.body}');
+      throw Exception('Failed to send notification');
+    } else {
+      print('✅ Gửi thông báo thành công');
     }
   }
 
-  // 🆕 Phương thức mới để đánh dấu tất cả thông báo là đã đọc
-  Future<bool> markAllAsRead(String authToken) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/mark-all-as-read'), // Gọi endpoint mới ở backend
-        headers: {'Authorization': 'Bearer $authToken'},
-      );
-
-      if (response.statusCode == 200) {
-        print('Successfully marked all notifications as read.');
-        return true;
-      } else {
-        print(
-          'Failed to mark all notifications as read - Status Code: ${response.statusCode}',
-        );
-        print(
-          'Failed to mark all notifications as read - Body: ${response.body}',
-        );
-        throw Exception('Failed to mark all notifications as read');
-      }
-    } catch (e) {
-      print('Error marking all notifications as read: $e');
-      return false;
+  Future<int> fetchUnreadCount(String token) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/notifications/count'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body)['unread_count'];
+    } else {
+      return 0;
     }
+  }
+
+  Future<bool> markAsRead(int id, String token) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/notifications/$id/read'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    return response.statusCode == 200;
+  }
+
+  Future<bool> markAllAsRead(String token) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/notifications/mark-all-as-read'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    return response.statusCode == 200;
   }
 }

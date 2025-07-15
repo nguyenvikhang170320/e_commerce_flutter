@@ -3,6 +3,7 @@ import 'package:app_ecommerce/services/order_service.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -269,12 +270,12 @@ class _CartPageState extends State<CartPage> {
                       message: "Đặt hàng thành công",
                     );
                     notificationProvider.sendNotification(
-                      userId: userProvider.userId!,
+                      receivers: [userProvider.userId!], // 👈 gửi đến chính user hiện tại
                       title: 'Đơn hàng đã thanh toán',
-                      message: '${userProvider.name ?? 'Khách'} vừa thanh toán.',
+                      message: '${userProvider.name ?? 'Khách'} vừa thanh toán đơn hàng.',
                       type: 'order',
                     );
-                    notificationProvider.loadUnreadCount(notificationProvider.authToken!);
+                    notificationProvider.loadUnreadCount();
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (context) => BottomNav()),
@@ -319,9 +320,10 @@ class _CartPageState extends State<CartPage> {
                     "quantity": item.quantity,
                     "price": item.price,
                   }).toList();
-
+                  final double shippingFee = 15000; // Phí ship cố định 30k
+                  final double discountPercent = 10;
                   final response = await Dio().post(
-                    'http://192.168.1.7:5000/api/orders/with-payment-url',
+                    '${dotenv.env['BASE_URL']}/orders/with-payment-url',
                     data: {
                       "user_id": userId,
                       "total_amount": cartProvider.totalPrice,
@@ -330,6 +332,7 @@ class _CartPageState extends State<CartPage> {
                       "items": items, // 👈 Gửi danh sách sản phẩm
                     },
                   );
+                  Provider.of<CartProvider>(context, listen: false).cleanCart();
 
                   if (response.statusCode == 200) {
                     final data = response.data;
@@ -340,17 +343,17 @@ class _CartPageState extends State<CartPage> {
                     final uri = Uri.parse(paymentUrl);
                     print("✅ URI hợp lệ: ${uri.toString()}");
                     // await SharedPrefsHelper.saveLastOrderId(orderId.toString());
-                    Provider.of<CartProvider>(context, listen: false).cleanCart();
+
 
                     if (await canLaunchUrl(uri)) {
                       await launchUrl(uri, mode: LaunchMode.externalApplication);
-                      notificationProvider.sendNotification(
-                        userId: userProvider.userId!,
+                      await notificationProvider.sendNotification(
+                        receivers: [userProvider.userId!], // 👈 gửi đến chính user hiện tại
                         title: 'Đơn hàng đã thanh toán',
-                        message: '${userProvider.name ?? 'Khách'} vừa thanh toán.',
-                        type: 'order',
+                        message: '${userProvider.name ?? 'Khách'} vừa thanh toán đơn hàng.',
+                        type: 'payment',
                       );
-                      notificationProvider.loadUnreadCount(notificationProvider.authToken!);
+                      await notificationProvider.loadUnreadCount();
                       ToastService.showToast(
                         context,
                         message: "Vui lòng hoàn tất thanh toán trong trình duyệt.",

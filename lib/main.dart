@@ -33,14 +33,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
-        ChangeNotifierProvider(
-          create: (context) {
-            final notificationProvider = NotificationProvider();
-            notificationProvider
-                .init(); // Initialize NotificationProvider here!
-            return notificationProvider;
-          },
-        ),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProxyProvider<UserProvider, FavoriteProvider>(
           create: (context) => FavoriteProvider(0), // Giá trị khởi tạo tạm thời
           update:

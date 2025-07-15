@@ -3,7 +3,6 @@ import 'package:app_ecommerce/providers/favorite_provider.dart';
 import 'package:app_ecommerce/screens/change_password_page.dart';
 import 'package:app_ecommerce/screens/edit_profile_page.dart';
 import 'package:app_ecommerce/screens/favorite_list_page.dart';
-import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
 import 'package:app_ecommerce/screens/user_list_page.dart';
 import 'package:app_ecommerce/screens/verify_page.dart';

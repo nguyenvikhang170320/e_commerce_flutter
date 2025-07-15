@@ -1,5 +1,4 @@
 import 'package:app_ecommerce/screens/favorite_list_page.dart';
-import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';

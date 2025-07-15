@@ -1,16 +1,13 @@
 class NotificationItem {
   final int id;
-  final int userId;
   final String title;
   final String message;
   final String type;
-  final String status;  // read/unread
+  String status;
   final DateTime createdAt;
-
 
   NotificationItem({
     required this.id,
-    required this.userId,
     required this.title,
     required this.message,
     required this.type,
@@ -20,13 +17,12 @@ class NotificationItem {
 
   factory NotificationItem.fromJson(Map<String, dynamic> json) {
     return NotificationItem(
-      id: json['id'] as int? ?? 0, // Cung cấp giá trị mặc định nếu null
-      userId: json['user_id'] as int? ?? 0,
-      title: json['title'] as String? ?? '',
-      message: json['message'] as String? ?? '',
-      type: json['type'] as String? ?? '',
-      status: json['status'] as String? ?? '',
-      createdAt: _parseDate(json['created_at'])
+      id: json['id'],
+      title: json['title'],
+      message: json['message'],
+      type: json['type'],
+      status: json['status'],
+      createdAt:  _parseDate(json['created_at']),
     );
   }
   static DateTime _parseDate(dynamic value) {

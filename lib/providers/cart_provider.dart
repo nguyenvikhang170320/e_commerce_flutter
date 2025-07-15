@@ -8,24 +8,27 @@ class CartProvider with ChangeNotifier {
 
   List<CartItem> get itemCart => _itemCart;
 
-  // ✅ Thêm sản phẩm vào giỏ hàng
   Future<bool> addToCart({
     required Product product,
     required String token,
     required int quantity,
     required double price,
     String? currentUserName,
+    double discountPercent = 0.0,   // ✅ thêm vào
+    double shippingFee = 0.0,       // ✅ thêm vào
   }) async {
     final cartItem = await CartService.addToCart(
       productId: product.id,
       quantity: quantity,
       price: price,
       token: token,
+      discountPercent: discountPercent,   // ✅ truyền xuống service
+      shippingFee: shippingFee,           // ✅ truyền xuống service
     );
 
     if (cartItem != null) {
       final index = _itemCart.indexWhere(
-        (item) => item.productId == product.id,
+            (item) => item.productId == product.id,
       );
       if (index != -1) {
         _itemCart[index].quantity += quantity;
@@ -40,6 +43,7 @@ class CartProvider with ChangeNotifier {
       return false;
     }
   }
+
 
   // ✅ Lấy giỏ hàng từ backend
   Future<void> fetchCart(String token) async {

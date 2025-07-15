@@ -25,7 +25,7 @@ class AddToCartScreen extends StatefulWidget {
 
 class _AddToCartScreenState extends State<AddToCartScreen> {
   int quantity = 1;
-  final double shippingFee = 30000; // Phí ship cố định 30k
+  final double shippingFee = 15000; // Phí ship cố định 30k
   final double discountPercent = 10; // Giảm giá 10% demo
   String formatCurrency(String amountStr) {
     final amount = double.tryParse(amountStr) ?? 0;
@@ -241,6 +241,8 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     quantity: quantity,
                     price: total,
                     currentUserName: userProvider.name ?? '',
+                    shippingFee: shippingFee,
+                    discountPercent: discountPercent,
                   );
                   if (added) {
                     ToastService.showToast(
@@ -254,17 +256,13 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                       MaterialPageRoute(builder: (_) => CartPage()),
                     );
                   }
-
-                  notificationProvider.sendNotification(
-                    userId: widget.product.sellerId,
-                    title: 'Đơn hàng mới đã đặt!',
-                    message:
-                        '${userProvider.name ?? 'Khách'} vừa thêm ${widget.product.name} vào giỏ hàng.',
-                    type: 'order',
+                  await notificationProvider.sendNotification(
+                    receivers: [userProvider.userId!], // 👈 gửi đến chính user hiện tại
+                    title: 'Đơn hàng đã đặt',
+                    message: '${userProvider.name ?? 'Khách'} vừa đặt  đơn hàng.',
+                    type: 'cart',
                   );
-                  notificationProvider.loadUnreadCount(
-                    notificationProvider.authToken!,
-                  );
+                  await notificationProvider.loadUnreadCount();
                 },
                 child: const Text(
                   "Thêm vào giỏ hàng",

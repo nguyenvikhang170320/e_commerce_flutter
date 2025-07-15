@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:app_ecommerce/models/products.dart';
+import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
+import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/add_to_cart_page.dart';
 import 'package:app_ecommerce/screens/create_product_page.dart';
 import 'package:app_ecommerce/screens/global_search_page.dart';
@@ -165,7 +167,7 @@ class _ProductScreenState extends State<ProductScreen> {
                   );
 
                   if (confirm == true) {
-                    await ProductService.deleteProduct(prod.id.toString());
+                    await ProductService.deleteProduct(prod.id);
                     productProvider.fetchProducts();
                     ToastService.showSuccessToast(
                       context,
@@ -186,7 +188,10 @@ class _ProductScreenState extends State<ProductScreen> {
   @override
   Widget build(BuildContext context) {
     final favoriteProvider = Provider.of<FavoriteProvider>(context);
-
+    final notificationProvider =
+    Provider.of<NotificationProvider>(context, listen: false);
+    final userProvider =
+    Provider.of<UserProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -352,11 +357,18 @@ class _ProductScreenState extends State<ProductScreen> {
                       if (userRole !=
                           'admin') // Chỉ hiển thị nút yêu thích cho user và seller
                         Positioned(
-                          top: 8,
-                          right: 8,
+                          top: 220,
+                          right: 10,
                           child: GestureDetector(
-                            onTap: () {
+                            onTap: () async {
                               favoriteProvider.toggleFavorite(prod);
+                              await notificationProvider.sendNotification(
+                                receivers: [userProvider.userId!], // 👈 gửi đến chính user hiện tại
+                                title: 'Yêu thích',
+                                message: '${userProvider.name ?? 'Khách'} vừa thêm sản phẩm vào mục yêu thích.',
+                                type: 'favorite',
+                              );
+                              await notificationProvider.loadUnreadCount();
                             },
                             child: Icon(
                               isFavorite
@@ -369,8 +381,8 @@ class _ProductScreenState extends State<ProductScreen> {
                         ),
                       if (userRole == 'admin' || userRole == 'seller')
                         Positioned(
-                          top: 4,
-                          right: 40,
+                          top: 8,
+                          right: 2,
                           child: Container(
                             width: 30,
                             height: 30,

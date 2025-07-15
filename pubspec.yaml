@@ -49,10 +49,11 @@ dependencies:
   jwt_decoder: ^2.0.1 #Để chuyển chuỗi token JWT (JSON Web Token)
   google_maps_flutter: ^2.6.0 #maps
   geolocator: ^13.0.2 #maps
-  geocoding: ^3.0.0 #maps
+  geocoding: ^4.0.0 #maps
   webview_flutter: ^4.11.0
   dio: ^5.7.0
-  url_launcher: ^6.2.5 #link maps
+  url_launcher: ^6.2.5 #link maps,vnpay mở trình duyệt
+  collection: ^1.19.1
 
 
 dev_dependencies:

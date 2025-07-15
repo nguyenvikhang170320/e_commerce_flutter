@@ -1,10 +1,10 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
+import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/chat_list_page.dart';
 import 'package:app_ecommerce/screens/favorite_list_page.dart';
 import 'package:app_ecommerce/screens/login_page.dart';
-import 'package:app_ecommerce/screens/maps_page.dart';
 import 'package:app_ecommerce/screens/profile_page.dart';
 import 'package:app_ecommerce/screens/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
@@ -19,20 +19,6 @@ class CustomDrawer extends StatefulWidget {
 }
 
 class _CustomDrawerState extends State<CustomDrawer> {
-  String _deliveryAddress = '';
-
-  LatLng? _deliveryCoordinates;
-
-  void _handleLocationSelected(LatLng location, String address) {
-    setState(() {
-      _deliveryCoordinates = location;
-      _deliveryAddress = address;
-    });
-    print(
-      'Địa chỉ đã chọn (OrderPage): $_deliveryAddress, tọa độ: $_deliveryCoordinates',
-    );
-    // Cập nhật trường địa chỉ trên UI của trang hóa đơn
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,18 +81,17 @@ class _CustomDrawerState extends State<CustomDrawer> {
           ),
 
           ListTile(
-            leading: Icon(Icons.map_outlined),
-            title: Text('Bản đồ'),
+            leading: Icon(Icons.production_quantity_limits_rounded),
+            title: Text('Quản lý sản phẩm nâng cao'),
             onTap: () {
-              Navigator.pop(context); // đóng drawer
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) =>
-                          MapsPage(onLocationSelected: _handleLocationSelected),
-                ),
-              );
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(
+              //     builder:
+              //         (context) =>
+              //             MapsPage(onLocationSelected: _handleLocationSelected),
+              //   ),
+              // );
             },
           ),
           ListTile(
@@ -151,25 +136,23 @@ class _CustomDrawerState extends State<CustomDrawer> {
               // 1. Xóa token khỏi SharedPreferences
               await SharedPrefsHelper.clearToken();
 
-              //2. Reset AuthProvider nếu có
-              final authProvider = Provider.of<AuthProvider>(
-                context,
-                listen: false,
-              );
+              // 2. Reset các provider
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              final cartProvider = Provider.of<CartProvider>(context, listen: false);
+              final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+
               authProvider.logout(context);
-              final cartProvider = Provider.of<CartProvider>(
-                context,
-                listen: false,
-              );
               cartProvider.cleanCart();
+              notificationProvider.reset(); // 🧠 Thêm dòng này để xóa thông báo user cũ
 
               // 3. Điều hướng về LoginPage
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => LoginPage()),
-                (route) => false, // clear all previous routes
+                    (route) => false, // clear all previous routes
               );
             },
+
           ),
         ],
       ),

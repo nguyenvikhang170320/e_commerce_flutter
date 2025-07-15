@@ -240,7 +240,7 @@ class ProductService {
   }
 
   // ✅ Xóa sản phẩm
-  static Future<void> deleteProduct(String id) async {
+  static Future<void> deleteProduct(int id) async {
     final token = await SharedPrefsHelper.getToken();
     final uri = Uri.parse('${dotenv.env['BASE_URL']}/products/$id');
 

@@ -15,6 +15,8 @@ class CartService {
     required int quantity,
     required double price,
     required String token,
+    double discountPercent = 0.0,   // 👈 Thêm tham số mặc định
+    double shippingFee = 0.0,
   }) async {
     if (_isAdding) return null; // Prevent duplicate requests
     _isAdding = true;
@@ -32,6 +34,8 @@ class CartService {
           'product_id': productId,
           'quantity': quantity,
           'price': price,
+          'discountPercent': discountPercent,   // 👈 Thêm vào body
+          'shipping_fee': shippingFee,
         }),
       );
 

@@ -64,7 +64,7 @@ class ProductProvider with ChangeNotifier {
   }
 
   // Xóa sản phẩm
-  Future<void> deleteProduct(String id) async {
+  Future<void> deleteProduct(int id) async {
     try {
       await ProductService.deleteProduct(id); // Gọi API xóa sản phẩm
       _products.removeWhere((p) => p.id == id); // Xóa sản phẩm khỏi danh sách
