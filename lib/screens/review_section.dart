@@ -8,8 +8,9 @@ import 'package:collection/collection.dart';
 
 class ReviewSection extends StatefulWidget {
   final int productId;
+  final bool allowReview;
 
-  const ReviewSection({Key? key, required this.productId}) : super(key: key);
+  const ReviewSection({Key? key, required this.productId,  this.allowReview = false }) : super(key: key);
 
   @override
   State<ReviewSection> createState() => _ReviewSectionState();
@@ -30,27 +31,37 @@ class _ReviewSectionState extends State<ReviewSection> {
 
   Future<void> loadReviews() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final fetched = await ReviewService.fetchReviews(
-      widget.productId,
-      token: userProvider.accessToken,
-    );
-    final userId = userProvider.userId;
+    try {
+      final fetched = await ReviewService.fetchReviews(
+        widget.productId,
+        token: userProvider.accessToken,
+      );
 
-    final found = fetched.firstWhereOrNull((r) => r.userId == userId);
+      final userId = userProvider.userId;
+      final found = fetched.firstWhereOrNull((r) => r.userId == userId);
 
-    setState(() {
-      reviews = fetched;
-      userReview = found;
-      if (userReview != null) {
-        rating = userReview!.rating;
-        _commentController.text = userReview!.comment;
-      } else {
-        rating = 5;
-        _commentController.clear();
-      }
-      isLoading = false;
-    });
+      setState(() {
+        reviews = fetched;
+        userReview = found;
+        if (userReview != null) {
+          rating = userReview!.rating;
+          _commentController.text = userReview!.comment;
+        } else {
+          rating = 5;
+          _commentController.clear();
+        }
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Lỗi khi loadReviews: $e');
+      setState(() {
+        reviews = [];
+        userReview = null;
+        isLoading = false;
+      });
+    }
   }
+
 
 
   Future<void> submitReview() async {
@@ -119,7 +130,7 @@ class _ReviewSectionState extends State<ReviewSection> {
 
         const Divider(height: 30),
 
-        if (userProvider.role == 'user')
+        if (userProvider.role == 'user'&& widget.allowReview)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

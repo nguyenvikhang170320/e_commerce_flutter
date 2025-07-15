@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:app_ecommerce/screens/all_order_page.dart';
 import 'package:app_ecommerce/screens/notification_page.dart';
+import 'package:app_ecommerce/screens/review_section.dart';
 import 'package:app_ecommerce/screens/user_order_details_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
@@ -246,6 +247,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final currentPaymentStatus =
         order['payment_status']; // Trạng thái thanh toán điện tử
     final customerName = order['customer_name'] ?? 'Không có tên';
+    // Gộp các sản phẩm cùng product_id lại
+    final Map<int, Map<String, dynamic>> groupedItems = {};
+
+    for (var item in items) {
+      final int productId = item['product_id'];
+      if (groupedItems.containsKey(productId)) {
+        groupedItems[productId]!['quantity'] += item['quantity'];
+      } else {
+        // Copy item và đảm bảo quantity là int
+        groupedItems[productId] = Map<String, dynamic>.from(item);
+        groupedItems[productId]!['quantity'] = item['quantity'];
+      }
+    }
+
+    final uniqueItems = groupedItems.values.toList();
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -347,66 +363,78 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ).format(DateTime.parse(order['created_at'].toString())),
             ),
 
+
             SizedBox(height: 20),
             _buildSectionTitle('Chi tiết sản phẩm'),
-            ListView.separated(
-              shrinkWrap: true,
-              physics:
-                  NeverScrollableScrollPhysics(), // Ngăn ListView bên trong ScrollView cuộn
-              itemCount: items.length,
-              separatorBuilder:
-                  (context, index) =>
-                      Divider(height: 1, color: Colors.grey.shade300),
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
+            // Đánh giá
+
+
+
+    ListView.separated(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: uniqueItems.length,
+      separatorBuilder: (context, index) =>
+          Divider(height: 1, color: Colors.grey.shade300),
+      itemBuilder: (context, index) {
+        final item = uniqueItems[index];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // phần hiển thị sản phẩm
+            Row(
+              children: [
+                SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      item['image'],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Icon(Icons.image_not_supported),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        width: 80,
-                        height: 80,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            item['image'],
-                            fit: BoxFit.cover,
-                            errorBuilder:
-                                (context, error, stackTrace) =>
-                                    Icon(Icons.image_not_supported),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item['name'],
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 4),
-                            Text('Số lượng: ${item['quantity']}'),
-                            Text(
-                              formatCurrency(item['price']),
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                      Text(item['name'],
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Text('Số lượng: ${item['quantity']}'),
+                      Text(
+                        formatCurrency(item['price']),
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
-                );
-              },
+                ),
+              ],
             ),
 
-            SizedBox(height: 20),
+            // ✅ Thêm phần ReviewSection ở đây (nếu đơn hàng đã thanh toán):
+            if (_selectedPaymentStatus == 'paid')
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: ReviewSection(
+                  productId: item['product_id'],
+                  allowReview: true,
+                ),
+              ),
+          ],
+        );
+      },
+    ),
+
+
+    SizedBox(height: 20),
             if (isAdmin || isSeller) ...[
               _buildSectionTitle('Cập nhật trạng thái'),
               DropdownButtonFormField<String>(
