@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:http/http.dart' as http;
 import '../models/notification.dart';
 
@@ -19,15 +20,22 @@ class NotificationService {
       throw Exception('Failed to fetch notifications');
     }
   }
+
   Future<void> sendNotification({
     required List<int> receivers,
     required String title,
     required String message,
     required String type,
   }) async {
+    final token = await SharedPrefsHelper.getToken(); // ✅ FIXED
+    print('Token: $token');
+
     final response = await http.post(
       Uri.parse('$baseUrl/notifications'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
       body: json.encode({
         'receivers': receivers,
         'title': title,
@@ -43,6 +51,7 @@ class NotificationService {
       print('✅ Gửi thông báo thành công');
     }
   }
+
 
   Future<int> fetchUnreadCount(String token) async {
     final response = await http.get(

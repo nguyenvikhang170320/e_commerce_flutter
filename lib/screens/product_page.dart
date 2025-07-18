@@ -188,10 +188,11 @@ class _ProductScreenState extends State<ProductScreen> {
   @override
   Widget build(BuildContext context) {
     final favoriteProvider = Provider.of<FavoriteProvider>(context);
-    final notificationProvider =
-    Provider.of<NotificationProvider>(context, listen: false);
-    final userProvider =
-    Provider.of<UserProvider>(context, listen: false);
+    final notificationProvider = Provider.of<NotificationProvider>(
+      context,
+      listen: false,
+    );
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -204,6 +205,11 @@ class _ProductScreenState extends State<ProductScreen> {
         ),
         title: Text('Danh sách sản phẩm', style: TextStyle(fontSize: 18)),
         actions: [
+          if (userRole == 'admin' || userRole == 'seller')
+            IconButton(
+              icon: Icon(Icons.create),
+              onPressed: () => _showCreateOnlyDialog(context),
+            ),
           IconButton(
             onPressed: () {
               Navigator.of(context).pushReplacement(
@@ -212,18 +218,19 @@ class _ProductScreenState extends State<ProductScreen> {
             },
             icon: Icon(Icons.search),
           ),
-          IconButton(
-            icon: Icon(Icons.create),
-            onPressed: () => _showCreateOnlyDialog(context),
-          ),
         ],
       ),
       body: Consumer<ProductProvider>(
         builder: (context, productProvider, child) {
           final productsFromProvider = productProvider.products;
-          return productsFromProvider.isEmpty
-              ? Center(child: Text('Không có sản phẩm'))
-              : GridView.builder(
+          if (productsFromProvider.isEmpty) {
+            return Center(child: Text('Không có sản phẩm'));
+          }
+
+          return
+
+              //sản phẩm
+              GridView.builder(
                 padding: EdgeInsets.all(12),
                 itemCount: productsFromProvider.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -244,7 +251,10 @@ class _ProductScreenState extends State<ProductScreen> {
                       GestureDetector(
                         onTap: () {
                           Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(builder: (ctx) => ProductDetailScreen(product: prod)),
+                            MaterialPageRoute(
+                              builder:
+                                  (ctx) => ProductDetailScreen(product: prod),
+                            ),
                           );
                         },
                         child: Container(
@@ -363,9 +373,12 @@ class _ProductScreenState extends State<ProductScreen> {
                             onTap: () async {
                               favoriteProvider.toggleFavorite(prod);
                               await notificationProvider.sendNotification(
-                                receivers: [userProvider.userId!], // 👈 gửi đến chính user hiện tại
+                                receivers: [
+                                  userProvider.userId!,
+                                ], // 👈 gửi đến chính user hiện tại
                                 title: 'Yêu thích',
-                                message: '${userProvider.name ?? 'Khách'} vừa thêm sản phẩm vào mục yêu thích.',
+                                message:
+                                    '${userProvider.name ?? 'Khách'} vừa thêm sản phẩm vào mục yêu thích.',
                                 type: 'favorite',
                               );
                               await notificationProvider.loadUnreadCount();
@@ -411,6 +424,7 @@ class _ProductScreenState extends State<ProductScreen> {
                   );
                 },
               );
+
         },
       ),
     );

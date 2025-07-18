@@ -1,132 +1,207 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart';
-import 'package:app_ecommerce/providers/user_provider.dart';
-import 'package:app_ecommerce/screens/chat_list_page.dart';
+import 'package:app_ecommerce/screens/cart_page.dart';
+import 'package:app_ecommerce/screens/category_page.dart';
+import 'package:app_ecommerce/screens/create_flash_sale.dart';
 import 'package:app_ecommerce/screens/favorite_list_page.dart';
+import 'package:app_ecommerce/screens/flash_sale_page.dart';
 import 'package:app_ecommerce/screens/login_page.dart';
+import 'package:app_ecommerce/screens/notification_page.dart';
+import 'package:app_ecommerce/screens/product_page.dart';
 import 'package:app_ecommerce/screens/profile_page.dart';
+import 'package:app_ecommerce/screens/review_management_page.dart';
 import 'package:app_ecommerce/screens/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
-import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:app_ecommerce/providers/user_provider.dart';
 
-class CustomDrawer extends StatefulWidget {
-  @override
-  State<CustomDrawer> createState() => _CustomDrawerState();
-}
 
-class _CustomDrawerState extends State<CustomDrawer> {
+class CustomDrawer extends StatelessWidget {
+  const CustomDrawer({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context,listen: false);
+    final role = userProvider.role;
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
-        children: <Widget>[
+        children: [
           DrawerHeader(
-            decoration: BoxDecoration(color: Colors.orange),
+            decoration: BoxDecoration(
+              color: Colors.deepPurple,
+            ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 30,
                   backgroundImage:
-                      userProvider.image != null
-                          ? NetworkImage(userProvider.image!)
-                          : null,
+                  userProvider.image != null
+                      ? NetworkImage(userProvider.image!)
+                      : null,
                   child:
-                      userProvider.image == null
-                          ? const Icon(Icons.person, size: 50)
-                          : null,
+                  userProvider.image == null
+                      ? const Icon(Icons.person, size: 50)
+                      : null,
                 ),
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Xin chào ${userProvider.name ?? 'Ecommerce'}',
+                    'Xin chào: ${userProvider.name ?? ''}',
                     style: TextStyle(color: Colors.white, fontSize: 18),
                   ),
                 ),
               ],
             ),
           ),
+
+          // Ai cũng thấy: Hồ sơ
           ListTile(
-            leading: Icon(Icons.home),
-            title: Text('Trang chủ'),
+            leading: const Icon(Icons.person),
+            title: const Text('Hồ sơ của tôi'),
             onTap: () {
-              Navigator.pop(context); // đóng drawer
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => BottomNav()),
-              ); // đóng drawer
-              // Thêm điều hướng nếu cần
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.chat_bubble),
-            title: Text('Tin nhắn'),
-            onTap: () {
-              Navigator.pop(context); // đóng drawer
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder:
-                      (context) =>
-                          ChatListScreen(currentUserId: userProvider.userId!),
-                ),
-              );
+              Navigator.pop(context);
+              Navigator.push(context, MaterialPageRoute(builder: (_) => ProfilePage()));
             },
           ),
 
-          ListTile(
-            leading: Icon(Icons.production_quantity_limits_rounded),
-            title: Text('Quản lý sản phẩm nâng cao'),
-            onTap: () {
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(
-              //     builder:
-              //         (context) =>
-              //             MapsPage(onLocationSelected: _handleLocationSelected),
-              //   ),
-              // );
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.favorite),
-            title: Text('Yêu thích'),
-            onTap: () {
-              Navigator.pop(context); // đóng drawer
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => FavoriteListScreen()),
-              ); // đóng drawer
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.person),
-            title: Text('Cá nhân'),
-            onTap: () {
-              Navigator.pop(context); // đóng drawer
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfilePage()),
-              ); // đóng drawer
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.verified),
-            title: Text('Xác minh tài khoản'),
-            onTap: () {
-              Navigator.pop(context); // đóng drawer
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => VerifyRequestsScreen()),
-              ); // đóng drawer
-            },
-          ),
+          // Người dùng: Giỏ hàng, Yêu thích
+          if (role == 'user') ...[
+            ListTile(
+              leading: const Icon(Icons.category),
+              title: const Text('Danh mục'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) =>  CategoryScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.store),
+              title: const Text('Sản phẩm của tôi'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) =>  ProductScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flash_on),
+              title: const Text('Sản phẩm giảm giá'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => FlashSalePage()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.favorite),
+              title: const Text('Yêu thích'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteListScreen()));
+              },
+            ),
+            //Thông báo
+            ListTile(
+              leading: const Icon(Icons.notifications),
+              title: const Text('Thông báo'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationScreen()));
+              },
+            ),
+          ],
+
+          // Người bán: Quản lý sản phẩm, đánh giá
+          if (role == 'seller') ...[
+            ListTile(
+              leading: const Icon(Icons.category),
+              title: const Text('Danh mục'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) =>  CategoryScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.store),
+              title: const Text('Sản phẩm của tôi'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) =>  ProductScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flash_on),
+              title: const Text('Sản phẩm giảm giá'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => FlashSalePage()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flash_on),
+              title: const Text('Giảm giá sản phẩm'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => CreateFlashSaleScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.favorite),
+              title: const Text('Yêu thích'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteListScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.rate_review),
+              title: const Text('Quản lý đánh giá'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ReviewManagementScreen()));
+              },
+            ),
+            //Thông báo
+            ListTile(
+              leading: const Icon(Icons.notifications),
+              title: const Text('Thông báo'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationScreen()));
+              },
+            ),
+          ],
+
+          // Admin: Duyệt xác minh, Flash Sale
+          if (role == 'admin') ...[
+            ListTile(
+              leading: const Icon(Icons.verified_user),
+              title: const Text('Duyệt xác minh'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => VerifyRequestsScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flash_on),
+              title: const Text('Sản phẩm giảm giá'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => FlashSalePage()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flash_on),
+              title: const Text('Giảm giá sản phẩm'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => CreateFlashSaleScreen()));
+              },
+            ),
+          ],
+
           ListTile(
             leading: Icon(Icons.logout),
             title: Text('Đăng xuất'),
@@ -154,7 +229,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
             },
 
           ),
+
         ],
+
       ),
     );
   }

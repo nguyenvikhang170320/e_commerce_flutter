@@ -106,10 +106,10 @@ class _CartPageState extends State<CartPage> {
           context,
           length: ToastLength.medium,
           expandedHeight: 100,
-          message: "Bạn là tài khoản admin, nên sẽ hiển thị giỏ hàng trống",
+          message: "Bạn không có quyền thực hiện thao tác này",
         );
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => BottomNav(),));
       }
-      await Provider.of<CartProvider>(context, listen: false).fetchCart(token!);
     } else {
       print("❌ Không có token để xác thực");
     }
@@ -269,13 +269,13 @@ class _CartPageState extends State<CartPage> {
                       expandedHeight: 80,
                       message: "Đặt hàng thành công",
                     );
-                    notificationProvider.sendNotification(
+                    await notificationProvider.sendNotification(
                       receivers: [userProvider.userId!], // 👈 gửi đến chính user hiện tại
                       title: 'Đơn hàng đã thanh toán',
                       message: '${userProvider.name ?? 'Khách'} vừa thanh toán đơn hàng.',
                       type: 'order',
                     );
-                    notificationProvider.loadUnreadCount();
+                    await notificationProvider.loadUnreadCount();
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (context) => BottomNav()),

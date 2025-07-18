@@ -1,19 +1,18 @@
 import 'dart:convert';
+import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
-import 'package:app_ecommerce/screens/payment_page.dart';
+import 'package:app_ecommerce/providers/user_provider.dart';
+import 'package:app_ecommerce/screens/all_order_page.dart';
+import 'package:app_ecommerce/screens/cart_page.dart';
+import 'package:app_ecommerce/screens/chat_list_page.dart';
+import 'package:app_ecommerce/screens/home_page.dart';
+import 'package:app_ecommerce/screens/revenue_page.dart';
 import 'package:app_ecommerce/screens/user_list_page.dart';
 import 'package:app_ecommerce/screens/user_order_details_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-
-import '../screens/all_order_page.dart';
-import '../screens/cart_page.dart';
-import '../screens/home_page.dart';
-import '../screens/revenue_page.dart';
-import 'package:app_ecommerce/providers/auth_provider.dart';
-import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:provider/provider.dart';
 
 class BottomNav extends StatefulWidget {
@@ -25,6 +24,13 @@ class _BottomNavState extends State<BottomNav> {
   int _selectedIndex = 0;
   String? userRole;
   int? sellerID;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserRole();
+    _syncCart();
+  }
 
   Future<void> fetchUserRole() async {
     final token = await SharedPrefsHelper.getToken();
@@ -46,33 +52,21 @@ class _BottomNavState extends State<BottomNav> {
         setState(() {
           userRole = data['role'];
           sellerID = data['id'];
-          print("Người dùng $userRole");
-          print("ID Người bán $sellerID");
         });
       } else {
-        print('Không thể lấy role. Status: ${response.statusCode}');
+        print('Lỗi lấy role: ${response.statusCode}');
       }
     } catch (e) {
-      print('Lỗi khi lấy role: $e');
+      print('Lỗi khi fetch user role: $e');
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    fetchUserRole(); // Gọi API lấy role
-    _syncCart();
   }
 
   Future<void> _syncCart() async {
     final token = await SharedPrefsHelper.getToken();
     if (token != null) {
-      final productProvider = Provider.of<ProductProvider>(
-        context,
-        listen: false,
-      );
-      await productProvider.fetchProducts();
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
+      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      await productProvider.fetchProducts();
       await cartProvider.fetchCart(token);
     }
   }
@@ -83,52 +77,77 @@ class _BottomNavState extends State<BottomNav> {
     });
   }
 
+
   @override
   Widget build(BuildContext context) {
-    // Nếu chưa có role thì hiển thị loading
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
     if (userRole == null) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final screens = [
-      HomePage(),
-      CartPage(),
-      userRole == 'user' ? UserOrdersScreen() : AllOrdersScreen(),
-      SellerRevenueScreen(sellerId: sellerID!),
-      UserListScreen(),
-    ];
+    List<Widget> screens;
+    List<BottomNavigationBarItem> items;
+
+    if (userRole == 'admin') {
+
+      screens = [
+        HomePage(),
+        AllOrdersScreen(),
+        UserListScreen(),
+      ];
+      items = const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
+        BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Hoá đơn'),
+        BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Người dùng'),
+        BottomNavigationBarItem(icon: Icon(Icons.report), label: 'Báo cáo'),
+      ];
+    } else if (userRole == 'seller') {
+      screens = [
+        HomePage(),
+        AllOrdersScreen(),
+        SellerRevenueScreen(sellerId: sellerID!),
+        UserListScreen(),
+        ChatListScreen(currentUserId:  userProvider.userId!),
+      ];
+      items = const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
+        BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Hoá đơn'),
+        BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Doanh thu'),
+        BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Tài khoản'),
+        BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_sharp), label: 'Tin nhắn'),
+      ];
+    } else {
+      // user
+      screens = [
+        HomePage(),
+        CartPage(),
+        UserOrdersScreen(),
+        UserListScreen(),
+        ChatListScreen(currentUserId:  userProvider.userId!),
+      ];
+      items = const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
+        BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Giỏ hàng'),
+        BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Hoá đơn'),
+        BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Tài khoản'),
+        BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_sharp), label: 'Tin nhắn'),
+      ];
+    }
 
     return Scaffold(
-      body:
-          _selectedIndex < screens.length
-              ? screens[_selectedIndex]
-              : Center(child: Text('Chưa xác định màn hình')),
+      body: _selectedIndex < screens.length
+          ? screens[_selectedIndex]
+          : Center(child: Text('Không tìm thấy màn hình')),
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.orange,
         unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Giỏ hàng',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long),
-            label: 'Hoá đơn',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart),
-            label: 'Doanh thu',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.data_usage_rounded),
-            label: 'Tài khoản',
-          ),
-        ],
+        items: items,
       ),
     );
   }
+
+
 }

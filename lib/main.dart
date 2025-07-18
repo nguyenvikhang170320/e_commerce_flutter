@@ -1,6 +1,7 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/category_provider.dart';
 import 'package:app_ecommerce/providers/favorite_provider.dart';
+import 'package:app_ecommerce/providers/flash_sale_provider.dart';
 import 'package:app_ecommerce/providers/location_provider.dart';
 import 'package:app_ecommerce/providers/message_provider.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart'; // Import NotificationProvider
@@ -34,6 +35,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => FlashSaleProvider()),
         ChangeNotifierProxyProvider<UserProvider, FavoriteProvider>(
           create: (context) => FavoriteProvider(0), // Giá trị khởi tạo tạm thời
           update:
