@@ -32,6 +32,7 @@ class FlashSaleService {
     required double flashPrice,
     required DateTime startTime,
     required DateTime endTime,
+    required double discountPercentage,
   }) async {
     final token = await SharedPrefsHelper.getToken();
     final response = await http.post(
@@ -45,6 +46,7 @@ class FlashSaleService {
         'flash_sale_price': flashPrice,
         'start_time': startTime.toIso8601String(),
         'end_time': endTime.toIso8601String(),
+        'discount_percentage': discountPercentage,
       }),
     );
 

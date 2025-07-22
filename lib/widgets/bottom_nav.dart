@@ -107,7 +107,9 @@ class _BottomNavState extends State<BottomNav> {
         AllOrdersScreen(),
         SellerRevenueScreen(sellerId: sellerID!),
         UserListScreen(),
-        ChatListScreen(currentUserId:  userProvider.userId!),
+        userProvider.userId != null
+            ? ChatListScreen(currentUserId: userProvider.userId!)
+            : Center(child: CircularProgressIndicator()),
       ];
       items = const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
@@ -123,7 +125,9 @@ class _BottomNavState extends State<BottomNav> {
         CartPage(),
         UserOrdersScreen(),
         UserListScreen(),
-        ChatListScreen(currentUserId:  userProvider.userId!),
+        userProvider.userId != null
+            ? ChatListScreen(currentUserId: userProvider.userId!)
+            : Center(child: CircularProgressIndicator()),
       ];
       items = const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),

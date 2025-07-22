@@ -39,12 +39,14 @@ class FlashSaleProvider with ChangeNotifier {
     required double flashPrice,
     required DateTime startTime,
     required DateTime endTime,
+    required double discountPercentage,
   }) async {
     final success = await FlashSaleService.createFlashSale(
       productId: productId,
       flashPrice: flashPrice,
       startTime: startTime,
       endTime: endTime,
+      discountPercentage: discountPercentage,
     );
     if (success) {
       await fetchFlashSales();
@@ -68,9 +70,14 @@ class FlashSaleProvider with ChangeNotifier {
   Future<void> toggleActiveStatus(int flashSaleId) async {
     final success = await FlashSaleService.toggleActiveStatus(flashSaleId);
     if (success) {
-      await fetchFlashSales(); // Tải lại danh sách nếu thành công
+      final index = _flashSales.indexWhere((fs) => fs.id == flashSaleId);
+      if (index != -1) {
+        _flashSales[index].isActive = !_flashSales[index].isActive;
+        notifyListeners();
+      }
     }
   }
+
 
 
 

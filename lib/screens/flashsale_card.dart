@@ -1,6 +1,7 @@
 import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:toasty_box/toast_service.dart';
 import '../models/flash_sale.dart';
@@ -21,9 +22,18 @@ class _FlashSaleCardState extends State<FlashSaleCard> {
     final flashSaleProvider = Provider.of<FlashSaleProvider>(context, listen: false);
     final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-
+    String formatCurrency(String amountStr) {
+      final amount = double.tryParse(amountStr) ?? 0;
+      return NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(amount);
+    }
     final role = userProvider.role;
     final flashSale = widget.flashSale;
+    final percent = ((flashSale.originalPrice - flashSale.flashPrice) /
+        flashSale.originalPrice *
+        100)
+        .round();
+    print(percent);
+    print(flashSale.originalPrice);
 
     return Card(
       margin: EdgeInsets.only(bottom: 12),
@@ -54,38 +64,59 @@ class _FlashSaleCardState extends State<FlashSaleCard> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 4),
-                  Text(
-                    'Giá gốc: ${flashSale.product!.price.toStringAsFixed(0)}đ',
-                    style: TextStyle(
-                      fontSize: 12,
-                      decoration: TextDecoration.lineThrough,
-                      color: Colors.grey,
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Giá gốc: ',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        TextSpan(
+                          text:
+                          formatCurrency(flashSale.originalPrice.toString()),
+                          style: const TextStyle(
+                            decoration: TextDecoration.lineThrough,
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                        TextSpan(
+                          text: '  (-$percent%)',
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Text(
-                    'Giá sale: ${flashSale.flashPrice.toStringAsFixed(0)}đ',
+                    'Giá sale: ${formatCurrency(flashSale.flashPrice.toString())}',
                     style: TextStyle(fontSize: 14, color: Colors.red),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        flashSale.isActive ? 'Đang bật' : 'Đã tắt',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      Switch(
-                        value: flashSale.isActive,
-                        onChanged: (value) async {
-                          try {
-                            await flashSaleProvider.toggleActiveStatus(flashSale.id);
-                            ToastService.showToast(context, message: "Cập nhật trạng thái thành công");
-                          } catch (e) {
-                            ToastService.showToast(context, message: "Lỗi: $e");
-                          }
-                        },
-                      ),
-                    ],
-                  ),
+
+                  /// ✅ Nếu là seller và chưa được duyệt thì hiển thị Switch
+                  if (role == 'seller' && flashSale.status == 'approved')
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          flashSale.isActive ? 'Đang bật' : 'Đã tắt',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        Switch(
+                          value: flashSale.isActive,
+                          onChanged: (value) async {
+                            try {
+                              await flashSaleProvider.toggleActiveStatus(flashSale.id);
+                              ToastService.showToast(context, message: "Cập nhật trạng thái thành công");
+                            } catch (e) {
+                              ToastService.showToast(context, message: "Lỗi: $e");
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   if (role == 'admin' && flashSale.status == 'pending')
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
@@ -96,6 +127,12 @@ class _FlashSaleCardState extends State<FlashSaleCard> {
                               onPressed: () async {
                                 await flashSaleProvider.approveFlashSale(flashSale.id);
                                 ToastService.showToast(context, message: "Đã duyệt Flash Sale");
+                                await notificationProvider.sendNotification(
+                                  receivers: [flashSale.product!.sellerId!],
+                                  title: 'Giảm giá đã duyệt',
+                                  message: 'Sản phẩm "${flashSale.product!.name}" đã duyệt bởi Admin.',
+                                  type: 'flash-sale',
+                                );
                               },
                               style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
                               child: Icon(Icons.check, color: Colors.green,),
@@ -112,7 +149,7 @@ class _FlashSaleCardState extends State<FlashSaleCard> {
 
                                 await notificationProvider.sendNotification(
                                   receivers: [flashSale.product!.sellerId!],
-                                  title: 'Flash Sale bị từ chối',
+                                  title: 'Giảm giá bị từ chối',
                                   message: 'Sản phẩm "${flashSale.product!.name}" đã bị từ chối bởi Admin.',
                                   type: 'flash-sale',
                                 );

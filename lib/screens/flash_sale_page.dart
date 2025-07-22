@@ -24,7 +24,7 @@ class _FlashSalePageState extends State<FlashSalePage> {
     print("Số lượng flash sales: ${flashSales.length}");
     print("flash sales: ${flashSales}");
     return Scaffold(
-      appBar: AppBar(title: Text("⚡ Flash Sale")),
+      appBar: AppBar(title: Text("⚡ Sản phẩm giảm giá")),
       body: flashSales.isEmpty
           ? Center(child: Text('Không có sản phẩm giảm giá'))
           : GridView.builder(
