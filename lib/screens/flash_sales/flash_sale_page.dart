@@ -1,7 +1,8 @@
-import 'package:app_ecommerce/screens/flashsale_card.dart';
+import 'package:app_ecommerce/providers/flash_sale_provider.dart';
+import 'package:app_ecommerce/screens/flash_sales/flashsale_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/flash_sale_provider.dart';
+
 
 
 class FlashSalePage extends StatefulWidget {

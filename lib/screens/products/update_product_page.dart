@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:app_ecommerce/models/products.dart';
-import 'package:app_ecommerce/screens/product_page.dart';
+import 'package:app_ecommerce/screens/products/product_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app_ecommerce/services/categories_service.dart'; // Đảm bảo import service categories

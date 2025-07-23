@@ -11,7 +11,8 @@ class UserProvider with ChangeNotifier {
   String? accessToken;
   String? name;
   String? image;
-
+  Set<int> _reportedProductIds = {}; //ẩn nút báo cáo sản phẩm
+  Set<int> get reportedProductIds => _reportedProductIds;//ẩn nút báo cáo sản phẩm
   Future<void> fetchUserInfo() async {
     final token = await SharedPrefsHelper.getToken();
     if (token == null) return;
@@ -42,5 +43,14 @@ class UserProvider with ChangeNotifier {
     } catch (e) {
       print('Lỗi khi lấy user info: $e');
     }
+  }
+  //xử lý nút báo cáo sản phẩm
+  void addReportedProduct(int productId) {
+    _reportedProductIds.add(productId);
+    notifyListeners();
+  }
+
+  bool hasReported(int productId) {
+    return _reportedProductIds.contains(productId);
   }
 }

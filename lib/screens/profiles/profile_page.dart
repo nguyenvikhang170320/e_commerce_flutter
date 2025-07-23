@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:app_ecommerce/providers/favorite_provider.dart';
-import 'package:app_ecommerce/screens/change_password_page.dart';
-import 'package:app_ecommerce/screens/edit_profile_page.dart';
-import 'package:app_ecommerce/screens/favorite_list_page.dart';
-import 'package:app_ecommerce/screens/notification_page.dart';
-import 'package:app_ecommerce/screens/user_list_page.dart';
-import 'package:app_ecommerce/screens/verify_page.dart';
+import 'package:app_ecommerce/screens/profiles/change_password_page.dart';
+import 'package:app_ecommerce/screens/profiles/edit_profile_page.dart';
+import 'package:app_ecommerce/screens/favorites/favorite_list_page.dart';
+import 'package:app_ecommerce/screens/notifications/notification_page.dart';
+import 'package:app_ecommerce/screens/profiles/user_list_page.dart';
+import 'package:app_ecommerce/screens/verifies/verify_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -13,7 +13,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
-import '../widgets/bottom_nav.dart';
+import '../../widgets/bottom_nav.dart';
 
 class ProfilePage extends StatefulWidget {
   @override

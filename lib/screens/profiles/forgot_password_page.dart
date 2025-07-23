@@ -1,4 +1,4 @@
-import 'package:app_ecommerce/screens/reset_password_page.dart';
+import 'package:app_ecommerce/screens/profiles/reset_password_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;

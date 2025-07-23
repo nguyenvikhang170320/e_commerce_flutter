@@ -1,10 +1,13 @@
 import 'package:app_ecommerce/providers/category_provider.dart';
-import 'package:app_ecommerce/screens/category_page.dart';
-import 'package:app_ecommerce/screens/notification_page.dart';
-import 'package:app_ecommerce/screens/product_page.dart';
-import 'package:app_ecommerce/screens/profile_page.dart';
+import 'package:app_ecommerce/providers/user_provider.dart';
+import 'package:app_ecommerce/screens/categorys/category_page.dart';
+import 'package:app_ecommerce/screens/chats/chat_list_page.dart';
+import 'package:app_ecommerce/screens/notifications/notification_page.dart';
+import 'package:app_ecommerce/screens/products/product_page.dart';
+import 'package:app_ecommerce/screens/profiles/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:toasty_box/toast_enums.dart';
 
 import '../providers/notification_provider.dart';
 import '../services/share_preference.dart';
@@ -38,6 +41,7 @@ class _HeaderWithAvatarState extends State<HeaderWithAvatar> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context,listen: false);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
@@ -97,26 +101,18 @@ class _HeaderWithAvatarState extends State<HeaderWithAvatar> {
                       ],
                     ),
               ),
+              SizedBox(width: 5,),
               GestureDetector(
                 onTap: () {
-                  //chuyển sang trang danh mục
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => CategoryScreen()),
+                    MaterialPageRoute(builder: (context) => ChatListScreen(currentUserId: userProvider.userId!)),
                   );
-                },
-                child: Icon(Icons.category, size: 28),
-              ),
-              GestureDetector(
-                onTap: () {
                   //chuyển sang trang danh mục
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ProductScreen()),
-                  );
                 },
-                child: Icon(Icons.production_quantity_limits_sharp, size: 28),
+                child: Icon(Icons.chat_bubble_sharp, size: 28),
               ),
+              SizedBox(width: 5,),
               GestureDetector(
                 onTap: () {
                   //chuyển sang trang profile

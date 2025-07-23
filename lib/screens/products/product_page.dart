@@ -4,11 +4,12 @@ import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
-import 'package:app_ecommerce/screens/add_to_cart_page.dart';
-import 'package:app_ecommerce/screens/create_product_page.dart';
+import 'package:app_ecommerce/screens/carts/add_to_cart_page.dart';
+import 'package:app_ecommerce/screens/products/create_product_page.dart';
 import 'package:app_ecommerce/screens/global_search_page.dart';
-import 'package:app_ecommerce/screens/product_detail_page.dart';
-import 'package:app_ecommerce/screens/update_product_page.dart';
+import 'package:app_ecommerce/screens/products/product_detail_page.dart';
+import 'package:app_ecommerce/screens/products/update_product_page.dart';
+import 'package:app_ecommerce/screens/reports/seller_reported_products_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ import 'package:toasty_box/toast_enums.dart';
 
 import 'package:toasty_box/toast_service.dart';
 
-import '../providers/favorite_provider.dart';
+import '../../providers/favorite_provider.dart';
 
 class ProductScreen extends StatefulWidget {
   @override
@@ -218,6 +219,18 @@ class _ProductScreenState extends State<ProductScreen> {
             },
             icon: Icon(Icons.search),
           ),
+          if(userProvider.role == 'seller')
+            IconButton(
+              icon: Icon(Icons.report),
+              tooltip: 'Sản phẩm bị báo cáo',
+              onPressed: () {
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SellerReportedProductsPage(sellerId: userProvider.userId!)),
+                  );
+                }
+            )
         ],
       ),
       body: Consumer<ProductProvider>(

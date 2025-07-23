@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
-import 'package:app_ecommerce/screens/category_page.dart';
-import 'package:app_ecommerce/screens/product_detail_page.dart';
-import 'package:app_ecommerce/screens/product_page.dart';
+import 'package:app_ecommerce/screens/categorys/category_page.dart';
+import 'package:app_ecommerce/screens/products/product_detail_page.dart';
+import 'package:app_ecommerce/screens/products/product_page.dart';
 import 'package:app_ecommerce/services/product_service.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
@@ -18,7 +18,7 @@ import 'package:toasty_box/toast_enums.dart';
 import 'package:toasty_box/toast_service.dart';
 
 import '../providers/user_provider.dart';
-import '../screens/add_to_cart_page.dart';
+import '../screens/carts/add_to_cart_page.dart';
 
 class ProductList extends StatefulWidget {
   final int categoryId;

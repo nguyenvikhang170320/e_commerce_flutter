@@ -1,11 +1,11 @@
 import 'package:app_ecommerce/models/users.dart';
-import 'package:app_ecommerce/screens/chat_list_page.dart';
-import 'package:app_ecommerce/screens/chat_page.dart';
+import 'package:app_ecommerce/screens/chats/chat_list_page.dart';
+import 'package:app_ecommerce/screens/chats/chat_page.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
-import '../services/user_service.dart';
+import '../../services/user_service.dart';
 import 'package:provider/provider.dart';
-import '../providers/user_provider.dart';
+import '../../providers/user_provider.dart';
 
 class UserListScreen extends StatefulWidget {
   const UserListScreen({super.key});

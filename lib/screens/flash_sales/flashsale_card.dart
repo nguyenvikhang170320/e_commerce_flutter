@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:toasty_box/toast_service.dart';
-import '../models/flash_sale.dart';
-import '../providers/flash_sale_provider.dart';
+import '../../models/flash_sale.dart';
+import '../../providers/flash_sale_provider.dart';
 
 class FlashSaleCard extends StatefulWidget {
   final FlashSaleProduct flashSale;

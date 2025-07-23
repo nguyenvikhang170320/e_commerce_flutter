@@ -1,50 +1,31 @@
-import 'package:app_ecommerce/providers/user_provider.dart';
-import 'package:app_ecommerce/screens/notification_page.dart';
-import 'package:app_ecommerce/screens/order_detail_page.dart';
+import 'package:app_ecommerce/providers/notification_provider.dart';
+import 'package:app_ecommerce/screens/notifications/notification_page.dart';
+import 'package:app_ecommerce/screens/orders/order_detail_page.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:toasty_box/toast_enums.dart';
-import 'package:toasty_box/toast_service.dart';
-import '../providers/notification_provider.dart';
-import '../services/order_service.dart';
-import '../services/share_preference.dart';
+import '../../services/order_service.dart';
+import '../../services/share_preference.dart';
 
-class UserOrdersScreen extends StatefulWidget {
+class AllOrdersScreen extends StatefulWidget {
   @override
-  State<UserOrdersScreen> createState() => _UserOrdersScreenState();
+  State<AllOrdersScreen> createState() => _AllOrdersScreenState();
 }
 
-class _UserOrdersScreenState extends State<UserOrdersScreen> {
+class _AllOrdersScreenState extends State<AllOrdersScreen> {
   final orderService = OrderService();
-  String? userRole;
   String? token;
-
   @override
   void initState() {
+    // TODO: implement initState
     super.initState();
-    _loadData();
+    loadToken();
   }
 
-  Future<void> _loadData() async {
-    await Provider.of<UserProvider>(context, listen: false).fetchUserInfo();
-    userRole =
-        Provider.of<UserProvider>(
-          context,
-          listen: false,
-        ).role; // Lấy userRole từ provider
-    token =
-        Provider.of<UserProvider>(
-          context,
-          listen: false,
-        ).accessToken; // Lấy token
-    if (token != null) {
-      // Gọi fetchCart với token đã lấy được
-      print("Token: " + token!);
-    } else {
-      print("❌ Không có token để xác thực");
-    }
+  Future<void> loadToken() async {
+    token = await SharedPrefsHelper.getToken();
+    print('Token chats: $token');
   }
 
   String formatCurrency(String amountStr) {
@@ -141,7 +122,7 @@ class _UserOrdersScreenState extends State<UserOrdersScreen> {
         ],
       ),
       body: FutureBuilder(
-        future: orderService.getUserOrders(),
+        future: orderService.getAllOrders(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting)
             return Center(child: CircularProgressIndicator());

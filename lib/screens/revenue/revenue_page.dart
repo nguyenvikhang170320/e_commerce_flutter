@@ -1,4 +1,4 @@
-import 'package:app_ecommerce/screens/notification_page.dart';
+import 'package:app_ecommerce/screens/notifications/notification_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/notification_provider.dart';
+import '../../providers/notification_provider.dart';
 
 class SellerRevenueScreen extends StatefulWidget {
   final int sellerId;

@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
-import 'package:app_ecommerce/screens/all_order_page.dart';
-import 'package:app_ecommerce/screens/cart_page.dart';
-import 'package:app_ecommerce/screens/chat_list_page.dart';
+import 'package:app_ecommerce/screens/orders/all_order_page.dart';
+import 'package:app_ecommerce/screens/carts/cart_page.dart';
+import 'package:app_ecommerce/screens/chats/chat_list_page.dart';
 import 'package:app_ecommerce/screens/home_page.dart';
-import 'package:app_ecommerce/screens/revenue_page.dart';
-import 'package:app_ecommerce/screens/user_list_page.dart';
-import 'package:app_ecommerce/screens/user_order_details_page.dart';
+import 'package:app_ecommerce/screens/reports/admin_report_products_page.dart';
+import 'package:app_ecommerce/screens/revenue/revenue_page.dart';
+import 'package:app_ecommerce/screens/profiles/user_list_page.dart';
+import 'package:app_ecommerce/screens/orders/user_order_details_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -94,6 +95,7 @@ class _BottomNavState extends State<BottomNav> {
         HomePage(),
         AllOrdersScreen(),
         UserListScreen(),
+        AdminReportsPage(),
       ];
       items = const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),

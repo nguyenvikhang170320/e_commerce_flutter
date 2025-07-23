@@ -1,11 +1,11 @@
 
-import 'package:app_ecommerce/screens/notification_page.dart';
+import 'package:app_ecommerce/screens/notifications/notification_page.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../providers/favorite_provider.dart';
-import '../providers/notification_provider.dart';
-import '../services/share_preference.dart';
+import '../../providers/favorite_provider.dart';
+import '../../providers/notification_provider.dart';
+import '../../services/share_preference.dart';
 
 class FavoriteListScreen extends StatefulWidget {
   const FavoriteListScreen({Key? key}) : super(key: key);

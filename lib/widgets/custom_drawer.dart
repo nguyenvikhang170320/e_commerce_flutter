@@ -1,18 +1,20 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart';
-import 'package:app_ecommerce/screens/cart_page.dart';
-import 'package:app_ecommerce/screens/category_page.dart';
-import 'package:app_ecommerce/screens/create_flash_sale.dart';
-import 'package:app_ecommerce/screens/favorite_list_page.dart';
-import 'package:app_ecommerce/screens/flash_sale_page.dart';
+import 'package:app_ecommerce/screens/carts/cart_page.dart';
+import 'package:app_ecommerce/screens/categorys/category_page.dart';
+import 'package:app_ecommerce/screens/flash_sales/create_flash_sale.dart';
+import 'package:app_ecommerce/screens/favorites/favorite_list_page.dart';
+import 'package:app_ecommerce/screens/flash_sales/flash_sale_page.dart';
 import 'package:app_ecommerce/screens/login_page.dart';
-import 'package:app_ecommerce/screens/notification_page.dart';
-import 'package:app_ecommerce/screens/product_page.dart';
-import 'package:app_ecommerce/screens/profile_page.dart';
-import 'package:app_ecommerce/screens/review_management_page.dart';
-import 'package:app_ecommerce/screens/verify_request_page.dart';
+import 'package:app_ecommerce/screens/notifications/notification_page.dart';
+import 'package:app_ecommerce/screens/products/product_page.dart';
+import 'package:app_ecommerce/screens/profiles/profile_page.dart';
+import 'package:app_ecommerce/screens/reviews/review_management_page.dart';
+import 'package:app_ecommerce/screens/reviews/review_section.dart';
+import 'package:app_ecommerce/screens/verifies/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
+import 'package:app_ecommerce/services/terms_of_service_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
@@ -102,13 +104,13 @@ class CustomDrawer extends StatelessWidget {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteListScreen()));
               },
             ),
-            //Thông báo
+            //Điều khoản và dịch vụ app
             ListTile(
-              leading: const Icon(Icons.notifications),
-              title: const Text('Thông báo'),
+              leading: const Icon(Icons.design_services),
+              title: const Text('Điều khoản và dịch vụ'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationScreen()));
+                Navigator.push(context, MaterialPageRoute(builder: (_) => TermsOfServiceScreens()));
               },
             ),
           ],
@@ -155,21 +157,13 @@ class CustomDrawer extends StatelessWidget {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteListScreen()));
               },
             ),
+            //Điều khoản và dịch vụ app
             ListTile(
-              leading: const Icon(Icons.rate_review),
-              title: const Text('Quản lý đánh giá'),
+              leading: const Icon(Icons.design_services),
+              title: const Text('Điều khoản và dịch vụ'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const ReviewManagementScreen()));
-              },
-            ),
-            //Thông báo
-            ListTile(
-              leading: const Icon(Icons.notifications),
-              title: const Text('Thông báo'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationScreen()));
+                Navigator.push(context, MaterialPageRoute(builder: (_) => TermsOfServiceScreens()));
               },
             ),
           ],

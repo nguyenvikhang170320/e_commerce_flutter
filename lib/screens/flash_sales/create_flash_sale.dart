@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:toasty_box/toast_service.dart';
-import '../providers/product_provider.dart';
-import '../providers/user_provider.dart';
-import '../services/flash_sale_service.dart';
+import '../../providers/product_provider.dart';
+import '../../providers/user_provider.dart';
+import '../../services/flash_sale_service.dart';
 
 class CreateFlashSaleScreen extends StatefulWidget {
   const CreateFlashSaleScreen({super.key});
@@ -124,7 +124,7 @@ class _CreateFlashSaleScreenState extends State<CreateFlashSaleScreen> {
     productProvider.products.where((p) => p.sellerId == userId).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tạo Flash Sale')),
+      appBar: AppBar(title: const Text('Tạo Giá giảm cho sản phẩm')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -201,7 +201,7 @@ class _CreateFlashSaleScreenState extends State<CreateFlashSaleScreen> {
               ElevatedButton.icon(
                 onPressed: _submitForm,
                 icon: const Icon(Icons.save),
-                label: const Text('Tạo Flash Sale'),
+                label: const Text('Tạo'),
               ),
             ],
           ),

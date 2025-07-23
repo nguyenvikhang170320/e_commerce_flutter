@@ -2,7 +2,7 @@ import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
-import 'package:app_ecommerce/screens/forgot_password_page.dart';
+import 'package:app_ecommerce/screens/profiles/forgot_password_page.dart';
 import 'package:app_ecommerce/screens/register_page.dart';
 import 'package:app_ecommerce/services/auth_service.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';

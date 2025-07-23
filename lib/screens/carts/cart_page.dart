@@ -10,10 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toasty_box/toast_enums.dart';
 import 'package:toasty_box/toast_service.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../providers/cart_provider.dart';
-import '../providers/user_provider.dart';
-import 'notification_page.dart';
-import '../widgets/bottom_nav.dart';
+import '../../providers/cart_provider.dart';
+import '../../providers/user_provider.dart';
+import '../notifications/notification_page.dart';
+import '../../widgets/bottom_nav.dart';
 
 class CartPage extends StatefulWidget {
   @override

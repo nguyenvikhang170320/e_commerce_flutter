@@ -3,9 +3,9 @@ import 'package:app_ecommerce/screens/global_search_page.dart';
 import 'package:app_ecommerce/widgets/product_list.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/category_provider.dart';
-import '../models/category.dart';
-import '../services/share_preference.dart'; // Lấy token
+import '../../providers/category_provider.dart';
+import '../../models/category.dart';
+import '../../services/share_preference.dart'; // Lấy token
 import 'dart:convert'; // Để parse JSON
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';

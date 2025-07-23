@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:app_ecommerce/screens/all_order_page.dart';
-import 'package:app_ecommerce/screens/notification_page.dart';
-import 'package:app_ecommerce/screens/review_section.dart';
-import 'package:app_ecommerce/screens/user_order_details_page.dart';
+import 'package:app_ecommerce/screens/orders/all_order_page.dart';
+import 'package:app_ecommerce/screens/notifications/notification_page.dart';
+import 'package:app_ecommerce/screens/reviews/review_section.dart';
+import 'package:app_ecommerce/screens/orders/user_order_details_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:app_ecommerce/services/order_service.dart';
@@ -16,7 +16,7 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../providers/notification_provider.dart';
+import '../../providers/notification_provider.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final int orderId;
@@ -148,14 +148,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 String origin = "10.157502,105.666427"; //ĐLA-TÂN AN-TÂN-PHÚ-TÂN QUỚI,Đinh Hoà, Lai Vung, Đồng Tháp, Việt Nam
                 print("📍 Dùng vị trí mặc định làm origin: $origin");
                 final destination = value;
-
-                // // Nếu origin bị null hoặc không hợp lệ => fallback luôn
-                // if (origin == null || !origin.contains(',') || origin.startsWith('0.0')) {
-                //   origin = "22 Đ. Tôn Đức Thắng, P, Sa Đéc, Đồng Tháp 870000, Việt Nam";
-                //   print("⛳️ Không lấy được vị trí hoặc vị trí sai, dùng địa chỉ mặc định: $origin");
-                // } else {
-                //   print("📍 Lấy được vị trí: $origin");
-                // }
 
                 if (destination.isNotEmpty) {
                   await getAndLaunchDirection(origin!, destination);

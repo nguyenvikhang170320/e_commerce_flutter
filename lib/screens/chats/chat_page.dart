@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:app_ecommerce/providers/message_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
-import 'package:app_ecommerce/screens/chat_list_page.dart';
+import 'package:app_ecommerce/screens/chats/chat_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';

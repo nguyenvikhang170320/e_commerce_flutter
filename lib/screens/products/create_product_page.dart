@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:app_ecommerce/screens/product_page.dart';
+import 'package:app_ecommerce/screens/products/product_page.dart';
 import 'package:app_ecommerce/services/auth_service.dart';
 import 'package:app_ecommerce/services/categories_service.dart';
 import 'package:app_ecommerce/services/share_preference.dart';

@@ -1,7 +1,7 @@
 import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
-import 'package:app_ecommerce/screens/cart_page.dart';
-import 'package:app_ecommerce/screens/notification_page.dart';
+import 'package:app_ecommerce/screens/carts/cart_page.dart';
+import 'package:app_ecommerce/screens/notifications/notification_page.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -9,8 +9,8 @@ import 'package:provider/provider.dart';
 import 'package:toasty_box/toast_enums.dart';
 import 'package:toasty_box/toast_service.dart';
 
-import '../providers/notification_provider.dart';
-import '../providers/user_provider.dart';
+import '../../providers/notification_provider.dart';
+import '../../providers/user_provider.dart';
 
 class AddToCartScreen extends StatefulWidget {
   final Product product;
