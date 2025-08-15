@@ -197,7 +197,7 @@ class _ProductListCategoryState extends State<ProductListCategory> {
                                 builder:
                                     (context) => AddToCartScreen(
                                       product: productModel,
-                                      token: token ?? "",
+                                      userToken: token ?? "",
                                     ),
                               ),
                             );

@@ -106,6 +106,7 @@ class _BottomNavState extends State<BottomNav> {
     } else if (userRole == 'seller') {
       screens = [
         HomePage(),
+        CartPage(token: userProvider.accessToken!,),
         AllOrdersScreen(),
         SellerRevenueScreen(sellerId: sellerID!),
         UserListScreen(),
@@ -115,6 +116,7 @@ class _BottomNavState extends State<BottomNav> {
       ];
       items = const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
+        BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), label: 'Giỏ hàng'),
         BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Hoá đơn'),
         BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Doanh thu'),
         BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Tài khoản'),
@@ -124,7 +126,7 @@ class _BottomNavState extends State<BottomNav> {
       // user
       screens = [
         HomePage(),
-        CartPage(),
+        CartPage(token: userProvider.accessToken!,),
         UserOrdersScreen(),
         UserListScreen(),
         userProvider.userId != null

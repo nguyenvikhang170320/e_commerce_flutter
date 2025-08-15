@@ -339,7 +339,7 @@ class _ProductScreenState extends State<ProductScreen> {
                                                     (context) =>
                                                         AddToCartScreen(
                                                           product: prod,
-                                                          token: token,
+                                                          userToken: token,
                                                         ),
                                               ),
                                             );

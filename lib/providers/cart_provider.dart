@@ -1,62 +1,57 @@
 import 'package:app_ecommerce/models/cartItem.dart';
-import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/services/cart_service.dart';
 import 'package:flutter/material.dart';
 
 class CartProvider with ChangeNotifier {
-  List<CartItem> _itemCart = [];
+  bool _isLoading = false;
+  List<CartItem> _cartItems = [];
 
-  List<CartItem> get itemCart => _itemCart;
+  bool get isLoading => _isLoading;
+  List<CartItem> get cartItems => _cartItems;
 
-  Future<bool> addToCart({
-    required Product product,
-    required String token,
-    required int quantity,
-    required double price,
-    String? currentUserName,
-    double discountPercent = 0.0,   // ✅ thêm vào
-    double shippingFee = 0.0,       // ✅ thêm vào
-  }) async {
-    final cartItem = await CartService.addToCart(
-      productId: product.id,
-      quantity: quantity,
-      price: price,
-      token: token,
-      discountPercent: discountPercent,   // ✅ truyền xuống service
-      shippingFee: shippingFee,           // ✅ truyền xuống service
-    );
-
-    if (cartItem != null) {
-      final index = _itemCart.indexWhere(
-            (item) => item.productId == product.id,
-      );
-      if (index != -1) {
-        _itemCart[index].quantity += quantity;
-      } else {
-        _itemCart.add(cartItem);
-      }
-
-      notifyListeners();
-      return true;
-    } else {
-      print('❌ Không thể thêm sản phẩm vào giỏ hàng');
-      return false;
-    }
-  }
-
-
-  // ✅ Lấy giỏ hàng từ backend
+  /// ✅ Lấy giỏ hàng
   Future<void> fetchCart(String token) async {
     try {
-      final data = await CartService.fetchCart(token);
-      _itemCart = data.map<CartItem>((e) => CartItem.fromJson(e)).toList();
+      _isLoading = true;
       notifyListeners();
+
+      _cartItems = await CartService.fetchCart(token);
     } catch (e) {
-      print('Lỗi khi lấy giỏ hàng: $e');
+      debugPrint('❌ Lỗi khi lấy giỏ hàng: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
-  // ✅ Cập nhật số lượng
+
+  /// ✅ Thêm sản phẩm vào giỏ
+  Future<void> addItem({
+    required int productId,
+    required int quantity,
+    String? couponCode,
+    required String token,
+  }) async {
+    try {
+      if (CartService.isAdding) return;
+      CartService.isAdding = true;
+
+      await CartService.addToCart(
+        productId: productId,
+        quantity: quantity,
+        couponCode: couponCode,
+        token: token,
+      );
+
+      await fetchCart(token);
+    } catch (e) {
+      debugPrint('❌ Lỗi add item: $e');
+    } finally {
+      CartService.isAdding = false;
+    }
+  }
+
+  /// ✅ Cập nhật số lượng
   Future<void> updateQuantity({
     required int cartId,
     required int quantity,
@@ -68,42 +63,52 @@ class CartProvider with ChangeNotifier {
       token: token,
     );
 
-    final index = _itemCart.indexWhere((item) => item.id == cartId);
+    final index = _cartItems.indexWhere((item) => item.cartId == cartId);
     if (index != -1) {
-      _itemCart[index].quantity = quantity;
+      _cartItems[index] = CartItem(
+        cartId: _cartItems[index].cartId,
+        productId: _cartItems[index].productId,
+        productName: _cartItems[index].productName,
+        image: _cartItems[index].image,
+        originalPrice: _cartItems[index].originalPrice,
+        finalPricePerItem: _cartItems[index].finalPricePerItem,
+        shippingFee: _cartItems[index].shippingFee,
+        quantity: quantity,
+        totalPrice: _cartItems[index].totalPrice,
+        discountPercent: _cartItems[index].discountPercent,
+        couponCode: _cartItems[index].couponCode,
+        addedAt: _cartItems[index].addedAt,
+      );
       notifyListeners();
     }
   }
 
-  // ✅ Xóa sản phẩm
+  /// ✅ Xóa sản phẩm
   Future<void> removeItem({required int cartId, required String token}) async {
     await CartService.deleteCartItem(cartId: cartId, token: token);
-    _itemCart.removeWhere((item) => item.id == cartId);
+    _cartItems.removeWhere((item) => item.cartId == cartId);
     notifyListeners();
   }
 
-  // Tổng phí ship toàn giỏ
+  /// ✅ Tổng giá giỏ hàng (bao gồm phí ship)
   double get totalPrice {
-    return _itemCart.fold(0, (sum, item) {
-      return sum + item.price;
+    return _cartItems.fold(0, (sum, item) {
+      return sum + item.totalPrice;
     });
   }
 
-  // ✅ Xóa toàn bộ giỏ hàng
+  /// ✅ Xóa toàn bộ giỏ hàng
   Future<void> clearCart({required String token}) async {
-    final cartItems = await CartService.fetchCart(token);
-
-    for (var item in cartItems) {
-      await CartService.deleteCartItem(cartId: item['id'], token: token);
+    for (var item in _cartItems) {
+      await CartService.deleteCartItem(cartId: item.cartId, token: token);
     }
-
-    _itemCart.clear();
+    _cartItems.clear();
     notifyListeners();
   }
 
-  // ✅ Dọn local
+  /// ✅ Dọn local
   void cleanCart() {
-    _itemCart.clear();
+    _cartItems.clear();
     notifyListeners();
   }
 }

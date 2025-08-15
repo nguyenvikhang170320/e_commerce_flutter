@@ -235,7 +235,7 @@ class _ProductListState extends State<ProductList> {
                                       builder:
                                           (context) => AddToCartScreen(
                                             product: prod,
-                                            token: token!,
+                                            userToken: token!,
                                           ),
                                     ),
                                   );

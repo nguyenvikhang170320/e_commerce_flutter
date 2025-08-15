@@ -1,88 +1,89 @@
 import 'dart:convert';
-
 import 'package:app_ecommerce/models/cartItem.dart';
-import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart';
-import 'package:provider/provider.dart';
 
 class CartService {
-  static bool _isAdding = false; // 🛑 Cờ kiểm soát
-  // ✅ Thêm sản phẩm vào giỏ hàng
-  static Future<CartItem?> addToCart({
-    required int productId,
-    required int quantity,
-    required double price,
-    required String token,
-    double discountPercent = 0.0,   // 👈 Thêm tham số mặc định
-    double shippingFee = 0.0,
-  }) async {
-    if (_isAdding) return null; // Prevent duplicate requests
-    _isAdding = true;
+  static bool _isAdding = false;
+  static bool get isAdding => _isAdding;
+  static set isAdding(bool value) => _isAdding = value;
 
+  /// 🟢 Lấy giá flash sale theo productId
+  static Future<double?> getFlashSalePrice(int productId) async {
     try {
-      final url = Uri.parse("${dotenv.env['BASE_URL']}/carts");
+      final url = Uri.parse("${dotenv.env['BASE_URL']}/flash-sales/$productId");
+      final response = await http.get(url);
 
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'product_id': productId,
-          'quantity': quantity,
-          'price': price,
-          'discountPercent': discountPercent,   // 👈 Thêm vào body
-          'shipping_fee': shippingFee,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        final responseData = jsonDecode(response.body);
-
-        if (responseData['success'] == true && responseData['data'] != null) {
-          return CartItem.fromJson(responseData['data']);
-        } else {
-          print(
-            '❌ Không thể thêm sản phẩm vào giỏ hàng: ${responseData['error']}',
-          );
-          return null;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['price'] != null) {
+          return (data['price'] as num).toDouble();
         }
-      } else {
-        print('❌ Lỗi khi thêm sản phẩm vào giỏ hàng: ${response.body}');
-        return null;
       }
-    } catch (e) {
-      print('❌ Lỗi mạng khi thêm giỏ hàng: $e');
       return null;
-    } finally {
-      _isAdding = false;
+    } catch (e) {
+      print('❌ Lỗi khi lấy giá flash sale: $e');
+      return null;
     }
   }
 
-  //tìm kiếm sản phẩm trong giỏ hàng
-  static Future<List<CartItem>> searchCartItems(
-    String query,
-    String token, {
-    int? userId,
+  /// 🟢 Thêm sản phẩm vào giỏ hàng
+  static Future<Map<String, dynamic>> addToCart({
+    required int productId,
+    required int quantity,
+    required String token,
+    String? couponCode,
   }) async {
-    String urlString = '${dotenv.env['BASE_URL']}/carts/search?q=$query';
+    final response = await http.post(
+      Uri.parse('${dotenv.env['BASE_URL']}/carts'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'product_id': productId,
+        'quantity': quantity,
+        if (couponCode != null && couponCode.isNotEmpty) 'coupon_code': couponCode,
+      }),
+    );
 
-    // Thêm userId vào query nếu có và không phải là customer
-    // Logic này sẽ được xử lý lại ở backend để đảm bảo quyền của admin
-    if (userId != null) {
-      urlString += '&user_id=$userId';
-      print("userId" + urlString);
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Lỗi thêm giỏ hàng: ${response.body}');
     }
+  }
 
-    final url = Uri.parse(urlString);
-    print("Link $url");
+  /// 🟢 Lấy danh sách giỏ hàng
+  static Future<List<CartItem>> fetchCart(String token) async {
+    final response = await http.get(
+      Uri.parse('${dotenv.env['BASE_URL']}/carts'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List<dynamic> rawList = data['data'] ?? [];
+      return rawList.map((e) => CartItem.fromJson(e)).toList();
+    } else {
+      throw Exception('Lỗi lấy giỏ hàng: ${response.body}');
+    }
+  }
+
+  /// 🟢 Tìm kiếm sản phẩm trong giỏ hàng
+  static Future<List<CartItem>> searchCartItems(
+      String query,
+      String token, {
+        int? userId,
+      }) async {
+    String urlString = '${dotenv.env['BASE_URL']}/carts/search?q=$query';
+    if (userId != null) urlString += '&user_id=$userId';
 
     try {
       final response = await http.get(
-        url,
+        Uri.parse(urlString),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -92,76 +93,33 @@ class CartService {
       if (response.statusCode == 200) {
         final dynamic responseData = json.decode(response.body);
 
-        // Trường hợp 1: API trả về một đối tượng có key 'cartItems' (khi không tìm thấy hoặc có thông báo)
-        if (responseData is Map<String, dynamic> &&
-            responseData.containsKey('cartItems')) {
-          final List<dynamic> cartItemList = responseData['cartItems'];
-          return cartItemList
-              .map((json) => CartItem.fromJson(json as Map<String, dynamic>))
+        if (responseData is Map<String, dynamic> && responseData.containsKey('cartItems')) {
+          return (responseData['cartItems'] as List)
+              .map((json) => CartItem.fromJson(json))
               .toList();
-        }
-        // Trường hợp 2: API trả về trực tiếp một danh sách sản phẩm trong giỏ (khi tìm thấy)
-        else if (responseData is List) {
-          return responseData
-              .map((json) => CartItem.fromJson(json as Map<String, dynamic>))
-              .toList();
-        }
-        // Trường hợp không mong muốn
-        else {
-          print(
-            'Lỗi: Định dạng phản hồi không mong muốn cho tìm kiếm giỏ hàng: ${response.body}',
-          );
-          return []; // Trả về danh sách rỗng
+        } else if (responseData is List) {
+          return responseData.map((json) => CartItem.fromJson(json)).toList();
+        } else {
+          print('⚠️ Phản hồi không mong muốn: ${response.body}');
+          return [];
         }
       } else {
-        // Xử lý lỗi từ server (ví dụ: 400 Bad Request, 401 Unauthorized, 403 Forbidden)
         final errorData = json.decode(response.body);
-        throw Exception(
-          'Không tìm thấy mục giỏ hàng: ${errorData['message'] ?? 'Status Code: ${response.statusCode}'}',
-        );
+        throw Exception(errorData['message'] ?? 'Không tìm thấy mục giỏ hàng');
       }
     } catch (e) {
-      print('Error searching cart items: $e');
-      throw Exception(
-        'Không thể kết nối tới máy chủ hoặc tìm kiếm các mục trong giỏ hàng. Lỗi: $e',
-      );
+      throw Exception('Không thể tìm kiếm giỏ hàng: $e');
     }
   }
 
-  // ✅ Lấy danh sách giỏ hàng của người dùng từ token
-  static Future<dynamic> fetchCart(String? token) async {
-    if (token == null) {
-      throw Exception("Token không hợp lệ");
-    }
-
-    final url = Uri.parse('${dotenv.env['BASE_URL']}/carts');
-
-    final response = await http.get(
-      url,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      print("❌ Lỗi khi lấy giỏ hàng: ${response.statusCode}");
-      throw Exception('Failed to load cart');
-    }
-  }
-
-  /// ✅ Cập nhật số lượng sản phẩm theo cartId
+  /// 🟢 Cập nhật số lượng
   static Future<void> updateQuantity({
     required int cartId,
     required int quantity,
     required String token,
   }) async {
-    final url = Uri.parse('${dotenv.env['BASE_URL']}/carts/$cartId');
-
     final response = await http.put(
-      url,
+      Uri.parse('${dotenv.env['BASE_URL']}/carts/$cartId'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -170,20 +128,17 @@ class CartService {
     );
 
     if (response.statusCode != 200) {
-      print('❌ Lỗi cập nhật số lượng: ${response.body}');
-      throw Exception('Failed to update quantity');
+      throw Exception('Lỗi cập nhật số lượng: ${response.body}');
     }
   }
 
-  /// ✅ Xóa sản phẩm khỏi giỏ hàng theo cartId
+  /// 🟢 Xoá sản phẩm
   static Future<void> deleteCartItem({
     required int cartId,
     required String token,
   }) async {
-    final url = Uri.parse('${dotenv.env['BASE_URL']}/carts/$cartId');
-
     final response = await http.delete(
-      url,
+      Uri.parse('${dotenv.env['BASE_URL']}/carts/$cartId'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -191,8 +146,7 @@ class CartService {
     );
 
     if (response.statusCode != 200) {
-      print('❌ Lỗi khi xóa sản phẩm: ${response.body}');
-      throw Exception('Failed to delete item');
+      throw Exception('Lỗi khi xóa sản phẩm: ${response.body}');
     }
   }
 }

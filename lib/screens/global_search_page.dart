@@ -258,15 +258,15 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen>
   Widget _buildCartResultsTab() {
     return Consumer<CartProvider>(
       builder: (context, cartProvider, child) {
-        if (cartProvider.itemCart.isEmpty) {
+        if (cartProvider.cartItems.isEmpty) {
           return const Center(child: Text('Giỏ hàng trống.'));
         }
 
         // Lọc giỏ hàng theo từ khóa tìm kiếm _currentQuery (không phân biệt hoa thường)
         final filteredItems =
             _currentQuery.isEmpty
-                ? cartProvider.itemCart
-                : cartProvider.itemCart
+                ? cartProvider.cartItems
+                : cartProvider.cartItems
                     .where(
                       (item) => item.productName.toLowerCase().contains(
                         _currentQuery.toLowerCase(),
@@ -288,9 +288,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen>
               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: ListTile(
                 leading:
-                    cartItem.productImage != null
+                    cartItem.productName != null
                         ? Image.network(
-                          cartItem.productImage!,
+                          cartItem.image!,
                           width: 50,
                           height: 50,
                           fit: BoxFit.cover,
@@ -303,7 +303,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen>
                   '${cartItem.productName} (SL: ${cartItem.quantity})',
                 ),
                 subtitle: Text(
-                  "Giá: ${formatCurrency(cartItem.price.toStringAsFixed(0))}",
+                  "Giá: ${formatCurrency(cartItem.totalPrice.toStringAsFixed(0))}",
                 ),
                 onTap: () {
                   print('Tìm kiếm sản phẩm trong giỏ: ${cartItem.productName}');

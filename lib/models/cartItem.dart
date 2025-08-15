@@ -1,38 +1,73 @@
 class CartItem {
-  final int id;
+  final int cartId;
   final int productId;
   final String productName;
-  final double price;
-  final String productImage;
-  int quantity;
-  final DateTime addedAt; // Thêm thời gian thêm vào giỏ hàng
-  // ✅ Thêm 2 thuộc tính mới
+  final String? image;
+  final double originalPrice;
+  final double finalPricePerItem;
+  final double shippingFee;
+  int quantity; // mutable
+  final double totalPrice;
+  final int discountPercent;
+  final String? couponCode;
+  final DateTime addedAt; // mới
+
   CartItem({
-    required this.id,
+    required this.cartId,
     required this.productId,
     required this.productName,
-    required this.price,
-    required this.productImage,
+    this.image,
+    required this.originalPrice,
+    required this.finalPricePerItem,
+    required this.shippingFee,
     required this.quantity,
+    required this.totalPrice,
+    required this.discountPercent,
+    this.couponCode,
     required this.addedAt,
   });
 
-  // Factory constructor để tạo CartItem từ JSON
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
-      id: json['id'],
-      productId: json['product_id'],
-      productName: json['name'],
-      price:
-          (json['price'] is String)
-              ? double.tryParse(json['price']) ?? 0.0
-              : json['price'].toDouble(),
-      productImage: json['image'] ?? '',
-      quantity: json['quantity'],
+      cartId: json['cart_id'] ?? 0,
+      productId: json['product_id'] ?? 0,
+      productName: json['product_name'] ?? '',
+      image: json['image'],
+      originalPrice: _parsePrice(json['original_price'] ?? 0),
+      finalPricePerItem: _parsePrice(json['flash_sale_price'] ?? 0),
+      shippingFee: _parsePrice(json['shipping_fee'] ?? 0),
+      quantity: json['quantity'] ?? 0,
+      totalPrice: _parsePrice(json['total_price'] ?? 0),
+      discountPercent: json['discount_percent'] ?? 0,
+      couponCode: json['coupon_code'],
       addedAt: _parseDate(json['added_at']),
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'cart_id': cartId,
+      'product_id': productId,
+      'product_name': productName,
+      'image': image,
+      'original_price': originalPrice,
+      'final_price_per_item': finalPricePerItem,
+      'shipping_fee': shippingFee,
+      'quantity': quantity,
+      'total_price': totalPrice,
+      'discount_percent': discountPercent,
+      'coupon_code': couponCode,
+      'added_at': addedAt.toIso8601String(),
+    };
+  }
+  static double _parsePrice(dynamic value) {
+    if (value is String) {
+      // Nếu giá trị là chuỗi, thử chuyển nó thành double
+      return double.tryParse(value) ?? 0.0;
+    }
+    // Nếu giá trị là số, trực tiếp chuyển đổi thành double
+    return (value as num?)?.toDouble() ?? 0.0;
+  }
   static DateTime _parseDate(dynamic value) {
     if (value == null) return DateTime.now();
     if (value is int) {
@@ -40,17 +75,14 @@ class CartItem {
     }
     if (value is String) {
       try {
-        return DateTime.parse(
-          value,
-        ).toLocal(); // Parse và để Flutter tự xử lý múi giờ
-      } catch (e) {
+        return DateTime.parse(value).toLocal();
+      } catch (_) {
         return DateTime.now();
       }
     }
     return DateTime.now();
   }
 
-  // Tùy chọn setter cho số lượng
   void updateQuantity(int newQuantity) {
     quantity = newQuantity;
   }

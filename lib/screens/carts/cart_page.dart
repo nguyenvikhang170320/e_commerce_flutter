@@ -1,85 +1,38 @@
+import 'package:app_ecommerce/models/cartItem.dart';
+import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart';
+import 'package:app_ecommerce/providers/user_provider.dart';
+import 'package:app_ecommerce/screens/notifications/notification_page.dart';
 import 'package:app_ecommerce/services/order_service.dart';
-import 'package:app_ecommerce/services/share_preference.dart';
+import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 import 'package:toasty_box/toast_enums.dart';
 import 'package:toasty_box/toast_service.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../providers/cart_provider.dart';
-import '../../providers/user_provider.dart';
-import '../notifications/notification_page.dart';
-import '../../widgets/bottom_nav.dart';
 
 class CartPage extends StatefulWidget {
+  final String token;
+  const CartPage({super.key, required this.token});
+
   @override
   State<CartPage> createState() => _CartPageState();
 }
 
 class _CartPageState extends State<CartPage> {
-  bool isLoading = true;
-  String? token;
-  String? userRole;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
-    // _checkLastOrderStatus();
+    // Load giỏ hàng khi vào trang
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<CartProvider>(context, listen: false).fetchCart(widget.token);
+    });
   }
 
-  Future<void> _checkLastOrderStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final lastOrderId = prefs.getString('lastOrderId');
-    final isHandled = prefs.getBool('isOrderHandled') ?? false;
-    if (lastOrderId == null) return;
-
-    try {
-      final token = await SharedPrefsHelper.getToken(); // nếu bạn đang dùng token
-      final response = await Dio().get(
-        'http://192.168.1.7:5000/api/orders/$lastOrderId',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        print('📦 Response data: $data');
-
-        if (data['order'] == null) {
-          print('⚠️ Không tìm thấy đơn hàng trong response');
-          return;
-        }
-
-        final order = data['order'];
-        final paymentStatus = order['payment_status'];
-        print('💰 payment_status = $paymentStatus');
-
-        if (paymentStatus == 'pending') {
-          Provider.of<CartProvider>(context, listen: false).cleanCart();
-
-          ToastService.showSuccessToast(
-            context,
-            message: 'Thanh toán đơn hàng #$lastOrderId thành công!',
-          );
-
-          // 🔒 Đánh dấu đã xử lý đơn hàng => không xử lý lại nữa
-          await prefs.setBool('isOrderHandled', true);
-          // Hoặc có thể xóa luôn cả 2 key nếu không cần giữ lại
-          await prefs.remove('lastOrderId');
-          await prefs.remove('isOrderHandled');
-        }
-      }
-    } catch (e, stack) {
-      print('❌ Lỗi khi kiểm tra trạng thái đơn hàng: $e');
-      print('🔍 Stacktrace: $stack');
-    }
-  }
 
   //giá tiền
   String formatCurrency(String amountStr) {
@@ -87,34 +40,6 @@ class _CartPageState extends State<CartPage> {
     return NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(amount);
   }
 
-  Future<void> _loadData() async {
-    await Provider.of<UserProvider>(context, listen: false).fetchUserInfo();
-    userRole =
-        Provider.of<UserProvider>(
-          context,
-          listen: false,
-        ).role; // Lấy userRole từ provider
-    token =
-        Provider.of<UserProvider>(
-          context,
-          listen: false,
-        ).accessToken; // Lấy token
-    if (token != null) {
-      // Gọi fetchCart với token đã lấy được
-      if (userRole == 'admin') {
-        ToastService.showWarningToast(
-          context,
-          length: ToastLength.medium,
-          expandedHeight: 100,
-          message: "Bạn không có quyền thực hiện thao tác này",
-        );
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => BottomNav(),));
-      }
-    } else {
-      print("❌ Không có token để xác thực");
-    }
-    setState(() => isLoading = false);
-  }
 
   void confirmRemoveItem(BuildContext context, int cartId, String token) {
     showDialog(
@@ -250,46 +175,55 @@ class _CartPageState extends State<CartPage> {
                   context,
                   listen: false,
                 );
-                final userProvider = Provider.of<UserProvider>(context, listen: false);
+                final userProvider = Provider.of<UserProvider>(
+                  context,
+                  listen: false,
+                );
                 final orderService = OrderService();
 
-                  bool success = await orderService.createOrder(
-                    address: address,
-                    phone: phone,
-                    // Nếu cần gửi tọa độ thì thêm:
-                    // lat: _selectedLatLng?.latitude,
-                    // lng: _selectedLatLng?.longitude,
-                  );
+                bool success = await orderService.createOrder(
+                  address: address,
+                  phone: phone,
+                  // Nếu cần gửi tọa độ thì thêm:
+                  // lat: _selectedLatLng?.latitude,
+                  // lng: _selectedLatLng?.longitude,
+                );
 
-                  if (success) {
-                    Provider.of<CartProvider>(context, listen: false).cleanCart();
-                    ToastService.showSuccessToast(
-                      context,
-                      length: ToastLength.medium,
-                      expandedHeight: 80,
-                      message: "Đặt hàng thành công",
-                    );
-                    await notificationProvider.sendNotification(
-                      receivers: [userProvider.userId!], // 👈 gửi đến chính user hiện tại
-                      title: 'Đơn hàng đã thanh toán',
-                      message: '${userProvider.name ?? 'Khách'} vừa thanh toán đơn hàng.',
-                      type: 'order',
-                    );
-                    await notificationProvider.loadUnreadCount();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => BottomNav()),
-                    );
-                  } else {
-                    ToastService.showErrorToast(
-                      context,
-                      length: ToastLength.medium,
-                      expandedHeight: 80,
-                      message: "Lỗi khi đặt hàng",
-                    );
-                  }
+                if (success) {
+                  Provider.of<CartProvider>(context, listen: false).cleanCart();
+                  ToastService.showSuccessToast(
+                    context,
+                    length: ToastLength.medium,
+                    expandedHeight: 80,
+                    message: "Đặt hàng thành công",
+                  );
+                  await notificationProvider.sendNotification(
+                    receivers: [
+                      userProvider.userId!,
+                    ], // 👈 gửi đến chính user hiện tại
+                    title: 'Đơn hàng đã thanh toán',
+                    message:
+                        '${userProvider.name ?? 'Khách'} vừa thanh toán đơn hàng.',
+                    type: 'order',
+                  );
+                  await notificationProvider.loadUnreadCount();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => BottomNav()),
+                  );
+                } else {
+                  ToastService.showErrorToast(
+                    context,
+                    length: ToastLength.medium,
+                    expandedHeight: 80,
+                    message: "Lỗi khi đặt hàng",
+                  );
+                }
               },
-              child: Text("Thanh toán tiền mặt", style: TextStyle(color: Colors.green)),
+              child: Text(
+                "Thanh toán tiền mặt",
+                style: TextStyle(color: Colors.green),
+              ),
             ),
             TextButton(
               onPressed: () async {
@@ -299,7 +233,10 @@ class _CartPageState extends State<CartPage> {
                   context,
                   listen: false,
                 );
-                final userProvider = Provider.of<UserProvider>(context, listen: false);
+                final userProvider = Provider.of<UserProvider>(
+                  context,
+                  listen: false,
+                );
                 if (address.isEmpty || phone.isEmpty) {
                   ToastService.showWarningToast(
                     context,
@@ -315,13 +252,17 @@ class _CartPageState extends State<CartPage> {
                     length: ToastLength.short,
                   );
 
-                  final items = cartProvider.itemCart.map((item) => {
-                    "product_id": item.productId,
-                    "quantity": item.quantity,
-                    "price": item.price,
-                  }).toList();
-                  final double shippingFee = 15000; // Phí ship cố định 30k
-                  final double discountPercent = 10;
+                  final items =
+                      cartProvider.cartItems
+                          .map(
+                            (item) => {
+                              "product_id": item.productId,
+                              "quantity": item.quantity,
+                              "price": item.totalPrice,
+                            },
+                          )
+                          .toList();
+
                   final response = await Dio().post(
                     '${dotenv.env['BASE_URL']}/orders/with-payment-url',
                     data: {
@@ -339,24 +280,32 @@ class _CartPageState extends State<CartPage> {
                     final int orderId = data['orderId'];
                     final String paymentUrl = data['paymentUrl'];
                     print("✅ Đơn hàng ID: $orderId");
-                    print("🔗 URL thanh toán (${paymentUrl.length} ký tự): $paymentUrl");
+                    print(
+                      "🔗 URL thanh toán (${paymentUrl.length} ký tự): $paymentUrl",
+                    );
                     final uri = Uri.parse(paymentUrl);
                     print("✅ URI hợp lệ: ${uri.toString()}");
                     // await SharedPrefsHelper.saveLastOrderId(orderId.toString());
 
-
                     if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
                       await notificationProvider.sendNotification(
-                        receivers: [userProvider.userId!], // 👈 gửi đến chính user hiện tại
+                        receivers: [
+                          userProvider.userId!,
+                        ], // 👈 gửi đến chính user hiện tại
                         title: 'Đơn hàng đã thanh toán',
-                        message: '${userProvider.name ?? 'Khách'} vừa thanh toán đơn hàng.',
+                        message:
+                            '${userProvider.name ?? 'Khách'} vừa thanh toán đơn hàng.',
                         type: 'payment',
                       );
                       await notificationProvider.loadUnreadCount();
                       ToastService.showToast(
                         context,
-                        message: "Vui lòng hoàn tất thanh toán trong trình duyệt.",
+                        message:
+                            "Vui lòng hoàn tất thanh toán trong trình duyệt.",
                         length: ToastLength.short,
                       );
 
@@ -387,10 +336,11 @@ class _CartPageState extends State<CartPage> {
                     message: "Không kết nối được máy chủ.",
                   );
                 }
-
-
               },
-              child: Text("Thanh toán VNPAY", style: TextStyle(color: Colors.blue)),
+              child: Text(
+                "Thanh toán VNPAY",
+                style: TextStyle(color: Colors.blue),
+              ),
             ),
           ],
         );
@@ -398,30 +348,11 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
-    // userProvider is used here just to get the role, no need for accessToken directly in build
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final currencyFormat = NumberFormat('#,##0', 'vi_VN');
 
-    // Directly use the isLoading state to show a loading indicator
-    if (isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            "Giỏ hàng",
-            style: TextStyle(fontSize: 18, color: Colors.black),
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 0.0,
-          iconTheme: IconThemeData(color: Colors.black),
-        ),
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    // After isLoading is false, 'token' will have the value set in _loadData
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -477,21 +408,21 @@ class _CartPageState extends State<CartPage> {
           ),
         ],
       ),
+
       body:
-          cartProvider.itemCart.isEmpty
-              ? Center(child: Text("Giỏ hàng trống"))
+          cartProvider.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : cartProvider.cartItems.isEmpty
+              ? const Center(child: Text('Giỏ hàng trống'))
               : Column(
                 children: [
                   Expanded(
                     child: ListView.builder(
-                      itemCount: cartProvider.itemCart.length,
+                      itemCount: cartProvider.cartItems.length,
                       itemBuilder: (ctx, i) {
-                        final item = cartProvider.itemCart[i];
-                        print("Giá: " + item.price.toStringAsFixed(0));
-                        print(
-                          "Tổng cộng: " +
-                              cartProvider.totalPrice.toStringAsFixed(0),
-                        );
+                        final item = cartProvider.cartItems[i];
+                        print("Giá: " + item.totalPrice.toStringAsFixed(0));
+
                         return Card(
                           margin: EdgeInsets.symmetric(
                             horizontal: 16,
@@ -506,7 +437,7 @@ class _CartPageState extends State<CartPage> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8.0),
                                       child: Image.network(
-                                        item.productImage,
+                                        item.image!,
                                         width: 70,
                                         height: 70,
                                         fit: BoxFit.cover,
@@ -518,37 +449,38 @@ class _CartPageState extends State<CartPage> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            item.productName,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            "Giá: ${formatCurrency(item.price.toStringAsFixed(0))}",
-                                            style: TextStyle(
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            'Thời gian đặt hàng: ${DateFormat('dd/MM/yyyy HH:mm').format(item.addedAt)}',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                          SizedBox(height: 8),
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                'Số lượng đã đặt: ${item.quantity}',
-                                                style: TextStyle(fontSize: 16),
+                                          // Giá gốc + giảm giá
+                                          if (item.discountPercent > 0)
+                                            Text(
+                                              'Giá gốc: ${formatCurrency(item.originalPrice.toStringAsFixed(0))}',
+                                              style: const TextStyle(
+                                                decoration:
+                                                    TextDecoration.lineThrough,
+                                                color: Colors.grey,
                                               ),
-                                            ],
+                                            ),
+                                          Text(
+                                            'Giá sau giảm: ${formatCurrency(item.finalPricePerItem.toStringAsFixed(0))}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                          if (item.discountPercent > 0)
+                                            Text(
+                                              'Giảm: ${item.discountPercent}%',
+                                            ),
+                                          if (item.couponCode != null)
+                                            Text('Mã KM: ${item.couponCode}'),
+                                          Text(
+                                            'SL: ${item.quantity} - Phí ship: ${formatCurrency(item.shippingFee.toStringAsFixed(0))}',
+                                          ),
+                                          // Thời gian thêm vào giỏ
+                                          Text(
+                                            'Thêm lúc: ${DateFormat('dd/MM/yyyy HH:mm').format(item.addedAt)}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -563,8 +495,8 @@ class _CartPageState extends State<CartPage> {
                                     onPressed:
                                         () => confirmRemoveItem(
                                           context,
-                                          item.id,
-                                          token!,
+                                          item.cartId,
+                                          widget.token,
                                         ),
                                   ),
                                 ),
@@ -598,7 +530,7 @@ class _CartPageState extends State<CartPage> {
                                     () => confirmClearCart(
                                       context,
                                       cartProvider,
-                                      token!,
+                                      widget.token,
                                     ),
                                 icon: Icon(Icons.delete_forever),
                                 label: Text("Xóa giỏ hàng"),
@@ -633,6 +565,7 @@ class _CartPageState extends State<CartPage> {
                   ),
                 ],
               ),
+
     );
   }
 }

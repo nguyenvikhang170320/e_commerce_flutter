@@ -1,17 +1,17 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart';
-import 'package:app_ecommerce/screens/carts/cart_page.dart';
 import 'package:app_ecommerce/screens/categorys/category_page.dart';
+import 'package:app_ecommerce/screens/coupons/coupon_list_page.dart';
+import 'package:app_ecommerce/screens/coupons/create_coupon_page.dart';
+import 'package:app_ecommerce/screens/coupons/my_coupons_page.dart';
+import 'package:app_ecommerce/screens/coupons/user_cart_coupon.dart';
 import 'package:app_ecommerce/screens/flash_sales/create_flash_sale.dart';
 import 'package:app_ecommerce/screens/favorites/favorite_list_page.dart';
 import 'package:app_ecommerce/screens/flash_sales/flash_sale_page.dart';
 import 'package:app_ecommerce/screens/login_page.dart';
-import 'package:app_ecommerce/screens/notifications/notification_page.dart';
 import 'package:app_ecommerce/screens/products/product_page.dart';
 import 'package:app_ecommerce/screens/profiles/profile_page.dart';
-import 'package:app_ecommerce/screens/reviews/review_management_page.dart';
-import 'package:app_ecommerce/screens/reviews/review_section.dart';
 import 'package:app_ecommerce/screens/verifies/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/services/terms_of_service_page.dart';
@@ -97,6 +97,23 @@ class CustomDrawer extends StatelessWidget {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.css_outlined),
+              title: const Text('Mã khuyến mãi'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CartCouponWidget(
+                      token: userProvider.accessToken!,
+                      mode: 'all',
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            ListTile(
               leading: const Icon(Icons.favorite),
               title: const Text('Yêu thích'),
               onTap: () {
@@ -150,6 +167,22 @@ class CustomDrawer extends StatelessWidget {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.flash_auto_rounded),
+              title: const Text('Tạo mã khuyến mãi'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) =>  CreateCouponPage(token: userProvider.accessToken!)));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.countertops),
+              title: const Text('Danh sách mã khuyến mãi'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) =>  MyCouponsPage()));
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.favorite),
               title: const Text('Yêu thích'),
               onTap: () {
@@ -170,6 +203,22 @@ class CustomDrawer extends StatelessWidget {
 
           // Admin: Duyệt xác minh, Flash Sale
           if (role == 'admin') ...[
+            ListTile(
+              leading: const Icon(Icons.flash_auto_rounded),
+              title: const Text('Tạo mã khuyến mãi'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) =>  CreateCouponPage(token: userProvider.accessToken!)));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.countertops),
+              title: const Text('Danh sách mã khuyến mãi'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) =>  CouponListPage(token: userProvider.accessToken!)));
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.verified_user),
               title: const Text('Duyệt xác minh'),
