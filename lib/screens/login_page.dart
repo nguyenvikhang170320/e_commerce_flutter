@@ -155,14 +155,15 @@ class LoginPage extends StatelessWidget {
                   );
                   await authProvider.setToken(token);
 
-                  // 2. Gọi fetchCart từ CartProvider ngay sau login
+                  // 👈 load giỏ hàng mới sau đăng nhập
                   final cartProvider = Provider.of<CartProvider>(
                     context,
                     listen: false,
                   );
                   await cartProvider.fetchCart(
                     token,
-                  ); // 👈 load giỏ hàng mới sau đăng nhập
+                  );
+                  // 👈 load sản phẩm mới sau đăng nhập
                   final productProvider = Provider.of<ProductProvider>(
                     context,
                     listen: false,

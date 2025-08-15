@@ -1,5 +1,8 @@
 import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
+import 'package:app_ecommerce/providers/coupons_provider.dart';
+import 'package:app_ecommerce/providers/favorite_provider.dart';
+import 'package:app_ecommerce/providers/flash_sale_provider.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/screens/categorys/category_page.dart';
 import 'package:app_ecommerce/screens/coupons/coupon_list_page.dart';
@@ -82,7 +85,7 @@ class CustomDrawer extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.store),
-              title: const Text('Sản phẩm của tôi'),
+              title: const Text('Sản phẩm'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) =>  ProductScreen()));
@@ -98,7 +101,7 @@ class CustomDrawer extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.css_outlined),
-              title: const Text('Mã khuyến mãi'),
+              title: const Text('Danh sách mã khuyến mãi'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -144,9 +147,9 @@ class CustomDrawer extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.store),
-              title: const Text('Sản phẩm của tôi'),
+              title: const Text('Sản phẩm'),
               onTap: () {
-                Navigator.pop(context);
+
                 Navigator.push(context, MaterialPageRoute(builder: (_) =>  ProductScreen()));
               },
             ),
@@ -154,13 +157,13 @@ class CustomDrawer extends StatelessWidget {
               leading: const Icon(Icons.flash_on),
               title: const Text('Sản phẩm giảm giá'),
               onTap: () {
-                Navigator.pop(context);
+
                 Navigator.push(context, MaterialPageRoute(builder: (_) => FlashSalePage()));
               },
             ),
             ListTile(
               leading: const Icon(Icons.flash_on),
-              title: const Text('Giảm giá sản phẩm'),
+              title: const Text('Tạo sản phẩm giảm giá'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => CreateFlashSaleScreen()));
@@ -237,7 +240,7 @@ class CustomDrawer extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.flash_on),
-              title: const Text('Giảm giá sản phẩm'),
+              title: const Text('Tạo Sản phẩm giảm giá'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => CreateFlashSaleScreen()));
@@ -258,10 +261,17 @@ class CustomDrawer extends StatelessWidget {
               final authProvider = Provider.of<AuthProvider>(context, listen: false);
               final cartProvider = Provider.of<CartProvider>(context, listen: false);
               final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+              final favoriteProvider = Provider.of<FavoriteProvider>(context, listen: false);
+              final couponProvider = Provider.of<CouponProvider>(context, listen: false);
+              final flashsaleProvider = Provider.of<FlashSaleProvider>(context, listen: false);
+
 
               authProvider.logout(context);
               cartProvider.cleanCart();
-              notificationProvider.reset(); // 🧠 Thêm dòng này để xóa thông báo user cũ
+              notificationProvider.reset();
+              favoriteProvider.reset();
+              flashsaleProvider.reset();
+              couponProvider.reset();
 
               // 3. Điều hướng về LoginPage
               Navigator.pushAndRemoveUntil(

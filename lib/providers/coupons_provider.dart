@@ -150,4 +150,12 @@ class CouponProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  void reset() {
+    _coupons = [];
+    _allCoupons = [];
+    _savedCoupons = [];
+    _myCoupons = [];
+    notifyListeners();
+  }
 }

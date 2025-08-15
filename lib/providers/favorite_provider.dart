@@ -58,4 +58,8 @@ class FavoriteProvider extends ChangeNotifier {
   bool isProductFavorite(int productId) {
     return _favoriteProducts.any((product) => product.id == productId);
   }
+  void reset() {
+    _favoriteProducts = [];
+    notifyListeners();
+  }
 }

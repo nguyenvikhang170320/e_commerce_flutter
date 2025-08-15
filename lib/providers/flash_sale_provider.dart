@@ -1,4 +1,3 @@
-import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:flutter/material.dart';
 import '../models/flash_sale.dart';
 import '../services/flash_sale_service.dart';
@@ -77,9 +76,6 @@ class FlashSaleProvider with ChangeNotifier {
       }
     }
   }
-
-
-
 
   void reset() {
     _flashSales = [];

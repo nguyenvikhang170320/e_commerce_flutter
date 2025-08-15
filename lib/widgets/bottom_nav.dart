@@ -1,5 +1,7 @@
+// bottom_nav.dart
 import 'dart:convert';
 import 'package:app_ecommerce/providers/cart_provider.dart';
+import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/orders/all_order_page.dart';
@@ -17,58 +19,32 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 class BottomNav extends StatefulWidget {
+  const BottomNav({Key? key}) : super(key: key);
+
   @override
   State<BottomNav> createState() => _BottomNavState();
 }
 
 class _BottomNavState extends State<BottomNav> {
   int _selectedIndex = 0;
-  String? userRole;
-  int? sellerID;
 
   @override
   void initState() {
     super.initState();
-    fetchUserRole();
-    _syncCart();
+    _loadInitialData();
   }
 
-  Future<void> fetchUserRole() async {
-    final token = await SharedPrefsHelper.getToken();
-    if (token == null) return;
-
-    final apiUrl = '${dotenv.env['BASE_URL']}/auth/me';
-
-    try {
-      final response = await http.get(
-        Uri.parse(apiUrl),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          userRole = data['role'];
-          sellerID = data['id'];
-        });
-      } else {
-        print('Lỗi lấy role: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Lỗi khi fetch user role: $e');
-    }
-  }
-
-  Future<void> _syncCart() async {
-    final token = await SharedPrefsHelper.getToken();
+  Future<void> _loadInitialData() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.fetchUserInfo();
+    final token = userProvider.accessToken;
     if (token != null) {
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
       final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
       await productProvider.fetchProducts();
       await cartProvider.fetchCart(token);
+      await notificationProvider.loadNotifications();
     }
   }
 
@@ -78,84 +54,83 @@ class _BottomNavState extends State<BottomNav> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (userRole == null) {
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        if (userProvider.role == null) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
 
-    List<Widget> screens;
-    List<BottomNavigationBarItem> items;
+        List<Widget> screens;
+        List<BottomNavigationBarItem> items;
 
-    if (userRole == 'admin') {
+        if (userProvider.role == 'admin') {
+          screens = [
+            HomePage(),
+            AllOrdersScreen(),
+            UserListScreen(),
+            AdminReportsPage(),
+          ];
+          items = const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
+            BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Hoá đơn'),
+            BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Người dùng'),
+            BottomNavigationBarItem(icon: Icon(Icons.report), label: 'Báo cáo'),
+          ];
+        } else if (userProvider.role == 'seller') {
+          screens = [
+            HomePage(),
+            CartPage(token: userProvider.accessToken!),
+            AllOrdersScreen(),
+            SellerRevenueScreen(sellerId: userProvider.userId!),
+            const UserListScreen(),
+            userProvider.userId != null
+                ? ChatListScreen(currentUserId: userProvider.userId!)
+                : const Center(child: CircularProgressIndicator()),
+          ];
+          items = const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
+            BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Giỏ hàng'),
+            BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Hoá đơn'),
+            BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Doanh thu'),
+            BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Tài khoản'),
+            BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_sharp), label: 'Tin nhắn'),
+          ];
+        } else {
+          // user
+          screens = [
+            HomePage(),
+            CartPage(token: userProvider.accessToken!),
+            UserOrdersScreen(),
+            const UserListScreen(),
+            userProvider.userId != null
+                ? ChatListScreen(currentUserId: userProvider.userId!)
+                : const Center(child: CircularProgressIndicator()),
+          ];
+          items = const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
+            BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Giỏ hàng'),
+            BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Hoá đơn'),
+            BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Tài khoản'),
+            BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_sharp), label: 'Tin nhắn'),
+          ];
+        }
 
-      screens = [
-        HomePage(),
-        AllOrdersScreen(),
-        UserListScreen(),
-        AdminReportsPage(),
-      ];
-      items = const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
-        BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Hoá đơn'),
-        BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Người dùng'),
-        BottomNavigationBarItem(icon: Icon(Icons.report), label: 'Báo cáo'),
-      ];
-    } else if (userRole == 'seller') {
-      screens = [
-        HomePage(),
-        CartPage(token: userProvider.accessToken!,),
-        AllOrdersScreen(),
-        SellerRevenueScreen(sellerId: sellerID!),
-        UserListScreen(),
-        userProvider.userId != null
-            ? ChatListScreen(currentUserId: userProvider.userId!)
-            : Center(child: CircularProgressIndicator()),
-      ];
-      items = const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
-        BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), label: 'Giỏ hàng'),
-        BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Hoá đơn'),
-        BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Doanh thu'),
-        BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Tài khoản'),
-        BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_sharp), label: 'Tin nhắn'),
-      ];
-    } else {
-      // user
-      screens = [
-        HomePage(),
-        CartPage(token: userProvider.accessToken!,),
-        UserOrdersScreen(),
-        UserListScreen(),
-        userProvider.userId != null
-            ? ChatListScreen(currentUserId: userProvider.userId!)
-            : Center(child: CircularProgressIndicator()),
-      ];
-      items = const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
-        BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Giỏ hàng'),
-        BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Hoá đơn'),
-        BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Tài khoản'),
-        BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_sharp), label: 'Tin nhắn'),
-      ];
-    }
-
-    return Scaffold(
-      body: _selectedIndex < screens.length
-          ? screens[_selectedIndex]
-          : Center(child: Text('Không tìm thấy màn hình')),
-      bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: Colors.orange,
-        unselectedItemColor: Colors.grey,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        items: items,
-      ),
+        return Scaffold(
+          body: _selectedIndex < screens.length
+              ? screens[_selectedIndex]
+              : const Center(child: Text('Không tìm thấy màn hình')),
+          bottomNavigationBar: BottomNavigationBar(
+            selectedItemColor: Colors.orange,
+            unselectedItemColor: Colors.grey,
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
+            type: BottomNavigationBarType.fixed,
+            items: items,
+          ),
+        );
+      },
     );
   }
-
-
 }

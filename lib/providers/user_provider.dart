@@ -1,7 +1,7 @@
+// user_provider.dart
+import 'package:flutter/foundation.dart'; // import ChangeNotifier
 import 'dart:convert';
-
 import 'package:app_ecommerce/services/share_preference.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
@@ -11,13 +11,41 @@ class UserProvider with ChangeNotifier {
   String? accessToken;
   String? name;
   String? image;
-  Set<int> _reportedProductIds = {}; //ẩn nút báo cáo sản phẩm
-  Set<int> get reportedProductIds => _reportedProductIds;//ẩn nút báo cáo sản phẩm
+  Set<int> _reportedProductIds = {};
+
+  Set<int> get reportedProductIds => _reportedProductIds;
+
+  // Add setters to update the provider's state
+  void setRole(String? newRole) {
+    role = newRole;
+    notifyListeners();
+  }
+
+  void setUserId(int? newUserId) {
+    userId = newUserId;
+    notifyListeners();
+  }
+
+  void setAccessToken(String? newToken) {
+    accessToken = newToken;
+    notifyListeners();
+  }
+
+  void setName(String? newName) {
+    name = newName;
+    notifyListeners();
+  }
+
+  void setImage(String? newImage) {
+    image = newImage;
+    notifyListeners();
+  }
+
   Future<void> fetchUserInfo() async {
     final token = await SharedPrefsHelper.getToken();
     if (token == null) return;
 
-    accessToken = token; // ✅ Gán token vào accessToken
+    setAccessToken(token); // Use the setter
 
     final apiUrl = '${dotenv.env['BASE_URL']}/auth/me';
     try {
@@ -31,12 +59,11 @@ class UserProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        role = data['role'];
-        userId = data['id']; // Lưu lại user_id
-        name = data['name'];
-        image = data['image']; // ✅ Lấy name
+        setRole(data['role']);
+        setUserId(data['id']);
+        setName(data['name']);
+        setImage(data['image']);
         print("Người dùng: $name - $role (ID: $userId)");
-        notifyListeners();
       } else {
         print('Không thể lấy user info. Status: ${response.statusCode}');
       }
@@ -44,7 +71,7 @@ class UserProvider with ChangeNotifier {
       print('Lỗi khi lấy user info: $e');
     }
   }
-  //xử lý nút báo cáo sản phẩm
+
   void addReportedProduct(int productId) {
     _reportedProductIds.add(productId);
     notifyListeners();
