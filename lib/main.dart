@@ -100,6 +100,20 @@ class _SplashDeciderState extends State<SplashDecider> {
         print('ID người dùng: $userId');
         // Lấy thông tin người dùng đầy đủ (bao gồm userId)
         await Provider.of<UserProvider>(context, listen: false).fetchUserInfo();
+        // 👈 load giỏ hàng mới
+        final cartProvider = Provider.of<CartProvider>(
+          context,
+          listen: false,
+        );
+        await cartProvider.fetchCart(
+          token,
+        );
+        // 👈 load sản phẩm mới
+        final productProvider = Provider.of<ProductProvider>(
+          context,
+          listen: false,
+        );
+        await productProvider.fetchFeaturedProducts();
         setState(() => _startScreen = BottomNav());
       } else {
         // Token rỗng hoặc hết hạn

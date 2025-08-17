@@ -155,20 +155,8 @@ class LoginPage extends StatelessWidget {
                   );
                   await authProvider.setToken(token);
 
-                  // 👈 load giỏ hàng mới sau đăng nhập
-                  final cartProvider = Provider.of<CartProvider>(
-                    context,
-                    listen: false,
-                  );
-                  await cartProvider.fetchCart(
-                    token,
-                  );
-                  // 👈 load sản phẩm mới sau đăng nhập
-                  final productProvider = Provider.of<ProductProvider>(
-                    context,
-                    listen: false,
-                  );
-                  await productProvider.fetchProducts();
+
+
 
                   // 3. Chuyển sang màn hình chính
                   ToastService.showSuccessToast(

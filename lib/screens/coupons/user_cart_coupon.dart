@@ -79,11 +79,11 @@ class _CartCouponWidgetState extends State<CartCouponWidget> {
         );
       } else {
         // Xử lý khi lưu thất bại
-        ToastService.showErrorToast(
+        ToastService.showWarningToast(
           context,
           length: ToastLength.medium,
           expandedHeight: 100,
-          message: "Lưu thất bại",
+          message: "Lưu thất bại!Mã đã lưu rồi!!",
         );
       }
     } else {

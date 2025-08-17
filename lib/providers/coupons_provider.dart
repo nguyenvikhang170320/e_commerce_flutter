@@ -35,7 +35,7 @@ class CouponProvider extends ChangeNotifier {
   }
 
   /// 📌 Lưu coupon
-  Future<bool> saveCoupon(String token, int couponId) async {
+  Future<bool?> saveCoupon(String token, int couponId) async {
     try {
       final success =
       await _couponService.saveCoupon(token: token, couponId: couponId);

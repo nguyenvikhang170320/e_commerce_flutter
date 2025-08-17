@@ -72,10 +72,13 @@ class CartProvider with ChangeNotifier {
         image: _cartItems[index].image,
         originalPrice: _cartItems[index].originalPrice,
         finalPricePerItem: _cartItems[index].finalPricePerItem,
+        flashPrice: _cartItems[index].flashPrice,
+        productPrice: _cartItems[index].productPrice,
         shippingFee: _cartItems[index].shippingFee,
         quantity: quantity,
         totalPrice: _cartItems[index].totalPrice,
         discountPercent: _cartItems[index].discountPercent,
+        discountType: _cartItems[index].discountType,
         couponCode: _cartItems[index].couponCode,
         addedAt: _cartItems[index].addedAt,
       );
@@ -85,6 +88,7 @@ class CartProvider with ChangeNotifier {
 
   /// ✅ Xóa sản phẩm
   Future<void> removeItem({required int cartId, required String token}) async {
+    print('⚠️ Lỗi xóa cartId ${cartId}');
     await CartService.deleteCartItem(cartId: cartId, token: token);
     _cartItems.removeWhere((item) => item.cartId == cartId);
     notifyListeners();
@@ -96,6 +100,7 @@ class CartProvider with ChangeNotifier {
       return sum + item.totalPrice;
     });
   }
+
 
   /// ✅ Xóa toàn bộ giỏ hàng
   Future<void> clearCart({required String token}) async {

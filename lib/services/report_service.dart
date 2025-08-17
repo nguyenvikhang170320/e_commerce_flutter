@@ -29,7 +29,11 @@ class ReportService {
     final List<dynamic> jsonList = jsonDecode(res.body);
     return jsonList.map((e) => Report.fromJson(e)).toList();
   }
-
+  static Future<List<Report>> getUserReports(int userId) async {
+    final res = await http.get(Uri.parse('${dotenv.env['BASE_URL']}/reports/user/$userId'));
+    final List<dynamic> jsonList = jsonDecode(res.body);
+    return jsonList.map((e) => Report.fromJson(e)).toList();
+  }
   static Future<List<Report>> getAllReports() async {
     final res = await http.get(Uri.parse('${dotenv.env['BASE_URL']}/reports'));
     final List<dynamic> jsonList = jsonDecode(res.body);

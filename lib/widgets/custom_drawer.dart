@@ -15,6 +15,7 @@ import 'package:app_ecommerce/screens/flash_sales/flash_sale_page.dart';
 import 'package:app_ecommerce/screens/login_page.dart';
 import 'package:app_ecommerce/screens/products/product_page.dart';
 import 'package:app_ecommerce/screens/profiles/profile_page.dart';
+import 'package:app_ecommerce/screens/profiles/user_list_page.dart';
 import 'package:app_ecommerce/screens/verifies/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/services/terms_of_service_page.dart';
@@ -68,34 +69,42 @@ class CustomDrawer extends StatelessWidget {
             leading: const Icon(Icons.person),
             title: const Text('Hồ sơ của tôi'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.pop(context);// đóng drawer
               Navigator.push(context, MaterialPageRoute(builder: (_) => ProfilePage()));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.category),
+            title: const Text('Danh mục'),
+            onTap: () {
+              Navigator.pop(context);// đóng drawer
+              Navigator.push(context, MaterialPageRoute(builder: (_) =>  CategoryScreen()));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.store),
+            title: const Text('Sản phẩm'),
+            onTap: () {
+              Navigator.pop(context);// đóng drawer
+              Navigator.push(context, MaterialPageRoute(builder: (_) =>  ProductScreen()));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.favorite),
+            title: const Text('Yêu thích'),
+            onTap: () {
+              Navigator.pop(context);// đóng drawer
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteListScreen()));
             },
           ),
 
           // Người dùng: Giỏ hàng, Yêu thích
           if (role == 'user') ...[
             ListTile(
-              leading: const Icon(Icons.category),
-              title: const Text('Danh mục'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) =>  CategoryScreen()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.store),
-              title: const Text('Sản phẩm'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) =>  ProductScreen()));
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.flash_on),
               title: const Text('Sản phẩm giảm giá'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context);// đóng drawer
                 Navigator.push(context, MaterialPageRoute(builder: (_) => FlashSalePage()));
               },
             ),
@@ -103,7 +112,7 @@ class CustomDrawer extends StatelessWidget {
               leading: const Icon(Icons.css_outlined),
               title: const Text('Danh sách mã khuyến mãi'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context);// đóng drawer
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -115,49 +124,15 @@ class CustomDrawer extends StatelessWidget {
                 );
               },
             ),
-
-            ListTile(
-              leading: const Icon(Icons.favorite),
-              title: const Text('Yêu thích'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteListScreen()));
-              },
-            ),
-            //Điều khoản và dịch vụ app
-            ListTile(
-              leading: const Icon(Icons.design_services),
-              title: const Text('Điều khoản và dịch vụ'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => TermsOfServiceScreens()));
-              },
-            ),
           ],
 
           // Người bán: Quản lý sản phẩm, đánh giá
           if (role == 'seller') ...[
             ListTile(
-              leading: const Icon(Icons.category),
-              title: const Text('Danh mục'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) =>  CategoryScreen()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.store),
-              title: const Text('Sản phẩm'),
-              onTap: () {
-
-                Navigator.push(context, MaterialPageRoute(builder: (_) =>  ProductScreen()));
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.flash_on),
               title: const Text('Sản phẩm giảm giá'),
               onTap: () {
-
+                Navigator.pop(context);// đóng drawer
                 Navigator.push(context, MaterialPageRoute(builder: (_) => FlashSalePage()));
               },
             ),
@@ -165,7 +140,7 @@ class CustomDrawer extends StatelessWidget {
               leading: const Icon(Icons.flash_on),
               title: const Text('Tạo sản phẩm giảm giá'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context);// đóng drawer
                 Navigator.push(context, MaterialPageRoute(builder: (_) => CreateFlashSaleScreen()));
               },
             ),
@@ -173,7 +148,7 @@ class CustomDrawer extends StatelessWidget {
               leading: const Icon(Icons.flash_auto_rounded),
               title: const Text('Tạo mã khuyến mãi'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context);// đóng drawer
                 Navigator.push(context, MaterialPageRoute(builder: (_) =>  CreateCouponPage(token: userProvider.accessToken!)));
               },
             ),
@@ -181,25 +156,8 @@ class CustomDrawer extends StatelessWidget {
               leading: const Icon(Icons.countertops),
               title: const Text('Danh sách mã khuyến mãi'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context);// đóng drawer
                 Navigator.push(context, MaterialPageRoute(builder: (_) =>  MyCouponsPage()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.favorite),
-              title: const Text('Yêu thích'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteListScreen()));
-              },
-            ),
-            //Điều khoản và dịch vụ app
-            ListTile(
-              leading: const Icon(Icons.design_services),
-              title: const Text('Điều khoản và dịch vụ'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => TermsOfServiceScreens()));
               },
             ),
           ],
@@ -207,10 +165,26 @@ class CustomDrawer extends StatelessWidget {
           // Admin: Duyệt xác minh, Flash Sale
           if (role == 'admin') ...[
             ListTile(
+              leading: const Icon(Icons.flash_on),
+              title: const Text('Sản phẩm giảm giá'),
+              onTap: () {
+                Navigator.pop(context); // đóng drawer
+                Navigator.push(context, MaterialPageRoute(builder: (_) => FlashSalePage()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flash_on),
+              title: const Text('Tạo sản phẩm giảm giá'),
+              onTap: () {
+                Navigator.pop(context);// đóng drawer
+                Navigator.push(context, MaterialPageRoute(builder: (_) => CreateFlashSaleScreen()));
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.flash_auto_rounded),
               title: const Text('Tạo mã khuyến mãi'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context);// đóng drawer
                 Navigator.push(context, MaterialPageRoute(builder: (_) =>  CreateCouponPage(token: userProvider.accessToken!)));
               },
             ),
@@ -218,36 +192,29 @@ class CustomDrawer extends StatelessWidget {
               leading: const Icon(Icons.countertops),
               title: const Text('Danh sách mã khuyến mãi'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context);// đóng drawer;
                 Navigator.push(context, MaterialPageRoute(builder: (_) =>  CouponListPage(token: userProvider.accessToken!)));
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.verified_user),
-              title: const Text('Duyệt xác minh'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => VerifyRequestsScreen()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.flash_on),
-              title: const Text('Sản phẩm giảm giá'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => FlashSalePage()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.flash_on),
-              title: const Text('Tạo Sản phẩm giảm giá'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => CreateFlashSaleScreen()));
-              },
-            ),
           ],
-
+          //tất cả tài khoản
+          ListTile(
+            leading: const Icon(Icons.supervised_user_circle),
+            title: const Text('Tài khoản'),
+            onTap: () {
+              Navigator.pop(context);// đóng drawer
+              Navigator.push(context, MaterialPageRoute(builder: (_) => UserListScreen()));
+            },
+          ),
+          //Điều khoản và dịch vụ app
+          ListTile(
+            leading: const Icon(Icons.design_services),
+            title: const Text('Điều khoản và dịch vụ'),
+            onTap: () {
+              Navigator.pop(context);// đóng drawer
+              Navigator.push(context, MaterialPageRoute(builder: (_) => TermsOfServiceScreens()));
+            },
+          ),
           ListTile(
             leading: Icon(Icons.logout),
             title: Text('Đăng xuất'),

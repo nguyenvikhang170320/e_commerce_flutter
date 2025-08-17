@@ -23,7 +23,6 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-
   @override
   void initState() {
     super.initState();
@@ -33,13 +32,11 @@ class _CartPageState extends State<CartPage> {
     });
   }
 
-
   //giá tiền
   String formatCurrency(String amountStr) {
     final amount = double.tryParse(amountStr) ?? 0;
     return NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(amount);
   }
-
 
   void confirmRemoveItem(BuildContext context, int cartId, String token) {
     showDialog(
@@ -184,6 +181,7 @@ class _CartPageState extends State<CartPage> {
                 bool success = await orderService.createOrder(
                   address: address,
                   phone: phone,
+
                   // Nếu cần gửi tọa độ thì thêm:
                   // lat: _selectedLatLng?.latitude,
                   // lng: _selectedLatLng?.longitude,
@@ -436,44 +434,76 @@ class _CartPageState extends State<CartPage> {
                                   children: [
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8.0),
-                                      child: Image.network(
-                                        item.image!,
-                                        width: 70,
-                                        height: 70,
-                                        fit: BoxFit.cover,
-                                      ),
+                                      child:
+                                          item.image != null
+                                              ? Image.network(
+                                                item.image!,
+                                                width: 70,
+                                                height: 70,
+                                                fit: BoxFit.cover,
+                                              )
+                                              : Icon(Icons.image),
                                     ),
+
                                     SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          // Giá gốc + giảm giá
-                                          if (item.discountPercent > 0)
-                                            Text(
-                                              'Giá gốc: ${formatCurrency(item.originalPrice.toStringAsFixed(0))}',
-                                              style: const TextStyle(
-                                                decoration:
-                                                    TextDecoration.lineThrough,
-                                                color: Colors.grey,
+                                          item.discountType == "flash_sale"
+                                              ? Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Giá gốc: ${formatCurrency(item.originalPrice.toStringAsFixed(0))}',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                  color: Colors.red,
+                                                  decoration:
+                                                  TextDecoration.lineThrough,
+                                                ),
                                               ),
-                                            ),
+
+                                              Text(
+                                                'Giá giảm: ${formatCurrency(item.flashPrice.toStringAsFixed(0))}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.red,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              if (item.couponCode != null) // Nếu có coupon thì show thêm
+                                                Text(
+                                                  'Mã KM: ${item.couponCode}',
+                                                  style: const TextStyle(color: Colors.blue),
+                                                ),
+                                            ],
+                                          )
+                                              : item.discountType == "category"
+                                              ? Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Giá : ${formatCurrency(item.productPrice.toStringAsFixed(0))}',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                              if (item.couponCode != null) // Nếu có coupon thì show thêm
+                                                Text(
+                                                  'Mã KM: ${item.couponCode}',
+                                                  style: const TextStyle(color: Colors.blue),
+                                                ),
+                                            ],
+                                          )
+                                              : Text('Mã KM11: ${item.couponCode}'),
+                                          Text('Giảm % danh mục: ${item.discountPercent}%'),
                                           Text(
-                                            'Giá sau giảm: ${formatCurrency(item.finalPricePerItem.toStringAsFixed(0))}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.red,
-                                            ),
-                                          ),
-                                          if (item.discountPercent > 0)
-                                            Text(
-                                              'Giảm: ${item.discountPercent}%',
-                                            ),
-                                          if (item.couponCode != null)
-                                            Text('Mã KM: ${item.couponCode}'),
-                                          Text(
-                                            'SL: ${item.quantity} - Phí ship: ${formatCurrency(item.shippingFee.toStringAsFixed(0))}',
+                                            'SL: ${item.quantity} - Phí vận chuyển: ${formatCurrency(item.shippingFee.toStringAsFixed(0))}',
                                           ),
                                           // Thời gian thêm vào giỏ
                                           Text(
@@ -482,14 +512,22 @@ class _CartPageState extends State<CartPage> {
                                               fontSize: 12,
                                             ),
                                           ),
+                                          Text(
+                                            'Tổng phụ sản phẩm: ${formatCurrency(item.finalPricePerItem.toStringAsFixed(0))}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.red,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
                                   ],
                                 ),
                                 Positioned(
-                                  top: 0,
-                                  right: 0,
+                                  top: 2,
+                                  right: 2,
                                   child: IconButton(
                                     icon: Icon(Icons.close, color: Colors.red),
                                     onPressed:
@@ -512,8 +550,9 @@ class _CartPageState extends State<CartPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
+
                         Text(
-                          'Tổng cộng: ${formatCurrency(cartProvider.totalPrice.toStringAsFixed(0))}',
+                          'Tổng: ${formatCurrency(cartProvider.totalPrice.toStringAsFixed(0))}',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -565,7 +604,6 @@ class _CartPageState extends State<CartPage> {
                   ),
                 ],
               ),
-
     );
   }
 }

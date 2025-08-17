@@ -104,17 +104,6 @@ class _HeaderWithAvatarState extends State<HeaderWithAvatar> {
               SizedBox(width: 5,),
               GestureDetector(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ChatListScreen(currentUserId: userProvider.userId!)),
-                  );
-                  //chuyển sang trang danh mục
-                },
-                child: Icon(Icons.chat_bubble_sharp, size: 28),
-              ),
-              SizedBox(width: 5,),
-              GestureDetector(
-                onTap: () {
                   //chuyển sang trang profile
                   Navigator.push(
                     context,

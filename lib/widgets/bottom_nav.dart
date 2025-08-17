@@ -9,9 +9,11 @@ import 'package:app_ecommerce/screens/carts/cart_page.dart';
 import 'package:app_ecommerce/screens/chats/chat_list_page.dart';
 import 'package:app_ecommerce/screens/home_page.dart';
 import 'package:app_ecommerce/screens/reports/admin_report_products_page.dart';
+import 'package:app_ecommerce/screens/reports/seller_reported_products_page.dart';
 import 'package:app_ecommerce/screens/revenue/revenue_page.dart';
 import 'package:app_ecommerce/screens/profiles/user_list_page.dart';
 import 'package:app_ecommerce/screens/orders/user_order_details_page.dart';
+import 'package:app_ecommerce/screens/verifies/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -42,7 +44,7 @@ class _BottomNavState extends State<BottomNav> {
       final cartProvider = Provider.of<CartProvider>(context, listen: false);
       final productProvider = Provider.of<ProductProvider>(context, listen: false);
       final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
-      await productProvider.fetchProducts();
+      await productProvider.fetchFeaturedProducts();
       await cartProvider.fetchCart(token);
       await notificationProvider.loadNotifications();
     }
@@ -69,14 +71,18 @@ class _BottomNavState extends State<BottomNav> {
           screens = [
             HomePage(),
             AllOrdersScreen(),
-            UserListScreen(),
             AdminReportsPage(),
+            userProvider.userId != null
+                ? ChatListScreen(currentUserId: userProvider.userId!)
+                : const Center(child: CircularProgressIndicator()),
+            VerifyRequestsScreen(),
           ];
           items = const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
             BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Hoá đơn'),
-            BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Người dùng'),
             BottomNavigationBarItem(icon: Icon(Icons.report), label: 'Báo cáo'),
+            BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: 'Tin nhắn'),
+            BottomNavigationBarItem(icon: Icon(Icons.verified_user), label: 'Duyệt xác minh tài khoản'),
           ];
         } else if (userProvider.role == 'seller') {
           screens = [
@@ -84,7 +90,7 @@ class _BottomNavState extends State<BottomNav> {
             CartPage(token: userProvider.accessToken!),
             AllOrdersScreen(),
             SellerRevenueScreen(sellerId: userProvider.userId!),
-            const UserListScreen(),
+            SellerReportedProductsPage(sellerId: userProvider.userId!),
             userProvider.userId != null
                 ? ChatListScreen(currentUserId: userProvider.userId!)
                 : const Center(child: CircularProgressIndicator()),
@@ -94,7 +100,7 @@ class _BottomNavState extends State<BottomNav> {
             BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Giỏ hàng'),
             BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Hoá đơn'),
             BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Doanh thu'),
-            BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Tài khoản'),
+            BottomNavigationBarItem(icon: Icon(Icons.report), label: 'Báo cáo'),
             BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_sharp), label: 'Tin nhắn'),
           ];
         } else {
