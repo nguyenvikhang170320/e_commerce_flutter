@@ -349,7 +349,6 @@ class _CartPageState extends State<CartPage> {
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
-    final currencyFormat = NumberFormat('#,##0', 'vi_VN');
 
     return Scaffold(
       appBar: AppBar(
@@ -465,7 +464,7 @@ class _CartPageState extends State<CartPage> {
                                                   TextDecoration.lineThrough,
                                                 ),
                                               ),
-
+                                              Text('Giảm ${item.discountPercent}%'),
                                               Text(
                                                 'Giá giảm: ${formatCurrency(item.flashPrice.toStringAsFixed(0))}',
                                                 style: const TextStyle(
@@ -474,9 +473,11 @@ class _CartPageState extends State<CartPage> {
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
-                                              if (item.couponCode != null) // Nếu có coupon thì show thêm
+                                              if (item.discount_value != null)
                                                 Text(
-                                                  'Mã KM: ${item.couponCode}',
+                                                  'Giảm: ${item.coupon_discount_type == "percent"
+                                                      ? "${item.discount_value}%"
+                                                      : formatCurrency(item.discount_value!.toStringAsFixed(0))}',
                                                   style: const TextStyle(color: Colors.blue),
                                                 ),
                                             ],
@@ -493,15 +494,18 @@ class _CartPageState extends State<CartPage> {
                                                   color: Colors.red,
                                                 ),
                                               ),
-                                              if (item.couponCode != null) // Nếu có coupon thì show thêm
+                                              Text('Giảm ${item.discountPercent}% theo danh mục'),
+                                              if (item.discount_value != null)
                                                 Text(
-                                                  'Mã KM: ${item.couponCode}',
+                                                  'Giảm: ${item.coupon_discount_type == "percent"
+                                                      ? "${item.discount_value}%"
+                                                      : formatCurrency(item.discount_value!.toStringAsFixed(0))}',
                                                   style: const TextStyle(color: Colors.blue),
                                                 ),
                                             ],
                                           )
-                                              : Text('Mã KM11: ${item.couponCode}'),
-                                          Text('Giảm % danh mục: ${item.discountPercent}%'),
+                                              : Text('Mã KM: ${item.couponCode}'),
+
                                           Text(
                                             'SL: ${item.quantity} - Phí vận chuyển: ${formatCurrency(item.shippingFee.toStringAsFixed(0))}',
                                           ),
@@ -550,7 +554,7 @@ class _CartPageState extends State<CartPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-
+                        // Tổng cuối cùng
                         Text(
                           'Tổng: ${formatCurrency(cartProvider.totalPrice.toStringAsFixed(0))}',
                           style: TextStyle(
@@ -559,38 +563,38 @@ class _CartPageState extends State<CartPage> {
                             color: Colors.green[700],
                           ),
                         ),
-                        SizedBox(height: 16),
+
+                        const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed:
-                                    () => confirmClearCart(
-                                      context,
-                                      cartProvider,
-                                      widget.token,
-                                    ),
-                                icon: Icon(Icons.delete_forever),
-                                label: Text("Xóa giỏ hàng"),
+                                onPressed: () => confirmClearCart(
+                                  context,
+                                  cartProvider,
+                                  widget.token,
+                                ),
+                                icon: const Icon(Icons.delete_forever),
+                                label: const Text("Xóa giỏ hàng"),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
-                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8.0),
                                   ),
                                 ),
                               ),
                             ),
-                            SizedBox(width: 16),
+                            const SizedBox(width: 16),
                             Expanded(
                               child: ElevatedButton.icon(
                                 onPressed: () => handleCheckout(context),
-                                icon: Icon(Icons.payment),
-                                label: Text("Thanh toán"),
+                                icon: const Icon(Icons.payment),
+                                label: const Text("Thanh toán"),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,
-                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8.0),
                                   ),

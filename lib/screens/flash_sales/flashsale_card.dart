@@ -91,7 +91,7 @@ class _FlashSaleCardState extends State<FlashSaleCard> {
                     ),
                   ),
                   Text(
-                    'Giá sale: ${formatCurrency(flashSale.flashPrice.toString())}',
+                    'Giá giảm: ${formatCurrency(flashSale.flashPrice.toString())}',
                     style: TextStyle(fontSize: 14, color: Colors.red),
                   ),
 

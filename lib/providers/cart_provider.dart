@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 class CartProvider with ChangeNotifier {
   bool _isLoading = false;
   List<CartItem> _cartItems = [];
-
+  double _discountValue = 0.0;
+  bool _isPercentDiscount = false;
   bool get isLoading => _isLoading;
   List<CartItem> get cartItems => _cartItems;
-
+  double get discountValue => _discountValue;
+  bool get isPercentDiscount => _isPercentDiscount;
   /// ✅ Lấy giỏ hàng
   Future<void> fetchCart(String token) async {
     try {
@@ -65,23 +67,8 @@ class CartProvider with ChangeNotifier {
 
     final index = _cartItems.indexWhere((item) => item.cartId == cartId);
     if (index != -1) {
-      _cartItems[index] = CartItem(
-        cartId: _cartItems[index].cartId,
-        productId: _cartItems[index].productId,
-        productName: _cartItems[index].productName,
-        image: _cartItems[index].image,
-        originalPrice: _cartItems[index].originalPrice,
-        finalPricePerItem: _cartItems[index].finalPricePerItem,
-        flashPrice: _cartItems[index].flashPrice,
-        productPrice: _cartItems[index].productPrice,
-        shippingFee: _cartItems[index].shippingFee,
-        quantity: quantity,
-        totalPrice: _cartItems[index].totalPrice,
-        discountPercent: _cartItems[index].discountPercent,
-        discountType: _cartItems[index].discountType,
-        couponCode: _cartItems[index].couponCode,
-        addedAt: _cartItems[index].addedAt,
-      );
+      _cartItems[index].updateQuantity(quantity);
+      totalPrice;
       notifyListeners();
     }
   }

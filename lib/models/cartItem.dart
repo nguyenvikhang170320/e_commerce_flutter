@@ -12,7 +12,9 @@ class CartItem {
   final double totalPrice;
   final String? discountPercent;
   final String? couponCode;
-  late String discountType;
+  final double?  discount_value;
+  final String discountType;
+  final String coupon_discount_type;
   final DateTime addedAt; // mới
 
   CartItem({
@@ -29,8 +31,10 @@ class CartItem {
     required this.totalPrice,
     required this.discountPercent,
     this.couponCode,
+    this.discount_value,
     required this.addedAt,
     required this.discountType,
+    required this.coupon_discount_type,
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
@@ -48,7 +52,9 @@ class CartItem {
       totalPrice: _parsePrice(json['final_price_per_item'] ?? 0),
       discountPercent: json['discount_percent'].toString(),
       discountType: json['discount_type'].toString(),
+      coupon_discount_type: json['coupon_discount_type'].toString(),
       couponCode: json['coupon_code'],
+      discount_value: _parsePrice(json['discount_value']),
       addedAt: _parseDate(json['added_at']),
     );
   }
@@ -68,6 +74,7 @@ class CartItem {
       'discount_percent': discountPercent,
       'discount_type': discountType,
       'coupon_code': couponCode,
+      'discount_value': discount_value,
       'added_at': addedAt.toIso8601String(),
     };
   }
