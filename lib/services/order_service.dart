@@ -12,10 +12,13 @@ class OrderService {
   }
 
   // Tạo đơn hàng mới
-  // Tạo đơn hàng mới
   Future<bool> createOrder({
     required String address,
     required String phone,
+    required double totalAmount,
+    required double subtotalAmount,
+    required double shippingFee,
+    required double couponDiscount,
   }) async {
     final token = await _getToken();
     final url = Uri.parse(baseUrl);
@@ -26,7 +29,10 @@ class OrderService {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({'address': address, 'phone': phone}),
+      body: jsonEncode({'address': address, 'phone': phone,'total_amount': totalAmount,
+        'subtotal_amount': subtotalAmount,
+        'shipping_fee': shippingFee,
+        'coupon_discount': couponDiscount,}),
     );
 
     if (res.statusCode == 201) {

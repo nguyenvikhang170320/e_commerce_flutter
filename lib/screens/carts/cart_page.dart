@@ -26,13 +26,11 @@ class _CartPageState extends State<CartPage> {
   @override
   void initState() {
     super.initState();
-    // Load giỏ hàng khi vào trang
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<CartProvider>(context, listen: false).fetchCart(widget.token);
     });
   }
 
-  //giá tiền
   String formatCurrency(String amountStr) {
     final amount = double.tryParse(amountStr) ?? 0;
     return NumberFormat.currency(locale: 'vi_VN', symbol: '₫').format(amount);
@@ -58,7 +56,6 @@ class _CartPageState extends State<CartPage> {
                     context,
                     listen: false,
                   ).removeItem(cartId: cartId, token: token);
-
                   ToastService.showSuccessToast(
                     context,
                     length: ToastLength.medium,
@@ -95,7 +92,6 @@ class _CartPageState extends State<CartPage> {
               TextButton(
                 onPressed: () {
                   cartProvider.clearCart(token: token);
-
                   ToastService.showSuccessToast(
                     context,
                     length: ToastLength.medium,
@@ -157,10 +153,9 @@ class _CartPageState extends State<CartPage> {
             ),
             TextButton(
               onPressed: () async {
-                Navigator.of(ctx).pop(); // Đóng dialog
+                Navigator.of(ctx).pop();
                 final address = addressController.text.trim();
                 final phone = phoneController.text.trim();
-
                 if (address.isEmpty || phone.isEmpty) {
                   ToastService.showWarningToast(
                     context,
@@ -177,16 +172,17 @@ class _CartPageState extends State<CartPage> {
                   listen: false,
                 );
                 final orderService = OrderService();
-
                 bool success = await orderService.createOrder(
                   address: address,
                   phone: phone,
-
-                  // Nếu cần gửi tọa độ thì thêm:
-                  // lat: _selectedLatLng?.latitude,
-                  // lng: _selectedLatLng?.longitude,
+                  totalAmount:
+                      cartProvider
+                          .totalPrice, // No quotes around the parameter name
+                  subtotalAmount: cartProvider.totalSubtotal,
+                  shippingFee: cartProvider.totalShippingFee,
+                  couponDiscount: cartProvider.totalCouponDiscount,
+                  // Thêm các trường tổng cộng mới vào đây
                 );
-
                 if (success) {
                   Provider.of<CartProvider>(context, listen: false).cleanCart();
                   ToastService.showSuccessToast(
@@ -196,9 +192,7 @@ class _CartPageState extends State<CartPage> {
                     message: "Đặt hàng thành công",
                   );
                   await notificationProvider.sendNotification(
-                    receivers: [
-                      userProvider.userId!,
-                    ], // 👈 gửi đến chính user hiện tại
+                    receivers: [userProvider.userId!],
                     title: 'Đơn hàng đã thanh toán',
                     message:
                         '${userProvider.name ?? 'Khách'} vừa thanh toán đơn hàng.',
@@ -224,6 +218,10 @@ class _CartPageState extends State<CartPage> {
               ),
             ),
             TextButton(
+              child: Text(
+                "Thanh toán VNPAY",
+                style: TextStyle(color: Colors.blue),
+              ),
               onPressed: () async {
                 final address = addressController.text.trim();
                 final phone = phoneController.text.trim();
@@ -242,85 +240,92 @@ class _CartPageState extends State<CartPage> {
                   );
                   return;
                 }
-
                 try {
                   ToastService.showToast(
                     context,
                     message: "Đang tạo đơn hàng...",
                     length: ToastLength.short,
                   );
-
                   final items =
                       cartProvider.cartItems
                           .map(
                             (item) => {
                               "product_id": item.productId,
                               "quantity": item.quantity,
-                              "price": item.totalPrice,
+                              "price": item.subtotal,
                             },
                           )
                           .toList();
+                  final token = userProvider.accessToken;
 
                   final response = await Dio().post(
-                    '${dotenv.env['BASE_URL']}/orders/with-payment-url',
+                    '${dotenv.env['BASE_URL']}/vnpay/orders/with-payment-url',
+                    options: Options(
+                      headers: {
+                        'Authorization': 'Bearer $token',
+                        // Add the Bearer token here
+                        'Content-Type': 'application/json',
+                      },
+                    ),
                     data: {
                       "user_id": userId,
-                      "total_amount": cartProvider.totalPrice,
                       "address": addressController.text,
                       "phone": phoneController.text,
-                      "items": items, // 👈 Gửi danh sách sản phẩm
+                      "totalAmount": cartProvider.totalPrice,
+                      // No quotes around the parameter name
+                      "subtotalAmount": cartProvider.totalSubtotal,
+                      "shippingFee": cartProvider.totalShippingFee,
+                      "couponDiscount": cartProvider.totalCouponDiscount,
+                      "items": items,
                     },
                   );
-                  Provider.of<CartProvider>(context, listen: false).cleanCart();
-
+                  Provider.of<CartProvider>(
+                    context,
+                    listen: false,
+                  ).cleanCart();
                   if (response.statusCode == 200) {
-                    final data = response.data;
-                    final int orderId = data['orderId'];
-                    final String paymentUrl = data['paymentUrl'];
+                    final order = response.data;
+                    final int orderId = order['orderId'];
+                    final String paymentUrl = order['paymentUrl'];
                     print("✅ Đơn hàng ID: $orderId");
                     print(
                       "🔗 URL thanh toán (${paymentUrl.length} ký tự): $paymentUrl",
                     );
                     final uri = Uri.parse(paymentUrl);
                     print("✅ URI hợp lệ: ${uri.toString()}");
-                    // await SharedPrefsHelper.saveLastOrderId(orderId.toString());
 
                     if (await canLaunchUrl(uri)) {
                       await launchUrl(
                         uri,
                         mode: LaunchMode.externalApplication,
                       );
-                      await notificationProvider.sendNotification(
-                        receivers: [
-                          userProvider.userId!,
-                        ], // 👈 gửi đến chính user hiện tại
-                        title: 'Đơn hàng đã thanh toán',
-                        message:
-                            '${userProvider.name ?? 'Khách'} vừa thanh toán đơn hàng.',
-                        type: 'payment',
-                      );
-                      await notificationProvider.loadUnreadCount();
-                      ToastService.showToast(
+                      Provider.of<CartProvider>(
                         context,
-                        message:
-                            "Vui lòng hoàn tất thanh toán trong trình duyệt.",
-                        length: ToastLength.short,
-                      );
-
-                      ToastService.showSuccessToast(
-                        context,
-                        message: "Đơn hàng thanh toán thành công",
-                        length: ToastLength.short,
-                      );
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (ctx) => BottomNav()),
-                      );
+                        listen: false,
+                      ).cleanCart();
                     } else {
                       ToastService.showErrorToast(
                         context,
                         message: "Không thể mở trang thanh toán VNPAY.",
                       );
                     }
+                    ToastService.showSuccessToast(
+                      context,
+                      message:
+                          "Thanh toán thành công. Đơn hàng đang chờ duyệt.",
+                      length: ToastLength.long,
+                    );
+                    await notificationProvider.sendNotification(
+                      receivers: [userProvider.userId!],
+                      title: 'Đơn hàng đã thanh toán',
+                      message:
+                          '${userProvider.name ?? 'Khách'} vừa thanh toán đơn hàng.',
+                      type: 'payment',
+                    );
+                    await notificationProvider.loadUnreadCount();
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (ctx) => BottomNav()),
+                    );
                   } else {
                     ToastService.showWarningToast(
                       context,
@@ -335,10 +340,6 @@ class _CartPageState extends State<CartPage> {
                   );
                 }
               },
-              child: Text(
-                "Thanh toán VNPAY",
-                style: TextStyle(color: Colors.blue),
-              ),
             ),
           ],
         );
@@ -405,7 +406,6 @@ class _CartPageState extends State<CartPage> {
           ),
         ],
       ),
-
       body:
           cartProvider.isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -418,7 +418,10 @@ class _CartPageState extends State<CartPage> {
                       itemCount: cartProvider.cartItems.length,
                       itemBuilder: (ctx, i) {
                         final item = cartProvider.cartItems[i];
-                        print("Giá: " + item.totalPrice.toStringAsFixed(0));
+                        print(
+                          "Giá chưa cộng phí ship: " +
+                              item.finalPricePerItem.toStringAsFixed(0),
+                        );
 
                         return Card(
                           margin: EdgeInsets.symmetric(
@@ -443,82 +446,34 @@ class _CartPageState extends State<CartPage> {
                                               )
                                               : Icon(Icons.image),
                                     ),
-
                                     SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          item.discountType == "flash_sale"
-                                              ? Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Giá gốc: ${formatCurrency(item.originalPrice.toStringAsFixed(0))}',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                  color: Colors.red,
-                                                  decoration:
-                                                  TextDecoration.lineThrough,
-                                                ),
-                                              ),
-                                              Text('Giảm ${item.discountPercent}%'),
-                                              Text(
-                                                'Giá giảm: ${formatCurrency(item.flashPrice.toStringAsFixed(0))}',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.red,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              if (item.discount_value != null)
-                                                Text(
-                                                  'Giảm: ${item.coupon_discount_type == "percent"
-                                                      ? "${item.discount_value}%"
-                                                      : formatCurrency(item.discount_value!.toStringAsFixed(0))}',
-                                                  style: const TextStyle(color: Colors.blue),
-                                                ),
-                                            ],
-                                          )
-                                              : item.discountType == "category"
-                                              ? Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Giá : ${formatCurrency(item.productPrice.toStringAsFixed(0))}',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                  color: Colors.red,
-                                                ),
-                                              ),
-                                              Text('Giảm ${item.discountPercent}% theo danh mục'),
-                                              if (item.discount_value != null)
-                                                Text(
-                                                  'Giảm: ${item.coupon_discount_type == "percent"
-                                                      ? "${item.discount_value}%"
-                                                      : formatCurrency(item.discount_value!.toStringAsFixed(0))}',
-                                                  style: const TextStyle(color: Colors.blue),
-                                                ),
-                                            ],
-                                          )
-                                              : Text('Mã KM: ${item.couponCode}'),
-
                                           Text(
-                                            'SL: ${item.quantity} - Phí vận chuyển: ${formatCurrency(item.shippingFee.toStringAsFixed(0))}',
-                                          ),
-                                          // Thời gian thêm vào giỏ
-                                          Text(
-                                            'Thêm lúc: ${DateFormat('dd/MM/yyyy HH:mm').format(item.addedAt)}',
-                                            style: const TextStyle(
-                                              fontSize: 12,
+                                            item.productName,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
                                             ),
                                           ),
+                                          const SizedBox(height: 4),
+                                          // Hiển thị giá và giảm giá
+                                          _buildPriceInfo(item, formatCurrency),
+                                          const SizedBox(height: 4),
                                           Text(
-                                            'Tổng phụ sản phẩm: ${formatCurrency(item.finalPricePerItem.toStringAsFixed(0))}',
-                                            style: const TextStyle(
+                                            'SL: ${item.quantity}',
+                                            style: TextStyle(fontSize: 12),
+                                          ),
+                                          Text(
+                                            'Phí vận chuyển: ${formatCurrency(item.shippingFee.toStringAsFixed(0))}',
+                                            style: TextStyle(fontSize: 12),
+                                          ),
+                                          Text(
+                                            'Tổng tiền sản phẩm: ${formatCurrency(item.subtotal.toStringAsFixed(0))}',
+                                            style: TextStyle(
                                               fontSize: 12,
                                               color: Colors.red,
                                               fontWeight: FontWeight.bold,
@@ -552,34 +507,28 @@ class _CartPageState extends State<CartPage> {
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Tổng cuối cùng
-                        Text(
-                          'Tổng: ${formatCurrency(cartProvider.totalPrice.toStringAsFixed(0))}',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green[700],
-                          ),
-                        ),
-
+                        _buildTotalSummary(cartProvider, formatCurrency),
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: () => confirmClearCart(
-                                  context,
-                                  cartProvider,
-                                  widget.token,
-                                ),
+                                onPressed:
+                                    () => confirmClearCart(
+                                      context,
+                                      cartProvider,
+                                      widget.token,
+                                    ),
                                 icon: const Icon(Icons.delete_forever),
                                 label: const Text("Xóa giỏ hàng"),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8.0),
                                   ),
@@ -594,7 +543,9 @@ class _CartPageState extends State<CartPage> {
                                 label: const Text("Thanh toán"),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8.0),
                                   ),
@@ -608,6 +559,158 @@ class _CartPageState extends State<CartPage> {
                   ),
                 ],
               ),
+    );
+  }
+
+  Widget _buildPriceInfo(CartItem item, Function formatCurrency) {
+    if (item.discountType == "flash_sale") {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Giá gốc: ${formatCurrency(item.originalPrice.toStringAsFixed(0))}',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              decoration: TextDecoration.lineThrough,
+            ),
+          ),
+          Text(
+            'Giảm ${item.discountPercent}% theo flash sale',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            'Giá sau giảm: ${formatCurrency(item.flashPrice.toStringAsFixed(0))}',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (item.couponCode != null)
+            Text(
+              'Mã KM: ${item.couponCode} - Giảm: ${item.couponDiscountType == "percent" ? "${item.discountValue}%" : formatCurrency(item.discountValue!.toStringAsFixed(0))}',
+              style: const TextStyle(color: Colors.blue, fontSize: 12),
+            ),
+        ],
+      );
+    } else if (item.discountType == "category") {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Giá gốc: ${formatCurrency(item.productPrice.toStringAsFixed(0))}',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              decoration: TextDecoration.lineThrough,
+            ),
+          ),
+          Text(
+            'Giảm ${item.discountPercent}% theo danh mục',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            'Giá sau giảm: ${formatCurrency(item.finalPricePerItem.toStringAsFixed(0))}',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (item.couponCode != null)
+            Text(
+              'Mã KM: ${item.couponCode} - Giảm: ${item.couponDiscountType == "percent" ? "${item.discountValue}%" : formatCurrency(item.discountValue!.toStringAsFixed(0))}',
+              style: const TextStyle(color: Colors.blue, fontSize: 12),
+            ),
+        ],
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Giá: ${formatCurrency(item.productPrice.toStringAsFixed(0))}',
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+          if (item.couponCode != null)
+            Text(
+              'Mã KM: ${item.couponCode} - Giảm: ${item.couponDiscountType == "percent" ? "${item.discountValue}%" : formatCurrency(item.discountValue!.toStringAsFixed(0))}',
+              style: const TextStyle(color: Colors.blue, fontSize: 12),
+            ),
+        ],
+      );
+    }
+  }
+
+  Widget _buildTotalSummary(
+    CartProvider cartProvider,
+    Function formatCurrency,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Tổng tiền hàng:', style: TextStyle(fontSize: 16)),
+            Text(
+              formatCurrency(cartProvider.totalSubtotal.toStringAsFixed(0)),
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Phí vận chuyển:', style: TextStyle(fontSize: 16)),
+            Text(
+              formatCurrency(cartProvider.totalShippingFee.toStringAsFixed(0)),
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+        if (cartProvider.totalCouponDiscount > 0)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Giảm giá coupon:',
+                style: TextStyle(fontSize: 16, color: Colors.blue),
+              ),
+              Text(
+                '- ${formatCurrency(cartProvider.totalCouponDiscount.toStringAsFixed(0))}',
+                style: TextStyle(fontSize: 16, color: Colors.blue),
+              ),
+            ],
+          ),
+        Divider(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Tổng cộng:',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              formatCurrency(cartProvider.totalPrice.toStringAsFixed(0)),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.green[700],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

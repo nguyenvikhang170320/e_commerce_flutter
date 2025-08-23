@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SharedPrefsHelper {
   static const _tokenKey = 'token';
   static const _firstTimeKey = 'isFirstTime';
-
+  static const _userIdKey = 'user_id';
   /// Lưu token đăng nhập
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -22,7 +22,21 @@ class SharedPrefsHelper {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, '');
   }
-
+  //Lưu role đăng nhập
+  static Future<void> saveRole(String role) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('role', role);
+  }
+  //Lấy role
+  static Future<String?> getRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('role');
+  }
+  //xóa role
+  static Future<void> clearRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('role');
+  }
   /// Lưu trạng thái lần đầu mở app
   static Future<void> setFirstTime(bool value) async {
     final prefs = await SharedPreferences.getInstance();
@@ -34,4 +48,17 @@ class SharedPrefsHelper {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_firstTimeKey) ?? true;
   }
+
+
+  // ✅ UserId
+  static Future<void> saveUserId(int userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_userIdKey, userId);
+  }
+
+  static Future<int?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_userIdKey);
+  }
+
 }

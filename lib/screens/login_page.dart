@@ -1,13 +1,10 @@
-import 'package:app_ecommerce/providers/auth_provider.dart';
-import 'package:app_ecommerce/providers/cart_provider.dart';
-import 'package:app_ecommerce/providers/notification_provider.dart';
-import 'package:app_ecommerce/providers/product_provider.dart';
+import 'package:app_ecommerce/screens/dieukhoan_chinhsachbaomat/markdown_page.dart';
 import 'package:app_ecommerce/screens/profiles/forgot_password_page.dart';
 import 'package:app_ecommerce/screens/register_page.dart';
 import 'package:app_ecommerce/services/auth_service.dart';
+import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:toasty_box/toast_enums.dart';
 import 'package:toasty_box/toast_service.dart';
 
@@ -72,6 +69,7 @@ class LoginPage extends StatelessWidget {
           ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -148,15 +146,7 @@ class LoginPage extends StatelessWidget {
 
                   print("Đăng nhập token là: $token");
 
-                  // 1. Lưu token vào AuthProvider
-                  final authProvider = Provider.of<AuthProvider>(
-                    context,
-                    listen: false,
-                  );
-                  await authProvider.setToken(token);
-
-
-
+                  await SharedPrefsHelper.saveToken(token);
 
                   // 3. Chuyển sang màn hình chính
                   ToastService.showSuccessToast(

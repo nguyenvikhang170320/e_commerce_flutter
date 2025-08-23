@@ -1,4 +1,3 @@
-import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/category_provider.dart';
 import 'package:app_ecommerce/providers/coupons_provider.dart';
 import 'package:app_ecommerce/providers/favorite_provider.dart';
@@ -10,10 +9,13 @@ import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/search_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
+import 'package:app_ecommerce/screens/dieukhoan_chinhsachbaomat/markdown_page.dart';
 import 'package:app_ecommerce/screens/login_page.dart';
+import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,7 +34,6 @@ void main() async {
         ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
@@ -54,7 +55,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'E-commerce',
+      title: 'Ứng dụng thương mại điện tử',
       debugShowCheckedModeBanner: false,
       home: SplashDecider(), // Trang khởi đầu
     );
@@ -76,7 +77,6 @@ class _SplashDeciderState extends State<SplashDecider> {
     super.initState();
     _checkAppStatus();
   }
-
   Future<void> _checkAppStatus() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -88,12 +88,11 @@ class _SplashDeciderState extends State<SplashDecider> {
       setState(() => _startScreen = IntroPage());
     } else {
       final token = prefs.getString('token') ?? '';
+      print("Token: "+token);
 
       if (token.isNotEmpty && !JwtDecoder.isExpired(token)) {
         // Giải mã token
         Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-        print("Token ban đầu: $token");
-        print("Payload token: $decodedToken");
         String? role = decodedToken['role'];
         print('Vai trò: $role');
         int? userId = decodedToken['id'];

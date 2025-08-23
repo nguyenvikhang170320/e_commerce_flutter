@@ -2,6 +2,7 @@ import 'package:app_ecommerce/providers/category_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/categorys/category_page.dart';
 import 'package:app_ecommerce/screens/chats/chat_list_page.dart';
+import 'package:app_ecommerce/screens/global_search_page.dart';
 import 'package:app_ecommerce/screens/notifications/notification_page.dart';
 import 'package:app_ecommerce/screens/products/product_page.dart';
 import 'package:app_ecommerce/screens/profiles/profile_page.dart';
@@ -60,6 +61,16 @@ class _HeaderWithAvatarState extends State<HeaderWithAvatar> {
           ),
           Row(
             children: [
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (ctx) => GlobalSearchScreen(),
+                    ),
+                  );
+                },
+              ),
               Consumer<NotificationProvider>(
                 builder:
                     (ctx, provider, _) => Stack(

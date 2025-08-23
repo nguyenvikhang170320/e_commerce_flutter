@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:app_ecommerce/models/cartData.dart';
 import 'package:app_ecommerce/models/cartItem.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
@@ -55,7 +56,7 @@ class CartService {
   }
 
   /// 🟢 Lấy danh sách giỏ hàng
-  static Future<List<CartItem>> fetchCart(String token) async {
+  static Future<CartData> fetchCart(String token) async {
     final response = await http.get(
       Uri.parse('${dotenv.env['BASE_URL']}/carts'),
       headers: {
@@ -64,9 +65,26 @@ class CartService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      final Map<String, dynamic> data = jsonDecode(response.body);
       final List<dynamic> rawList = data['data'] ?? [];
-      return rawList.map((e) => CartItem.fromJson(e)).toList();
+
+      // Extract top-level totals
+      final double totalPrice = (data['totalPrice'] as num?)?.toDouble() ?? 0.0;
+      final double totalSubtotal = (data['totalSubtotal'] as num?)?.toDouble() ?? 0.0;
+      final double totalShippingFee = (data['totalShippingFee'] as num?)?.toDouble() ?? 0.0;
+      final double totalCouponDiscount = (data['totalCouponDiscount'] as num?)?.toDouble() ?? 0.0;
+
+      // Map raw data to a list of CartItem objects
+      final List<CartItem> items = rawList.map((e) => CartItem.fromJson(e)).toList();
+
+      // Return the new CartData object containing all information
+      return CartData(
+        cartItems: items,
+        totalPrice: totalPrice,
+        totalSubtotal: totalSubtotal,
+        totalShippingFee: totalShippingFee,
+        totalCouponDiscount: totalCouponDiscount,
+      );
     } else {
       throw Exception('Lỗi lấy giỏ hàng: ${response.body}');
     }

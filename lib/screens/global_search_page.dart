@@ -303,7 +303,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen>
                   '${cartItem.productName} (SL: ${cartItem.quantity})',
                 ),
                 subtitle: Text(
-                  "Giá: ${formatCurrency(cartItem.totalPrice.toStringAsFixed(0))}",
+                  "Giá: ${formatCurrency(cartItem.subtotal.toStringAsFixed(0))}",
                 ),
                 onTap: () {
                   print('Tìm kiếm sản phẩm trong giỏ: ${cartItem.productName}');

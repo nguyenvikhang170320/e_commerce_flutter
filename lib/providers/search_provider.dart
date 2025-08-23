@@ -11,8 +11,6 @@ import '../services/categories_service.dart';
 import '../services/product_service.dart';
 import '../services/cart_service.dart';
 
-import './auth_provider.dart'; // Đảm bảo AuthProvider có sẵn
-
 class SearchProvider with ChangeNotifier {
   // Trạng thái tìm kiếm danh mục
   List<Category> _categorySearchResults = [];
@@ -121,9 +119,9 @@ class SearchProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider = Provider.of<UserProvider>(context, listen: false);
 
-      final currentToken = authProvider.token;
+      final currentToken = authProvider.accessToken;
       print("Search token: $currentToken");
 
       if (currentToken == null) {

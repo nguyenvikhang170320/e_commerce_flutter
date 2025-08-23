@@ -5,27 +5,46 @@ import 'package:flutter/material.dart';
 class CartProvider with ChangeNotifier {
   bool _isLoading = false;
   List<CartItem> _cartItems = [];
-  double _discountValue = 0.0;
-  bool _isPercentDiscount = false;
+  double _totalPrice = 0;
+  double _totalSubtotal = 0;
+  double _totalShippingFee = 0;
+  double _totalCouponDiscount = 0;
+
   bool get isLoading => _isLoading;
   List<CartItem> get cartItems => _cartItems;
-  double get discountValue => _discountValue;
-  bool get isPercentDiscount => _isPercentDiscount;
+  double get totalPrice => _totalPrice;
+  double get totalSubtotal => _totalSubtotal;
+  double get totalShippingFee => _totalShippingFee;
+  double get totalCouponDiscount => _totalCouponDiscount;
+
   /// ✅ Lấy giỏ hàng
   Future<void> fetchCart(String token) async {
     try {
       _isLoading = true;
       notifyListeners();
 
-      _cartItems = await CartService.fetchCart(token);
+      final cartData = await CartService.fetchCart(token);
+
+      _cartItems = cartData.cartItems;
+      _totalPrice = cartData.totalPrice;
+      _totalSubtotal = cartData.totalSubtotal;
+      _totalShippingFee = cartData.totalShippingFee;
+      _totalCouponDiscount = cartData.totalCouponDiscount;
+
+      debugPrint('✅ Lấy giỏ hàng thành công');
     } catch (e) {
       debugPrint('❌ Lỗi khi lấy giỏ hàng: $e');
+      // Thêm xử lý lỗi nếu cần thiết
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
+  // Phương thức hỗ trợ để gọi fetchCart
+  Future<void> _refreshCart(String token) async {
+    await fetchCart(token);
+  }
 
   /// ✅ Thêm sản phẩm vào giỏ
   Future<void> addItem({
@@ -45,7 +64,8 @@ class CartProvider with ChangeNotifier {
         token: token,
       );
 
-      await fetchCart(token);
+      // Tải lại toàn bộ giỏ hàng sau khi thêm
+      await _refreshCart(token);
     } catch (e) {
       debugPrint('❌ Lỗi add item: $e');
     } finally {
@@ -59,48 +79,57 @@ class CartProvider with ChangeNotifier {
     required int quantity,
     required String token,
   }) async {
-    await CartService.updateQuantity(
-      cartId: cartId,
-      quantity: quantity,
-      token: token,
-    );
+    try {
+      await CartService.updateQuantity(
+        cartId: cartId,
+        quantity: quantity,
+        token: token,
+      );
 
-    final index = _cartItems.indexWhere((item) => item.cartId == cartId);
-    if (index != -1) {
-      _cartItems[index].updateQuantity(quantity);
-      totalPrice;
-      notifyListeners();
+      // Tải lại toàn bộ giỏ hàng sau khi cập nhật
+      await _refreshCart(token);
+    } catch (e) {
+      debugPrint('❌ Lỗi update quantity: $e');
     }
   }
 
   /// ✅ Xóa sản phẩm
   Future<void> removeItem({required int cartId, required String token}) async {
-    print('⚠️ Lỗi xóa cartId ${cartId}');
-    await CartService.deleteCartItem(cartId: cartId, token: token);
-    _cartItems.removeWhere((item) => item.cartId == cartId);
-    notifyListeners();
-  }
+    try {
+      debugPrint('⚠️ Xóa cartId ${cartId}');
+      await CartService.deleteCartItem(cartId: cartId, token: token);
 
-  /// ✅ Tổng giá giỏ hàng (bao gồm phí ship)
-  double get totalPrice {
-    return _cartItems.fold(0, (sum, item) {
-      return sum + item.totalPrice;
-    });
+      // Tải lại toàn bộ giỏ hàng sau khi xóa
+      await _refreshCart(token);
+    } catch (e) {
+      debugPrint('❌ Lỗi xóa item: $e');
+    }
   }
-
 
   /// ✅ Xóa toàn bộ giỏ hàng
   Future<void> clearCart({required String token}) async {
-    for (var item in _cartItems) {
-      await CartService.deleteCartItem(cartId: item.cartId, token: token);
+    try {
+      for (var item in _cartItems) {
+        await CartService.deleteCartItem(cartId: item.cartId, token: token);
+      }
+      _cartItems.clear();
+      _totalPrice = 0;
+      _totalSubtotal = 0;
+      _totalShippingFee = 0;
+      _totalCouponDiscount = 0;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('❌ Lỗi clear cart: $e');
     }
-    _cartItems.clear();
-    notifyListeners();
   }
 
-  /// ✅ Dọn local
+  /// ✅ Dọn local (hữu ích khi đăng xuất)
   void cleanCart() {
     _cartItems.clear();
+    _totalPrice = 0;
+    _totalSubtotal = 0;
+    _totalShippingFee = 0;
+    _totalCouponDiscount = 0;
     notifyListeners();
   }
 }

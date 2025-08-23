@@ -1,4 +1,3 @@
-import 'package:app_ecommerce/providers/auth_provider.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/coupons_provider.dart';
 import 'package:app_ecommerce/providers/favorite_provider.dart';
@@ -9,6 +8,7 @@ import 'package:app_ecommerce/screens/coupons/coupon_list_page.dart';
 import 'package:app_ecommerce/screens/coupons/create_coupon_page.dart';
 import 'package:app_ecommerce/screens/coupons/my_coupons_page.dart';
 import 'package:app_ecommerce/screens/coupons/user_cart_coupon.dart';
+import 'package:app_ecommerce/screens/dieukhoan_chinhsachbaomat/settings_page.dart';
 import 'package:app_ecommerce/screens/flash_sales/create_flash_sale.dart';
 import 'package:app_ecommerce/screens/favorites/favorite_list_page.dart';
 import 'package:app_ecommerce/screens/flash_sales/flash_sale_page.dart';
@@ -16,9 +16,7 @@ import 'package:app_ecommerce/screens/login_page.dart';
 import 'package:app_ecommerce/screens/products/product_page.dart';
 import 'package:app_ecommerce/screens/profiles/profile_page.dart';
 import 'package:app_ecommerce/screens/profiles/user_list_page.dart';
-import 'package:app_ecommerce/screens/verifies/verify_request_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
-import 'package:app_ecommerce/services/terms_of_service_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
@@ -208,11 +206,11 @@ class CustomDrawer extends StatelessWidget {
           ),
           //Điều khoản và dịch vụ app
           ListTile(
-            leading: const Icon(Icons.design_services),
-            title: const Text('Điều khoản và dịch vụ'),
+            leading: const Icon(Icons.settings),
+            title: const Text('Cài đặt'),
             onTap: () {
               Navigator.pop(context);// đóng drawer
-              Navigator.push(context, MaterialPageRoute(builder: (_) => TermsOfServiceScreens()));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => SettingsPage()));
             },
           ),
           ListTile(
@@ -225,7 +223,6 @@ class CustomDrawer extends StatelessWidget {
               await SharedPrefsHelper.clearToken();
 
               // 2. Reset các provider
-              final authProvider = Provider.of<AuthProvider>(context, listen: false);
               final cartProvider = Provider.of<CartProvider>(context, listen: false);
               final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
               final favoriteProvider = Provider.of<FavoriteProvider>(context, listen: false);
@@ -233,7 +230,6 @@ class CustomDrawer extends StatelessWidget {
               final flashsaleProvider = Provider.of<FlashSaleProvider>(context, listen: false);
 
 
-              authProvider.logout(context);
               cartProvider.cleanCart();
               notificationProvider.reset();
               favoriteProvider.reset();
