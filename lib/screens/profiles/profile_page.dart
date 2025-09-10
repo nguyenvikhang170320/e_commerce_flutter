@@ -26,17 +26,8 @@ class _ProfilePageState extends State<ProfilePage> {
   String? _userRole;
   int? userId;
   String? _verificationStatus;
-  String _deliveryAddress = '';
-  LatLng? _deliveryCoordinates;
 
-  // void _handleLocationSelected(LatLng location, String address) {
-  //   setState(() {
-  //     _deliveryCoordinates = location;
-  //     _deliveryAddress = address;
-  //   });
-  //   print('Địa chỉ đã chọn (OrderPage): $_deliveryAddress, tọa độ: $_deliveryCoordinates');
-  //   // Cập nhật trường địa chỉ trên UI của trang hóa đơn
-  // }
+
   @override
   void initState() {
     super.initState();

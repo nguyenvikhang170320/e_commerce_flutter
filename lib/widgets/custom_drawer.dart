@@ -27,8 +27,11 @@ class CustomDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context,listen: false);
+    final userProvider = Provider.of<UserProvider>(context);
     final role = userProvider.role;
+    final image = userProvider.image;
+    // print(role);
+    // print(image);
 
     return Drawer(
       child: ListView(
@@ -42,15 +45,14 @@ class CustomDrawer extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage:
-                  userProvider.image != null
-                      ? NetworkImage(userProvider.image!)
+                  backgroundImage: userProvider.image != null
+                      ? NetworkImage("${userProvider.image!}?v=${DateTime.now().millisecondsSinceEpoch}")
                       : null,
-                  child:
-                  userProvider.image == null
+                  child: userProvider.image == null
                       ? const Icon(Icons.person, size: 50)
                       : null,
                 ),
+
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
