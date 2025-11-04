@@ -180,6 +180,21 @@ class LoginPage extends StatelessWidget {
               ),
               child: Text('Đăng nhập', style: TextStyle(color: Colors.white)),
             ),
+            SizedBox(height: 12),
+            TextButton.icon(
+              icon: Icon(Icons.switch_account, color: Colors.deepPurpleAccent),
+              label: Text(
+                'Đổi tài khoản',
+                style: TextStyle(
+                  color: Colors.deepPurpleAccent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () {
+                _showAccountSwitchDialog(context);
+              },
+            ),
+
             SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -235,4 +250,67 @@ class LoginPage extends StatelessWidget {
       ),
     );
   }
+  void _showAccountSwitchDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(
+          'Chọn tài khoản đăng nhập',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.deepPurple,
+          ),
+        ),
+        content: Text(
+          'Chọn vai trò bạn muốn đăng nhập:',
+          style: TextStyle(color: Colors.grey[700]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              emailPhoneController.text = "nguoimua@gmail.com"; // hoặc để trống
+              passwordController.text = ""; // reset mật khẩu
+              ToastService.showSuccessToast(
+                context,
+                message: "Đang chuyển sang tài khoản Người mua",
+                length: ToastLength.short,
+              );
+            },
+            child: Text('Người mua',
+                style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              emailPhoneController.text = "nguoiban@gmail.com";
+              passwordController.text = "";
+              ToastService.showSuccessToast(
+                context,
+                message: "Đang chuyển sang tài khoản Người bán",
+                length: ToastLength.short,
+              );
+            },
+            child: Text('Người bán',
+                style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              emailPhoneController.text = "admin@gmail.com";
+              passwordController.text = "admin123";
+              ToastService.showSuccessToast(
+                context,
+                message: "Đang chuyển sang tài khoản Quản trị",
+                length: ToastLength.short,
+              );
+            },
+            child: Text('Admin',
+                style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

@@ -1,11 +1,17 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:app_ecommerce/screens/products/product_page.dart';
 import 'package:app_ecommerce/services/auth_service.dart';
 import 'package:app_ecommerce/services/categories_service.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 import 'package:app_ecommerce/providers/product_provider.dart';
 import 'package:toasty_box/toast_enums.dart';
@@ -25,10 +31,27 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
   String? imagePath;
   String? selectedCategoryId; // Biến để lưu category ID đã chọn
   List<dynamic> categories = []; // Danh sách category
+  File? _selectedImage;
+
   @override
   void initState() {
     super.initState();
     _fetchCategories(); // Gọi hàm để tải danh sách category khi màn hình được khởi tạo
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final pickedFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Lỗi chọn ảnh: $e");
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -44,70 +67,64 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
     }
   }
 
-  void _submit() async {
-    if (_formKey.currentState!.validate() && selectedCategoryId != null) {
-      final String? token = await SharedPrefsHelper.getToken();
-
-      if (token != null) {
-        try {
-          Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-          int? sellerId = decodedToken['id'];
-
-          if (sellerId != null) {
-            final newProduct = {
-              'name': name,
-              'price': price,
-              'image': imagePath ?? '',
-              'category_id': selectedCategoryId,
-              'description': description,
-              'stock':
-                  stock.toString(), // ✅ Chuyển stock thành String trước khi gửi
-              'seller_id':
-                  sellerId.toString(), // ✅ Thêm seller_id vào dữ liệu gửi
-              // 'is_featured': 0.toString(), // Bạn có thể thêm mặc định hoặc thu thập từ UI
-            };
-            Provider.of<ProductProvider>(
-              context,
-              listen: false,
-            ).addProduct(newProduct); // ✅ Gửi newProduct chứa seller_id
-
-            ToastService.showSuccessToast(
-              context,
-              length: ToastLength.medium,
-              expandedHeight: 100,
-              message: "Tạo sản phẩm thành công",
-            );
-
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (ctx) => ProductScreen()),
-            );
-            Provider.of<ProductProvider>(
-              context,
-              listen: false,
-            ).fetchProducts();
-          } else {
-            ToastService.showErrorToast(
-              context,
-              message: 'Không tìm thấy ID người dùng trong token.',
-            );
-          }
-        } catch (e) {
-          print('Lỗi giải mã token: $e');
-          ToastService.showErrorToast(
-            context,
-            message: 'Lỗi: Không thể xác thực người dùng.',
-          );
-        }
-      } else {
-        ToastService.showErrorToast(context, message: 'Bạn chưa đăng nhập.');
-      }
-    } else {
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate() || selectedCategoryId == null) {
       ToastService.showErrorToast(
         context,
         message: 'Vui lòng điền đầy đủ thông tin và chọn danh mục.',
       );
+      return;
+    }
+
+    final String? token = await SharedPrefsHelper.getToken();
+    if (token == null) {
+      ToastService.showErrorToast(context, message: 'Bạn chưa đăng nhập.');
+      return;
+    }
+
+    try {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      int? sellerId = decodedToken['id'];
+
+      if (sellerId == null) {
+        ToastService.showErrorToast(context, message: 'Không tìm thấy ID người dùng trong token.');
+        return;
+      }
+
+      // ✅ Gom dữ liệu sản phẩm
+      final newProduct = {
+        'name': name,
+        'price': price,
+        'description': description,
+        'category_id': selectedCategoryId!,
+        'stock': stock.toString(),
+        'seller_id': sellerId.toString(),
+        'image': _selectedImage?.path, // ✅ Đường dẫn local ảnh (nếu có)
+      };
+
+      // ✅ Gọi Provider để thêm sản phẩm (upload và lưu DB)
+      await Provider.of<ProductProvider>(context, listen: false).addProduct(newProduct);
+
+      ToastService.showSuccessToast(
+        context,
+        message: "Tạo sản phẩm thành công",
+        length: ToastLength.medium,
+        expandedHeight: 100,
+      );
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (ctx) => ProductScreen()),
+      );
+
+      Provider.of<ProductProvider>(context, listen: false).fetchProducts();
+    } catch (e) {
+      print('❌ Lỗi khi tạo sản phẩm: $e');
+      ToastService.showErrorToast(context, message: 'Không thể tạo sản phẩm.');
     }
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -160,27 +177,23 @@ class _CreateProductScreenState extends State<CreateProductScreen> {
                 validator: (value) => value == null ? 'Chọn danh mục' : null,
               ),
               SizedBox(height: 10),
-              if (imagePath != null &&
-                  imagePath!.startsWith('http')) // Kiểm tra nếu là URL
-                Image.network(
-                  imagePath!,
-                  height: 150,
-                  errorBuilder: (context, error, stackTrace) {
-                    print('Lỗi tải ảnh: $error');
-                    return const Text('Không thể tải ảnh');
-                  },
-                )
-              else if (imagePath != null)
-                Image.file(File(imagePath!), height: 150),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Link sản phẩm'),
-                onChanged: (val) => imagePath = val,
-                validator:
-                    (val) =>
-                        val == null || val.isEmpty
-                            ? 'Nhập đường dẫn sản phẩm'
-                            : null,
+
+              // 🔹 Nút chọn ảnh
+              ElevatedButton.icon(
+                onPressed: _pickImage,
+                icon: Icon(Icons.photo_library),
+                label: Text('Chọn ảnh'),
               ),
+
+              SizedBox(height: 10),
+              // 🔹 Hiển thị ảnh đã chọn
+              if (_selectedImage != null)
+                Image.file(_selectedImage!, height: 150)
+              else if (imagePath != null && imagePath!.startsWith('http'))
+                Image.network(imagePath!, height: 150)
+              else
+                Text('Chưa chọn ảnh'),
+
 
               SizedBox(height: 20),
               ElevatedButton(onPressed: _submit, child: Text('Tạo sản phẩm')),

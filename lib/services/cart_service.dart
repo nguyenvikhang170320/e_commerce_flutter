@@ -47,11 +47,11 @@ class CartService {
         if (couponCode != null && couponCode.isNotEmpty) 'coupon_code': couponCode,
       }),
     );
-
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     if (response.statusCode == 201) {
-      return jsonDecode(response.body);
+      return decoded;
     } else {
-      throw Exception('Lỗi thêm giỏ hàng: ${response.body}');
+      throw Exception(decoded['message'] ?? 'Lỗi thêm giỏ hàng');
     }
   }
 

@@ -8,13 +8,14 @@ class CartCouponWidget extends StatefulWidget {
   final double? cartTotal;
   final String? savedCouponCode;
   final String mode; // 👈 thêm mode
-
+  final int? sellerId;
   const CartCouponWidget({
     super.key,
     required this.token,
     this.cartTotal,
     this.savedCouponCode,
-    this.mode = 'all', // mặc định là all
+    this.mode = 'all',
+    this.sellerId,// mặc định là all
   });
 
   @override
@@ -37,6 +38,8 @@ class _CartCouponWidgetState extends State<CartCouponWidget> {
       final res = await CouponService().getCoupons(
         token: widget.token,
         mode: widget.mode,
+        sellerId: widget.sellerId,
+        cartTotal: widget.cartTotal,
       );
 
       setState(() {

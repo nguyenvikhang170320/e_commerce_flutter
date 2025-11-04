@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:app_ecommerce/providers/notification_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
+import 'package:app_ecommerce/screens/profiles/profile_page.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -38,7 +39,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     try {
-      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      final pickedFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+      );
       if (pickedFile != null) {
         setState(() {
           _selectedImage = File(pickedFile.path);
@@ -50,11 +53,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _submitProfile() async {
-    if(mounted){
+    if (mounted) {
       try {
         // Retrieve the token from SharedPreferences (or wherever you store it)
         String? token =
-        await SharedPrefsHelper.getToken(); // Replace with actual method to get token
+            await SharedPrefsHelper.getToken(); // Replace with actual method to get token
 
         // Check if token is null or empty
         if (token == null || token.isEmpty) {
@@ -103,7 +106,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             message: "Chỉnh sửa thành công",
           );
           Navigator.pop(context, true);
-
         } else {
           // Handle failed response
           final responseBody = await response.stream.bytesToString();
@@ -112,7 +114,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             length: ToastLength.medium,
             expandedHeight: 100,
             message:
-            "Lỗi cập nhật: ${responseBody.isNotEmpty ? responseBody : 'Có lỗi xảy ra'}",
+                "Lỗi cập nhật: ${responseBody.isNotEmpty ? responseBody : 'Có lỗi xảy ra'}",
           );
         }
       } catch (e) {
@@ -125,13 +127,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
       }
     }
-
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Chỉnh sửa trang cá nhân')),
+      appBar: AppBar(
+        title: Text(
+          'Chỉnh sửa trang cá nhân',
+          style: TextStyle(fontSize: 18, color: Colors.black),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0.0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => ProfilePage()),
+            );
+          },
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
@@ -142,11 +159,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   CircleAvatar(
                     radius: 60,
                     backgroundColor: Colors.white,
-                    backgroundImage: _selectedImage != null
-                        ? FileImage(_selectedImage!)
-                        : (widget.userData['image'] != null && widget.userData['image'].toString().isNotEmpty)
-                        ? NetworkImage(widget.userData['image'])
-                        : null,
+                    backgroundImage:
+                        _selectedImage != null
+                            ? FileImage(_selectedImage!)
+                            : (widget.userData['image'] != null &&
+                                widget.userData['image'].toString().isNotEmpty)
+                            ? NetworkImage(widget.userData['image'])
+                            : null,
                   ),
 
                   Positioned(

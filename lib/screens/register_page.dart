@@ -11,8 +11,7 @@ class RegisterPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final defaultAvatar =
-      'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740'; // update URL if needed
+  final defaultAvatar = ''; // update URL if needed
 
   @override
   Widget build(BuildContext context) {

@@ -4,6 +4,9 @@ import 'package:app_ecommerce/models/products.dart';
 import 'package:app_ecommerce/services/share_preference.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProductService {
   //tìm kiếm sản phẩm
@@ -121,36 +124,42 @@ class ProductService {
     }
   }
 
-  // ✅ Tạo sản phẩm
-  static Future<void> createProduct(Map<String, dynamic> product) async {
-    final token = await SharedPrefsHelper.getToken();
+  static Future<Map<String, dynamic>> createProduct(Map<String, dynamic> product) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
     final uri = Uri.parse('${dotenv.env['BASE_URL']}/products');
+
+    if (token == null) throw Exception('Chưa đăng nhập');
 
     try {
       http.Response response;
 
+      // ✅ Nếu có ảnh local (file)
       if (product['image'] != null && File(product['image']).existsSync()) {
-        final request =
-            http.MultipartRequest('POST', uri)
-              ..headers['Authorization'] = 'Bearer $token'
-              ..fields['name'] = product['name']
-              ..fields['price'] = product['price']
-              ..fields['description'] = product['description'] ?? ''
-              ..fields['category_id'] = product['category_id']?.toString() ?? ''
-              ..fields['stock'] =
-                  product['stock'].toString() ??
-                  '' // ✅ Chuyển int thành String cho fields
-              ..fields['is_featured'] =
-                  product['is_featured']?.toString() ?? '0'
-              ..fields['seller_id'] = product['seller_id']?.toString() ?? '';
+        final mimeType = lookupMimeType(product['image']);
+        final mimeSplit = mimeType?.split('/') ?? ['image', 'jpeg'];
+
+        final request = http.MultipartRequest('POST', uri)
+          ..headers['Authorization'] = 'Bearer $token'
+          ..fields['name'] = product['name']
+          ..fields['price'] = product['price']
+          ..fields['description'] = product['description'] ?? ''
+          ..fields['category_id'] = product['category_id']?.toString() ?? ''
+          ..fields['stock'] = product['stock'].toString()
+          ..fields['seller_id'] = product['seller_id']?.toString() ?? '';
 
         request.files.add(
-          await http.MultipartFile.fromPath('image', product['image']),
+          await http.MultipartFile.fromPath(
+            'image',
+            product['image'],
+            contentType: MediaType(mimeSplit[0], mimeSplit[1]),
+          ),
         );
 
         final streamedResponse = await request.send();
         response = await http.Response.fromStream(streamedResponse);
       } else {
+        // ✅ Không có ảnh — gửi JSON thuần
         response = await http.post(
           uri,
           headers: {
@@ -163,22 +172,25 @@ class ProductService {
             'description': product['description'] ?? '',
             'image': product['image'],
             'category_id': product['category_id'],
-            'stock': product['stock'], // ✅ Sử dụng trực tiếp int
-            'is_featured': product['is_featured'],
+            'stock': product['stock'],
             'seller_id': product['seller_id'],
           }),
         );
       }
 
-      if (response.statusCode == 201) {
-        print("✅ Thêm sản phẩm thành công");
+      // ✅ Kiểm tra kết quả
+      if (response.statusCode ==201) {
+        print('✅ Tạo sản phẩm thành công: ${response.body}');
+        return jsonDecode(response.body);
       } else {
-        print("❌ Lỗi thêm sản phẩm: ${response.body}");
+        print('❌ Lỗi thêm sản phẩm: ${response.body}');
+        throw Exception('Lỗi thêm sản phẩm: ${response.body}');
       }
     } catch (e) {
-      print("❌ Exception khi thêm sản phẩm: $e");
+      throw Exception('Exception khi thêm sản phẩm: $e');
     }
   }
+
 
   // ✅ Cập nhật sản phẩm
   static Future<void> updateProduct(Map<String, dynamic> product) async {

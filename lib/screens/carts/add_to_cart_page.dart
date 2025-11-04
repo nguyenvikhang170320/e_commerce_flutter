@@ -38,19 +38,39 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
 
-    await cartProvider.addItem(
-      productId: widget.product.id,
-      quantity: quantity,
-      token: widget.userToken,
-      couponCode: couponCode.isEmpty ? null : couponCode,
-    );
+    try {
+      await cartProvider.addItem(
+        productId: widget.product.id,
+        quantity: quantity,
+        token: widget.userToken,
+        couponCode: couponCode.isEmpty ? null : couponCode,
+      );
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (ctx) => CartPage(token: userProvider.accessToken!),
-      ),
-    );
+      // ✅ Nếu thành công thì hiển thị thông báo
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã thêm sản phẩm vào giỏ hàng')),
+      );
+
+      // ✅ Điều hướng đến giỏ hàng
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (ctx) => CartPage(token: userProvider.accessToken!),
+        ),
+      );
+    } catch (e) {
+      // ❌ Nếu lỗi từ backend, hiển thị thông báo lỗi
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceAll('Exception: ', ''),
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +179,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                         cartTotal: widget.product.price * quantity,
                         savedCouponCode: couponCode,
                         mode: 'saved',
+                        sellerId: widget.product.sellerId,
                       ),
                     ),
                   );

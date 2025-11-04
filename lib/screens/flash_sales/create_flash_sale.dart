@@ -124,7 +124,7 @@ class _CreateFlashSaleScreenState extends State<CreateFlashSaleScreen> {
     productProvider.products.where((p) => p.sellerId == userId).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tạo Giá giảm cho sản phẩm')),
+      appBar: AppBar(title: const Text('Tạo giảm giá')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -160,7 +160,7 @@ class _CreateFlashSaleScreenState extends State<CreateFlashSaleScreen> {
               TextFormField(
                 controller: _flashPriceController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Giá Flash Sale'),
+                decoration: const InputDecoration(labelText: 'Giá Flash Sale(giá giảm)'),
                 validator:
                     (value) => value == null || value.isEmpty ? 'Nhập giá' : null,
                 onChanged: (_) => _updatePercentFromFlashPrice(),

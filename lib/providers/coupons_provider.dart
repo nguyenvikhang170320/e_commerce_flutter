@@ -33,6 +33,25 @@ class CouponProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+  /// 📌 Lấy coupon theo người bán
+  Future<void> fetchCouponsBySeller(String token, int sellerId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _coupons = await _couponService.getCoupons(
+        token: token,
+        sellerId: sellerId, // ✅ truyền sellerId
+      );
+    } catch (e) {
+      debugPrint('❌ Lỗi fetchCouponsBySeller: $e');
+      _coupons = [];
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
 
   /// 📌 Lưu coupon
   Future<bool?> saveCoupon(String token, int couponId) async {

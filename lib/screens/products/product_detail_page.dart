@@ -4,7 +4,6 @@ import 'package:app_ecommerce/services/report_service.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toasty_box/toast_service.dart';
 import '../../models/products.dart';
 import 'package:intl/intl.dart';
 
@@ -71,10 +70,6 @@ class ProductDetailScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 16),
-            Text(
-              "Danh mục: ${product.categoryId ?? 'Không xác định'}",
-              style: TextStyle(fontSize: 16),
-            ),
             Divider(),
             SizedBox(height: 16),
             ReviewSection(productId: product.id),

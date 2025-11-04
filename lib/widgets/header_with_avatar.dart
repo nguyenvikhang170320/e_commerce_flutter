@@ -1,14 +1,9 @@
-import 'package:app_ecommerce/providers/category_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
-import 'package:app_ecommerce/screens/categorys/category_page.dart';
-import 'package:app_ecommerce/screens/chats/chat_list_page.dart';
 import 'package:app_ecommerce/screens/global_search_page.dart';
 import 'package:app_ecommerce/screens/notifications/notification_page.dart';
-import 'package:app_ecommerce/screens/products/product_page.dart';
 import 'package:app_ecommerce/screens/profiles/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:toasty_box/toast_enums.dart';
 
 import '../providers/notification_provider.dart';
 import '../services/share_preference.dart';

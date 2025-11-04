@@ -55,7 +55,7 @@ class _CreateCouponPageState extends State<CreateCouponPage> {
     final provider = Provider.of<CouponProvider>(context);
     final userProvider =Provider.of<UserProvider>(context, listen: false);
     return Scaffold(
-      appBar: AppBar(title: const Text("Tạo Coupon")),
+      appBar: AppBar(title: const Text("Tạo mã khuyến mãi")),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(

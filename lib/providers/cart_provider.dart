@@ -68,6 +68,7 @@ class CartProvider with ChangeNotifier {
       await _refreshCart(token);
     } catch (e) {
       debugPrint('❌ Lỗi add item: $e');
+      throw e;
     } finally {
       CartService.isAdding = false;
     }

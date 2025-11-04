@@ -32,8 +32,17 @@ class CouponService {
   Future<List<dynamic>> getCoupons({
     required String token,
     String mode = 'all', // 'all', 'saved' (user), hoặc 'seller' (seller)
+    int? sellerId,
+    double? cartTotal,
   }) async {
-    final url = Uri.parse('${dotenv.env['BASE_URL']}/coupon?mode=$mode');
+    // ✅ Xử lý URL hợp lý dựa theo sellerId hoặc mode
+    Uri url;
+    if (sellerId != null) {
+      url = Uri.parse('${dotenv.env['BASE_URL']}/coupon?seller_id=$sellerId');
+    } else {
+      url = Uri.parse('${dotenv.env['BASE_URL']}/coupon?mode=$mode');
+    }
+
     try {
       final res = await http.get(
         url,
@@ -49,10 +58,11 @@ class CouponService {
         throw Exception('Lỗi lấy coupon: ${data['message'] ?? res.statusCode}');
       }
     } catch (e) {
-      // Xử lý lỗi kết nối hoặc parse JSON
+      // Xử lý lỗi kết nối hoặc JSON
       throw Exception('Lỗi kết nối hoặc dữ liệu: $e');
     }
   }
+
 
   /// 📌 Lưu coupon
   Future<bool> saveCoupon({

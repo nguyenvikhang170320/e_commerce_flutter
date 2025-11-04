@@ -29,17 +29,28 @@ class ProductProvider with ChangeNotifier {
   }
 
   // Tạo sản phẩm mới
+  // ✅ Thêm sản phẩm, đồng bộ với backend
   Future<void> addProduct(Map<String, dynamic> product) async {
     try {
-      await ProductService.createProduct(product); // Gọi API tạo sản phẩm
-      _products.add(
-        Product.fromJson(product),
-      ); // Thêm sản phẩm vào danh sách cục bộ
+      final createdProduct = await ProductService.createProduct(product);
+      _products.add(Product.fromJson(createdProduct));
       notifyListeners();
     } catch (e) {
-      print("Lỗi khi thêm sản phẩm: $e");
+      print('Lỗi khi thêm sản phẩm: $e');
+      throw e;
     }
   }
+  // Future<void> addProduct(Map<String, dynamic> product) async {
+  //   try {
+  //     await ProductService.createProduct(product); // Gọi API tạo sản phẩm
+  //     _products.add(
+  //       Product.fromJson(product),
+  //     ); // Thêm sản phẩm vào danh sách cục bộ
+  //     notifyListeners();
+  //   } catch (e) {
+  //     print("Lỗi khi thêm sản phẩm: $e");
+  //   }
+  // }
 
   // Cập nhật sản phẩm
   Future<void> updateProduct(Map<String, dynamic> updatedProduct) async {
