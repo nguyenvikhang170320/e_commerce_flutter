@@ -33,15 +33,21 @@ class CouponProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
-  /// 📌 Lấy coupon theo người bán
-  Future<void> fetchCouponsBySeller(String token, int sellerId) async {
+  /// 📌 Lấy coupon theo người bán (mode = 'seller')
+  Future<void> fetchCouponsBySeller({
+    required String token,
+    required int sellerId,
+    required double price,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
     try {
       _coupons = await _couponService.getCoupons(
         token: token,
-        sellerId: sellerId, // ✅ truyền sellerId
+        mode: 'seller',
+        sellerId: sellerId,
+        cartTotal: price,
       );
     } catch (e) {
       debugPrint('❌ Lỗi fetchCouponsBySeller: $e');
@@ -51,6 +57,7 @@ class CouponProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
   }
+
 
 
   /// 📌 Lưu coupon

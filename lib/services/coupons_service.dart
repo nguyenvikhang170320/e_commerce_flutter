@@ -28,22 +28,64 @@ class CouponService {
   }
 
 
+  // /// 📌 Lấy danh sách coupon
+  // Future<List<dynamic>> getCoupons({
+  //   required String token,
+  //   String mode = 'all', // 'all', 'saved' (user), hoặc 'seller' (seller)
+  //   int? sellerId,
+  //   double? cartTotal,
+  // }) async {
+  //   // ✅ Xử lý URL hợp lý dựa theo sellerId hoặc mode
+  //   Uri url;
+  //   if (sellerId != null) {
+  //     url = Uri.parse('${dotenv.env['BASE_URL']}/coupon?seller_id=$sellerId');
+  //   } else {
+  //     url = Uri.parse('${dotenv.env['BASE_URL']}/coupon?mode=$mode');
+  //   }
+  //
+  //   try {
+  //     final res = await http.get(
+  //       url,
+  //       headers: {'Authorization': 'Bearer $token'},
+  //     );
+  //
+  //     if (res.statusCode == 200) {
+  //       final data = jsonDecode(utf8.decode(res.bodyBytes));
+  //       return data['coupons'] ?? [];
+  //     } else {
+  //       // Xử lý các mã lỗi HTTP khác nhau
+  //       final data = jsonDecode(utf8.decode(res.bodyBytes));
+  //       throw Exception('Lỗi lấy coupon: ${data['message'] ?? res.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     // Xử lý lỗi kết nối hoặc JSON
+  //     throw Exception('Lỗi kết nối hoặc dữ liệu: $e');
+  //   }
+  // }
   /// 📌 Lấy danh sách coupon
   Future<List<dynamic>> getCoupons({
     required String token,
-    String mode = 'all', // 'all', 'saved' (user), hoặc 'seller' (seller)
+    String mode = 'all', // 'all' hoặc 'seller'
     int? sellerId,
     double? cartTotal,
   }) async {
-    // ✅ Xử lý URL hợp lý dựa theo sellerId hoặc mode
-    Uri url;
-    if (sellerId != null) {
-      url = Uri.parse('${dotenv.env['BASE_URL']}/coupon?seller_id=$sellerId');
-    } else {
-      url = Uri.parse('${dotenv.env['BASE_URL']}/coupon?mode=$mode');
-    }
-
     try {
+      // ✅ Xử lý URL hợp lý dựa theo mode
+      Uri url;
+
+      if (mode == 'seller' && sellerId != null && cartTotal != null) {
+        print(123);
+        // 👉 Khi ở AddToCartScreen
+        url = Uri.parse(
+          '${dotenv.env['BASE_URL']}/coupon?mode=seller&seller_id=$sellerId&price=$cartTotal',
+        );
+      } else {
+        // 👉 Khi user xem tất cả coupon (để lưu)
+        url = Uri.parse(
+          '${dotenv.env['BASE_URL']}/coupon?mode=all',
+        );
+      }
+
       final res = await http.get(
         url,
         headers: {'Authorization': 'Bearer $token'},
@@ -53,15 +95,14 @@ class CouponService {
         final data = jsonDecode(utf8.decode(res.bodyBytes));
         return data['coupons'] ?? [];
       } else {
-        // Xử lý các mã lỗi HTTP khác nhau
         final data = jsonDecode(utf8.decode(res.bodyBytes));
         throw Exception('Lỗi lấy coupon: ${data['message'] ?? res.statusCode}');
       }
     } catch (e) {
-      // Xử lý lỗi kết nối hoặc JSON
       throw Exception('Lỗi kết nối hoặc dữ liệu: $e');
     }
   }
+
 
 
   /// 📌 Lưu coupon

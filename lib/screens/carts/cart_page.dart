@@ -279,11 +279,9 @@ class _CartPageState extends State<CartPage> {
                       "items": items,
                     },
                   );
-                  Provider.of<CartProvider>(
-                    context,
-                    listen: false,
-                  ).cleanCart();
+
                   if (response.statusCode == 200) {
+
                     final order = response.data;
                     final int orderId = order['orderId'];
                     final String paymentUrl = order['paymentUrl'];
@@ -299,10 +297,6 @@ class _CartPageState extends State<CartPage> {
                         uri,
                         mode: LaunchMode.externalApplication,
                       );
-                      Provider.of<CartProvider>(
-                        context,
-                        listen: false,
-                      ).cleanCart();
                     } else {
                       ToastService.showErrorToast(
                         context,
@@ -315,6 +309,7 @@ class _CartPageState extends State<CartPage> {
                           "Thanh toán thành công. Đơn hàng đang chờ duyệt.",
                       length: ToastLength.long,
                     );
+
                     await notificationProvider.sendNotification(
                       receivers: [userProvider.userId!],
                       title: 'Đơn hàng đã thanh toán',
@@ -323,9 +318,14 @@ class _CartPageState extends State<CartPage> {
                       type: 'payment',
                     );
                     await notificationProvider.loadUnreadCount();
+                    Provider.of<CartProvider>(
+                      context,
+                      listen: false,
+                    ).cleanCart();
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (ctx) => BottomNav()),
                     );
+
                   } else {
                     ToastService.showWarningToast(
                       context,

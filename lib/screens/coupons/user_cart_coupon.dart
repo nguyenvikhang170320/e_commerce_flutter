@@ -33,34 +33,29 @@ class _CartCouponWidgetState extends State<CartCouponWidget> {
   }
 
   Future<void> _loadCoupons() async {
-    print(2);
+    print('🔹 Đang tải danh sách coupon...');
     try {
       final res = await CouponService().getCoupons(
         token: widget.token,
-        mode: widget.mode,
+        mode: widget.mode, // 'seller' khi ở AddToCart
         sellerId: widget.sellerId,
         cartTotal: widget.cartTotal,
       );
 
       setState(() {
-        if (res is List) {
-          // If the response is a list, use it directly.
-          coupons = res;
-        } else if (res is Map) {
-          // If the response is a single object, wrap it in a list.
-          coupons = [res];
-        } else {
-          // If the response is null or a String (e.g., error message),
-          // initialize coupons as an empty list.
-          coupons = [];
-        }
+        coupons = res.isNotEmpty ? res : [];
         isLoading = false;
       });
+
+      print('✅ Tải coupon thành công: ${coupons.length} item');
     } catch (e) {
       debugPrint('❌ Lỗi load coupons: $e');
       setState(() => isLoading = false);
     }
   }
+
+
+
 
   // Hàm xử lý lưu coupon
   void _handleSaveCoupon(dynamic coupon) async {
@@ -117,19 +112,21 @@ class _CartCouponWidgetState extends State<CartCouponWidget> {
           return ListTile(
             leading: const Icon(Icons.local_offer, color: Colors.redAccent),
             title: Text(
-              coupon['code'] ?? '',
+              "Mã khuyến mãi: ${coupon['code'] ?? ''} ",
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(coupon['description'] ?? ''),
+                Text("Mô tả: ${coupon['description'] ?? ''} ",style: const TextStyle(fontWeight: FontWeight.bold),),
                 const SizedBox(height: 4),
                 Text(
-                  "Loại giảm giá: ${coupon['discount_type']} - Giá trị: ${coupon['discount_value']}",
+                  "Loại giảm giá: ${coupon['discount_type'] == 'amounts' ? 'Tiền' : '%'} - Giá trị: ${coupon['discount_value']}₫",style: const TextStyle(color: Colors.red,fontWeight: FontWeight.bold),
                 ),
-                Text("Đơn tối thiểu: ${coupon['min_order_value']}"),
+                Text("Áp dụng cho đơn hàng từ: ${coupon['min_order_value']}₫ trở lên"),
                 Text("HSD: ${coupon['start_time'] ?? coupon['end_time']}"),
+                Text("Người bán tạo mã khuyến mãi: ${coupon['seller_name'] ?? ''}")
+
               ],
             ),
             // Conditionally show the "Lưu" button based on the mode.

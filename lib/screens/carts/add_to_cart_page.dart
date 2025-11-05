@@ -178,7 +178,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                         token: widget.userToken,
                         cartTotal: widget.product.price * quantity,
                         savedCouponCode: couponCode,
-                        mode: 'saved',
+                        mode: 'seller',
                         sellerId: widget.product.sellerId,
                       ),
                     ),
