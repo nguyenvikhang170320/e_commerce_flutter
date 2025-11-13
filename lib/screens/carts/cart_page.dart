@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:app_ecommerce/models/cartItem.dart';
 import 'package:app_ecommerce/providers/cart_provider.dart';
 import 'package:app_ecommerce/providers/notification_provider.dart';
@@ -8,6 +10,7 @@ import 'package:app_ecommerce/widgets/bottom_nav.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:toasty_box/toast_enums.dart';
@@ -127,13 +130,64 @@ class _CartPageState extends State<CartPage> {
               children: [
                 Text("Chọn phương thức thanh toán của bạn:"),
                 SizedBox(height: 12),
-                TextField(
-                  controller: addressController,
-                  decoration: InputDecoration(
-                    labelText: "Địa chỉ giao hàng",
-                    border: OutlineInputBorder(),
-                  ),
+                TypeAheadField<Map<String, dynamic>>(
+                  builder: (context, controller, focusNode) {
+                    return TextField(
+                      controller: addressController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        labelText: "Địa chỉ giao hàng (tìm bằng VietMap hoặc nhập tay)",
+                        border: OutlineInputBorder(),
+                        suffixIcon: Icon(Icons.search, color: Colors.blue),
+                      ),
+                    );
+                  },
+                  suggestionsCallback: (pattern) async {
+                    if (pattern.isEmpty) return [];
+                    try {
+                      final apiKey = "ba5d5d509d3a533828b51bad52543d01db24dd72af9aa045";
+                      final url = "https://maps.vietmap.vn/api/search/v4?apikey=$apiKey&text=${Uri.encodeComponent(pattern)}&display_type=6";
+                      final response = await http.get(Uri.parse(url));
+                      print("Response body: ${response.body}");
+
+                      if (response.statusCode == 200) {
+                        final data = jsonDecode(response.body);
+                        if (data['data'] != null) {
+                          return List<Map<String, dynamic>>.from(data['data']);
+                        }
+                      }
+                    } catch (e) {
+                      print("Lỗi gọi API VietMap: $e");
+                    }
+                    return [];
+                  },
+                  itemBuilder: (context, suggestion) {
+                    return ListTile(
+                      leading: const Icon(Icons.location_on, color: Colors.redAccent),
+                      title: Text(suggestion['display'] ?? ''),
+                      subtitle: Text(suggestion['address'] ?? ''),
+                    );
+                  },
+                  onSelected: (suggestion) {
+                    addressController.text = suggestion['display'] ?? '';
+                    final location = suggestion['location'];
+                    final lat = location != null ? location['lat'] : null;
+                    final lng = location != null ? location['lon'] : null;
+                    print("Lat: $lat, Lng: $lng");
+                  },
+
                 ),
+
+
+
+
+                // TextField(
+                //   controller: addressController,
+                //   decoration: InputDecoration(
+                //     labelText: "Địa chỉ giao hàng",
+                //     border: OutlineInputBorder(),
+                //   ),
+                // ),
                 SizedBox(height: 12),
                 TextField(
                   controller: phoneController,

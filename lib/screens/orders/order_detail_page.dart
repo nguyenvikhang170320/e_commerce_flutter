@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:app_ecommerce/providers/location_provider.dart';
+import 'package:app_ecommerce/screens/LocationExamplePage.dart';
 import 'package:app_ecommerce/screens/orders/all_order_page.dart';
 import 'package:app_ecommerce/screens/notifications/notification_page.dart';
 import 'package:app_ecommerce/screens/reviews/review_section.dart';
@@ -141,21 +143,29 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Expanded(
             child: InkWell(
               onTap: () async {
+                final destination = value;
                 //nếu về sau cần lấy địa chỉ hiện tại, không dùng địa chỉ mặc định, thì mở dòng này lên
                 // final locationProvider = Provider.of<LocationProvider>(context, listen: false);
                 // await locationProvider.fetchCurrentLocation();
                 // String? origin = locationProvider.currentLocation;
-                String origin = "10.157502,105.666427"; //ĐLA-TÂN AN-TÂN-PHÚ-TÂN QUỚI,Đinh Hoà, Lai Vung, Đồng Tháp, Việt Nam
-                print("📍 Dùng vị trí mặc định làm origin: $origin");
-                final destination = value;
+                // if (destination.isNotEmpty) {
+                //   await getAndLaunchDirection(origin!, destination);
+                // } else {
+                //   ScaffoldMessenger.of(context).showSnackBar(
+                //     SnackBar(content: Text("Địa chỉ đích không hợp lệ")),
+                //   );
+                // }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MapWithDestinationPage(destinationAddress: destination,)),
+                );
+                //nếu về sau cần lấy địa chỉ hiện tại, không dùng địa chỉ mặc định, thì mở dòng này lên
+                // final locationProvider = Provider.of<LocationProvider>(context, listen: false);
+                // await locationProvider.fetchCurrentLocation();
+                // String? origin = locationProvider.currentLocation;
+                // //   String origin = "10.17085,105.67358"; //ĐLA-TÂN AN-TÂN-PHÚ-TÂN QUỚI,Đinh Hoà, Lai Vung, Đồng Tháp, Việt Nam
+                // print("📍 Dùng vị trí mặc định làm origin: $origin");
 
-                if (destination.isNotEmpty) {
-                  await getAndLaunchDirection(origin!, destination);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Địa chỉ đích không hợp lệ")),
-                  );
-                }
               },
 
               child: Text(
@@ -347,6 +357,60 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             _buildOrderDetailItem('Mã đơn hàng', '#${order['id']}'),
             _buildOrderDetailItem('Tên khách hàng', customerName),
             _buildOrderAdress('Địa chỉ giao hàng', order['address']),
+            SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: () async {
+                if (address == null || address!.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Không có địa chỉ để test VietMap")),
+                  );
+                  return;
+                }
+
+                try {
+                  final response = await http.post(
+                    Uri.parse('${dotenv.env['BASE_URL']}/maps/vietmap-geocode'),
+                    headers: {'Content-Type': 'application/json'},
+                    body: jsonEncode({'address': address}),
+                  );
+
+                  if (response.statusCode == 200) {
+                    final data = jsonDecode(response.body);
+                    final lat = data['lat'];
+                    final lng = data['lng'];
+
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: Text("VietMap Tọa độ"),
+                        content: Text("Lat: $lat\nLng: $lng"),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("Đóng"),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Không tìm thấy tọa độ VietMap")),
+                    );
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Lỗi khi gọi VietMap: $e")),
+                  );
+                }
+              },
+              icon: Icon(Icons.map_outlined),
+              label: Text("Test VietMap API"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueGrey,
+                foregroundColor: Colors.white,
+              ),
+            ),
+
             _buildOrderDetailItem('Số điện thoại', order['phone']),
             _buildOrderDetailItem(
               'Ngày đặt hàng',

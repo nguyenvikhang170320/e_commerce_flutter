@@ -11,6 +11,7 @@ import 'package:app_ecommerce/providers/search_provider.dart';
 import 'package:app_ecommerce/providers/user_provider.dart';
 import 'package:app_ecommerce/screens/login_page.dart';
 import 'package:app_ecommerce/widgets/bottom_nav.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
