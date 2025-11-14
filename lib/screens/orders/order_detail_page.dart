@@ -143,18 +143,32 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Expanded(
             child: InkWell(
               onTap: () async {
+                /*origin ở đây lấy vị trí nhà tôi để test
+                địa chỉ ĐLA-TÂN AN-TÂN-PHÚ-TÂN QUỚI,Đinh Hoà, Lai Vung, Đồng Tháp, Việt Nam
+                Mở dòng String origin, thì đóng dòng String? origin bên dưới lại*/
+                // String origin = "10.17085,105.67358"; // lấy địa chỉ mặc định
+                // print("📍 vị trí hiện tại, Dùng  mặc định làm origin: $origin");
                 final destination = value;
-                //nếu về sau cần lấy địa chỉ hiện tại, không dùng địa chỉ mặc định, thì mở dòng này lên
+                print("📍 vị trí đặt hàng: $destination");
+                /*nếu về sau cần lấy địa chỉ hiện tại, không dùng địa chỉ mặc định, thì mở dòng này lên
+                dùng geolocator flutter hay location flutter để lấy vị trí,
+                geolocator lấy GPS nên sẽ có sai số nhất định nhá*/
+                //Cách 1:  geolocator flutter
                 // final locationProvider = Provider.of<LocationProvider>(context, listen: false);
                 // await locationProvider.fetchCurrentLocation();
                 // String? origin = locationProvider.currentLocation;
+                // print("📍 vị trí hiện tại origin: $origin");
                 // if (destination.isNotEmpty) {
-                //   await getAndLaunchDirection(origin!, destination);
+                //   await getAndLaunchDirection(origin!, destination); // cái này mở google maps điện thoại
                 // } else {
                 //   ScaffoldMessenger.of(context).showSnackBar(
                 //     SnackBar(content: Text("Địa chỉ đích không hợp lệ")),
                 //   );
                 // }
+                /*Dùng location flutter để lấy GPS hien thi vi tri hien tai va diem den
+                 *Do dùng google maps của google, nen có 1 số thứ ko hoàn chỉnh, do không hỗ trợ ở quốc gia VN
+                * Mo đoạn code navigator.push này lên là được */
+                //Cách 2: location flutter
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => MapWithDestinationPage(destinationAddress: destination,)),
@@ -163,8 +177,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 // final locationProvider = Provider.of<LocationProvider>(context, listen: false);
                 // await locationProvider.fetchCurrentLocation();
                 // String? origin = locationProvider.currentLocation;
-                // //   String origin = "10.17085,105.67358"; //ĐLA-TÂN AN-TÂN-PHÚ-TÂN QUỚI,Đinh Hoà, Lai Vung, Đồng Tháp, Việt Nam
-                // print("📍 Dùng vị trí mặc định làm origin: $origin");
+
+
 
               },
 
