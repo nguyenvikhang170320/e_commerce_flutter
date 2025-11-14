@@ -10,7 +10,8 @@ class ReviewSection extends StatefulWidget {
   final int productId;
   final bool allowReview;
 
-  const ReviewSection({Key? key, required this.productId,  this.allowReview = false }) : super(key: key);
+  const ReviewSection({Key? key, required this.productId, this.allowReview = false})
+      : super(key: key);
 
   @override
   State<ReviewSection> createState() => _ReviewSectionState();
@@ -22,15 +23,21 @@ class _ReviewSectionState extends State<ReviewSection> {
   int rating = 5;
   final TextEditingController _commentController = TextEditingController();
   bool isLoading = true;
+  bool hasPermission = true; // seller có quyền xem hay không
 
   @override
   void initState() {
     super.initState();
     loadReviews();
   }
-
   Future<void> loadReviews() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    setState(() {
+      isLoading = true;
+      hasPermission = true; // reset quyền xem
+    });
+
     try {
       final fetched = await ReviewService.fetchReviews(
         widget.productId,
@@ -41,7 +48,7 @@ class _ReviewSectionState extends State<ReviewSection> {
       final found = fetched.firstWhereOrNull((r) => r.userId == userId);
 
       setState(() {
-        reviews = fetched;
+        reviews = fetched; // list rỗng nếu chưa có review, nhưng seller vẫn có quyền
         userReview = found;
         if (userReview != null) {
           rating = userReview!.rating;
@@ -51,17 +58,29 @@ class _ReviewSectionState extends State<ReviewSection> {
           _commentController.clear();
         }
         isLoading = false;
+        hasPermission = true; // chắc chắn seller có quyền
       });
-    } catch (e) {
+    } on Exception catch (e) {
       print('Lỗi khi loadReviews: $e');
-      setState(() {
-        reviews = [];
-        userReview = null;
-        isLoading = false;
-      });
+
+      if (e.toString().contains('403')) {
+        // Seller hoặc user không có quyền xem
+        setState(() {
+          hasPermission = false;
+          isLoading = false;
+        });
+
+      } else {
+        // Lỗi khác, vẫn hiển thị list rỗng
+        setState(() {
+          reviews = [];
+          userReview = null;
+          isLoading = false;
+          hasPermission = true; // vẫn có quyền, chỉ lỗi load
+        });
+      }
     }
   }
-
 
 
   Future<void> submitReview() async {
@@ -99,38 +118,44 @@ class _ReviewSectionState extends State<ReviewSection> {
 
         if (isLoading)
           const Center(child: CircularProgressIndicator())
+        else if (!hasPermission && userProvider.role == 'seller')
+          const Text(
+            'Bạn không có quyền xem đánh giá sản phẩm này',
+            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
+          )
+
         else if (reviews.isEmpty)
-          const Text('Chưa có đánh giá')
-        else
-          Column(
-            children: reviews.map((review) {
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: review.userImage != null
-                      ? NetworkImage(review.userImage!)
-                      : null,
-                  child: review.userImage == null ? const Icon(Icons.person) : null,
-                ),
-                title: Text(review.userName),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(review.comment),
-                    const SizedBox(height: 4),
-                    Text(
-                      DateFormat('dd/MM/yyyy').format(DateTime.parse(review.createdAt)),
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                trailing: Text('${review.rating}/5'),
-              );
-            }).toList(),
-          ),
+            const Text('Chưa có đánh giá')
+          else
+            Column(
+              children: reviews.map((review) {
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: review.userImage != null
+                        ? NetworkImage(review.userImage!)
+                        : null,
+                    child: review.userImage == null ? const Icon(Icons.person) : null,
+                  ),
+                  title: Text(review.userName),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(review.comment),
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat('dd/MM/yyyy').format(DateTime.parse(review.createdAt)),
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  trailing: Text('${review.rating}/5'),
+                );
+              }).toList(),
+            ),
 
         const Divider(height: 30),
 
-        if (userProvider.role == 'user'&& widget.allowReview)
+        if (userProvider.role == 'user' && widget.allowReview)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
