@@ -8,22 +8,28 @@ class ReviewService {
   static Future<List<Review>> fetchReviews(int productId, {String? token}) async {
     final url = Uri.parse('${dotenv.env['BASE_URL']}/reviews/$productId');
 
-    final response = await http.get(
-      url,
-      headers: token != null
-          ? {
-        'Authorization': 'Bearer $token',
-      }
-          : {},
-    );
+    try {
+      final response = await http.get(
+        url,
+        headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+      );
 
-    if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body)['data'];
-      return data.map((e) => Review.fromJson(e)).toList();
-    } else {
-      throw Exception('Lỗi khi tải đánh giá');
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body)['data'] ?? [];
+        return data.map((e) => Review.fromJson(e)).toList();
+      } else if (response.statusCode == 403) {
+        // ⭐ Ném riêng 403
+        throw Exception('403');
+      } else {
+        throw Exception('Lỗi khi tải đánh giá');
+      }
+    } catch (e) {
+      print('Exception khi fetchReviews: $e');
+      rethrow; // ném tiếp để frontend xử lý
     }
   }
+
+
 
   /// ✅ Gửi đánh giá mới
   static Future<bool> submitReview({
